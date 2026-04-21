@@ -34,8 +34,9 @@ use Illuminate\Support\Str;
 
     <h3 class="mb-4">📚 My Book Listings</h3>
 
+    <!-- Button to create new book -->
     <a href="{{ route('book.create') }}" class="btn btn-primary mb-3">
-        + Sell New Book
+        ➕ Sell New Book
     </a>
 
     <table class="table table-bordered table-hover bg-white">
@@ -50,18 +51,24 @@ use Illuminate\Support\Str;
         </thead>
 
         <tbody>
-        @foreach($books as $book)
+        @forelse($books as $book)
             <tr>
+
+                <!-- Image -->
                 <td>
-                    <img src="{{ asset('storage/' . $book->image) }}">
+                    <img src="{{ asset('storage/' . $book->image) }}" alt="Book Image">
                 </td>
 
-                <td>{{ $book->booktitle }}</td>
+                <!-- Title (FIXED) -->
+                <td>{{ $book->title }}</td>
 
+                <!-- Condition -->
                 <td>{{ $book->condition }}</td>
 
-                <td>{{ Str::limit($book->bookdescription, 50) }}</td>
+                <!-- Description (FIXED) -->
+                <td>{{ Str::limit($book->description, 50) }}</td>
 
+                <!-- Actions -->
                 <td>
                     <!-- Edit -->
                     <a href="{{ route('book.edit', $book->id) }}" class="btn btn-sm btn-warning">
@@ -73,14 +80,23 @@ use Illuminate\Support\Str;
                         @csrf
                         @method('DELETE')
 
-                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this book?')">
+                        <button class="btn btn-sm btn-danger"
+                                onclick="return confirm('Delete this book?')">
                             ❌ Delete
                         </button>
                     </form>
                 </td>
+
             </tr>
-        @endforeach
+        @empty
+            <tr>
+                <td colspan="5" class="text-center text-muted">
+                    No books found 😢
+                </td>
+            </tr>
+        @endforelse
         </tbody>
+
     </table>
 
 </div>
