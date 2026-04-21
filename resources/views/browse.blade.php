@@ -62,25 +62,42 @@
 
     <div class="row g-3">
 
-        <!-- Book 1 -->
+    @forelse($books as $book)
         <div class="col-md-4">
-            <div class="card book-card p-3">
-                <h6 class="fw-bold">Database Systems</h6>
-                <p class="text-muted mb-2">RM 20</p>
-                <a href="/book/1" class="btn btn-primary btn-sm w-100">View</a>
-            </div>
-        </div>
 
-        <!-- Book 2 -->
-        <div class="col-md-4">
-            <div class="card book-card p-3">
-                <h6 class="fw-bold">Web Development</h6>
-                <p class="text-muted mb-2">RM 15</p>
-                <a href="/book/2" class="btn btn-primary btn-sm w-100">View</a>
-            </div>
-        </div>
+            <div class="card p-3">
 
-    </div>
+                <!-- IMAGE -->
+                <img src="{{ asset('storage/' . $book->image) }}"
+                     style="height:180px; object-fit:cover; border-radius:10px;"
+                     class="mb-2">
+
+                <!-- TITLE -->
+                <h6 class="fw-bold">{{ $book->title }}</h6>
+
+                <!-- CONDITION -->
+                <p class="text-muted mb-1">
+                    Condition: {{ $book->condition }}
+                </p>
+
+                <!-- SUBJECT -->
+                <p class="text-muted mb-2">
+                    Subject ID: {{ $book->subject_id }}
+                </p>
+
+                <!-- BUTTON -->
+                <a href="/book/{{ $book->id }}" class="btn btn-primary btn-sm w-100">
+                    View
+                </a>
+
+            </div>
+
+        </div>
+    @empty
+        <p>No books available yet 😢</p>
+    @endforelse
+
+</div>
 
 </div>
 
