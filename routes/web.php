@@ -16,7 +16,7 @@ Route::get('/', function () {
 // ✅ create MUST come first
 Route::get('/book/create', function () {
     return view('book-create');
-})->middleware('auth');
+})->middleware('auth')->name('book.create');
 
 // ✅ store
 Route::post('/book/store', [BookController::class, 'store'])
@@ -27,6 +27,17 @@ Route::post('/book/store', [BookController::class, 'store'])
 // ✅ show (dynamic route ALWAYS last)
 Route::get('/book/{id}', [BookController::class, 'show']);
 
+Route::get('/book/{id}/edit', [BookController::class, 'edit'])
+    ->middleware('auth')
+    ->name('book.edit');
+
+Route::put('/book/{id}', [BookController::class, 'update'])
+    ->middleware('auth')
+    ->name('book.update');
+
+Route::delete('/book/{id}', [BookController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('book.destroy');
 
 /* =========================
    🏠 MAIN PAGES
@@ -51,3 +62,7 @@ Route::middleware('auth')->group(function () {
 
 
 require __DIR__.'/auth.php';
+
+Route::get('/my-listings', [BookController::class, 'myListings'])
+    ->middleware(['auth'])
+    ->name('book.myListings');

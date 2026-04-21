@@ -21,9 +21,13 @@
                     <a href="/book/create" class="btn btn-success mt-2">
                         ➕ Sell a Book
                     </a>
-                    <br>
-                    <a href="/homepage" class="btn btn-success mt-2">
-                        ➕ Browse Book
+                    <br><br>
+                    <a href="/homepage" class="btn btn-primary mt-2">
+                        🌍 Browse Books
+                    </a>
+                    <br><br>
+                    <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
+                        📚 My Listings
                     </a>
                 </div>
             </div>
