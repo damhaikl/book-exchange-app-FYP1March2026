@@ -66,3 +66,11 @@ require __DIR__.'/auth.php';
 Route::get('/my-listings', [BookController::class, 'myListings'])
     ->middleware(['auth'])
     ->name('book.myListings');
+
+Route::post('/book/{id}/request', [BookController::class, 'requestBook'])
+    ->middleware('auth')
+    ->name('book.request');
+
+Route::get('/inbox', [BookController::class, 'inbox'])
+    ->middleware('auth')
+    ->name('inbox');

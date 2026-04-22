@@ -25,6 +25,12 @@ use Illuminate\Support\Str;
             object-fit: cover;
             border-radius: 8px;
         }
+
+        .header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
     </style>
 </head>
 
@@ -32,14 +38,28 @@ use Illuminate\Support\Str;
 
 <div class="container">
 
-    <h3 class="mb-4">📚 My Book Listings</h3>
+    <!-- Header Section -->
+    <div class="header-row mb-4">
+        <div>
+            <!-- Back Button -->
+            <a href="/dashboard" class="btn btn-outline-secondary">
+                ⬅️ Back
+            </a>
+        </div>
+
+        <h3 class="mb-0">📚 My Book Listings</h3>
+
+        <div>
+            <!-- Empty div for spacing balance -->
+        </div>
+    </div>
 
     <!-- Button to create new book -->
     <a href="{{ route('book.create') }}" class="btn btn-primary mb-3">
         ➕ Sell New Book
     </a>
 
-    <table class="table table-bordered table-hover bg-white">
+    <table class="table table-bordered table-hover bg-white shadow-sm">
         <thead class="table-dark">
             <tr>
                 <th>Image</th>
@@ -59,13 +79,13 @@ use Illuminate\Support\Str;
                     <img src="{{ asset('storage/' . $book->image) }}" alt="Book Image">
                 </td>
 
-                <!-- Title (FIXED) -->
+                <!-- Title -->
                 <td>{{ $book->title }}</td>
 
                 <!-- Condition -->
                 <td>{{ $book->condition }}</td>
 
-                <!-- Description (FIXED) -->
+                <!-- Description -->
                 <td>{{ Str::limit($book->description, 50) }}</td>
 
                 <!-- Actions -->
@@ -102,4 +122,4 @@ use Illuminate\Support\Str;
 </div>
 
 </body>
-</html>
+</html> 

@@ -83,6 +83,12 @@
     <div class="actions">
         <button onclick="showPopup()">💬 Chat Seller</button>
         <button onclick="showPopup()">❤️ Save Book</button>
+        <form method="POST" action="{{ route('book.request', $book->id) }}">
+            @csrf
+            <button type="submit" onclick="return confirm('Request this book?')">
+                🤝 Request Book
+            </button>
+        </form>
     </div>
 </div>
 

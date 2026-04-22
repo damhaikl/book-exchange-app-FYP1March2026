@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Book Exchange - Browse</title>
+    <title>UniKLBook Hub</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -35,19 +35,27 @@
             width: 40px;
             height: 40px;
         }
+
+        .hero {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e5e5;
+        }
     </style>
 </head>
 
 <body>
 
-<!-- 🔥 HEADER (STANDARDISED) -->
+<!-- 🔥 HEADER -->
 <header class="app-header d-flex justify-content-between align-items-center px-4 py-3">
 
     <!-- LEFT: Brand -->
-    <h4 class="m-0 fw-bold">📚 Book Exchange</h4>
+    <h4 class="m-0 fw-bold">📚 UniKLBook Hub</h4>
 
     <!-- RIGHT: User -->
-    <a href="/profile"
+    <a href="/dashboard"
        class="btn btn-outline-dark rounded-circle d-flex align-items-center justify-content-center user-btn">
 
         <i class="bi bi-person"></i>
@@ -58,6 +66,14 @@
 <!-- 🧱 MAIN CONTENT -->
 <div class="container py-4">
 
+    <!-- 🧠 SYSTEM INTRO -->
+    <div class="hero text-center">
+        <h3 class="fw-bold mb-1">UniKLBook Hub</h3>
+        <p class="text-muted mb-0">
+            A Book Exchange System for UniKL MIIT Students
+        </p>
+    </div>
+
     <h5 class="mb-3">Browse Books</h5>
 
     <div class="row g-3">
@@ -65,7 +81,7 @@
     @forelse($books as $book)
         <div class="col-md-4">
 
-            <div class="card p-3">
+            <div class="card p-3 book-card">
 
                 <!-- IMAGE -->
                 <img src="{{ asset('storage/' . $book->image) }}"
@@ -97,7 +113,7 @@
         <p>No books available yet 😢</p>
     @endforelse
 
-</div>
+    </div>
 
 </div>
 

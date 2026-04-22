@@ -29,6 +29,10 @@
                     <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
                         📚 My Listings
                     </a>
+                    <br><br><br><br>
+                    <a href="/inbox" class="btn btn-dark mt-2">
+                        📥 Inbox (Requests)
+                    </a>
                 </div>
             </div>
         </div>
