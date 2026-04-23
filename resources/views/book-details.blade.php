@@ -75,7 +75,7 @@
         <i class="bi bi-arrow-left"></i> Back
     </a>
 
-    <img src="{{ $book->image }}">
+    <img src="{{ asset('storage/' . $book->image) }}" alt="Book Image" style="width:100%; height:300px; object-fit:cover; border-radius:10px;">
     <h1>{{ $book->title }}</h1>
     <p>{{ $book->description }}</p>
     <h3>RM {{ $book->price }}</h3>
@@ -83,6 +83,12 @@
     <div class="actions">
         <button onclick="showPopup()">💬 Chat Seller</button>
         <button onclick="showPopup()">❤️ Save Book</button>
+        <form method="POST" action="{{ route('book.request', $book->id) }}">
+            @csrf
+            <button type="submit" onclick="return confirm('Request this book?')">
+                🤝 Request Book
+            </button>
+        </form>
     </div>
 </div>
 

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Book Exchange - Browse</title>
+    <title>UniKLBook Hub</title>
 
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -35,19 +35,27 @@
             width: 40px;
             height: 40px;
         }
+
+        .hero {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e5e5;
+        }
     </style>
 </head>
 
 <body>
 
-<!-- 🔥 HEADER (STANDARDISED) -->
+<!-- 🔥 HEADER -->
 <header class="app-header d-flex justify-content-between align-items-center px-4 py-3">
 
     <!-- LEFT: Brand -->
-    <h4 class="m-0 fw-bold">📚 Book Exchange</h4>
+    <h4 class="m-0 fw-bold">📚 UniKLBook Hub</h4>
 
     <!-- RIGHT: User -->
-    <a href="/profile"
+    <a href="/dashboard"
        class="btn btn-outline-dark rounded-circle d-flex align-items-center justify-content-center user-btn">
 
         <i class="bi bi-person"></i>
@@ -58,27 +66,52 @@
 <!-- 🧱 MAIN CONTENT -->
 <div class="container py-4">
 
+    <!-- 🧠 SYSTEM INTRO -->
+    <div class="hero text-center">
+        <h3 class="fw-bold mb-1">UniKLBook Hub</h3>
+        <p class="text-muted mb-0">
+            A Book Exchange System for UniKL MIIT Students
+        </p>
+    </div>
+
     <h5 class="mb-3">Browse Books</h5>
 
     <div class="row g-3">
 
-        <!-- Book 1 -->
+    @forelse($books as $book)
         <div class="col-md-4">
-            <div class="card book-card p-3">
-                <h6 class="fw-bold">Database Systems</h6>
-                <p class="text-muted mb-2">RM 20</p>
-                <a href="/book/1" class="btn btn-primary btn-sm w-100">View</a>
-            </div>
-        </div>
 
-        <!-- Book 2 -->
-        <div class="col-md-4">
-            <div class="card book-card p-3">
-                <h6 class="fw-bold">Web Development</h6>
-                <p class="text-muted mb-2">RM 15</p>
-                <a href="/book/2" class="btn btn-primary btn-sm w-100">View</a>
+            <div class="card p-3 book-card">
+
+                <!-- IMAGE -->
+                <img src="{{ asset('storage/' . $book->image) }}"
+                     style="height:180px; object-fit:cover; border-radius:10px;"
+                     class="mb-2">
+
+                <!-- TITLE -->
+                <h6 class="fw-bold">{{ $book->title }}</h6>
+
+                <!-- CONDITION -->
+                <p class="text-muted mb-1">
+                    Condition: {{ $book->condition }}
+                </p>
+
+                <!-- SUBJECT -->
+                <p class="text-muted mb-2">
+                    Subject ID: {{ $book->subject_id }}
+                </p>
+
+                <!-- BUTTON -->
+                <a href="/book/{{ $book->id }}" class="btn btn-primary btn-sm w-100">
+                    View
+                </a>
+
             </div>
+
         </div>
+    @empty
+        <p>No books available yet 😢</p>
+    @endforelse
 
     </div>
 

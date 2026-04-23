@@ -14,4 +14,27 @@
             </div>
         </div>
     </div>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 text-gray-900 dark:text-gray-100">
+                    <a href="/book/create" class="btn btn-success mt-2">
+                        ➕ Sell a Book
+                    </a>
+                    <br><br>
+                    <a href="/homepage" class="btn btn-primary mt-2">
+                        🌍 Browse Books
+                    </a>
+                    <br><br>
+                    <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
+                        📚 My Listings
+                    </a>
+                    <br><br><br><br>
+                    <a href="/inbox" class="btn btn-dark mt-2">
+                        📥 Inbox (Requests)
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </x-app-layout>
