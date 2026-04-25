@@ -22,4 +22,8 @@ class BookRequest extends Model
     {
         return $this->belongsTo(User::class, 'requester_id');
     }
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_id');
+    }
 }

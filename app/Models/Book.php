@@ -12,6 +12,7 @@ class Book extends Model
         'condition',
         'subject_id',
         'image',
-        'user_id'
+        'user_id',
+        'status' 
     ];
 }

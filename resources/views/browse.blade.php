@@ -73,47 +73,76 @@
             A Book Exchange System for UniKL MIIT Students
         </p>
     </div>
+    <!-- 🔎 SEARCH + FILTER -->
+    <form method="GET" action="{{ route('homepage') }}" class="mb-4">
+        <div class="row g-2">
+            <!-- SEARCH -->
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control" placeholder="Search book title..." value="{{ request('search') }}">
+            </div>
+            
+            <!-- SUBJECT FILTER -->
+            <div class="col-md-3">
+                <input type="text" name="subject_id" class="form-control" placeholder="Subject ID" value="{{ request('subject_id') }}">
+            </div>
 
+            <!-- CONDITION FILTER -->
+            <div class="col-md-3">
+                <select name="condition" class="form-select">
+                    <option value="">All Condition</option>
+                    <option value="New" {{ request('condition') == 'New' ? 'selected' : '' }}>
+                        New
+                    </option>
+                    <option value="Like New" {{ request('condition') == 'Like New' ? 'selected' : '' }}>
+                        Like New
+                    </option>
+                    <option value="Used" {{ request('condition') == 'Used' ? 'selected' : '' }}>
+                        Used
+                    </option>
+                </select>
+            </div>
+
+            <!-- BUTTON -->
+            <!-- BUTTONS -->
+            <div class="col-md-2 d-flex gap-2">
+                <button class="btn btn-primary w-100">
+                    🔎 Search
+                </button>
+                <a href="{{ route('homepage') }}" class="btn btn-secondary w-100">
+                    🔄 Reset
+                </a>
+
+</div>
+
+
+        </div>
+    </form>
     <h5 class="mb-3">Browse Books</h5>
 
     <div class="row g-3">
 
     @forelse($books as $book)
-        <div class="col-md-4">
 
-            <div class="card p-3 book-card">
-
-                <!-- IMAGE -->
-                <img src="{{ asset('storage/' . $book->image) }}"
-                     style="height:180px; object-fit:cover; border-radius:10px;"
-                     class="mb-2">
-
-                <!-- TITLE -->
-                <h6 class="fw-bold">{{ $book->title }}</h6>
-
-                <!-- CONDITION -->
-                <p class="text-muted mb-1">
-                    Condition: {{ $book->condition }}
-                </p>
-
-                <!-- SUBJECT -->
-                <p class="text-muted mb-2">
-                    Subject ID: {{ $book->subject_id }}
-                </p>
-
-                <!-- BUTTON -->
-                <a href="/book/{{ $book->id }}" class="btn btn-primary btn-sm w-100">
-                    View
-                </a>
-
-            </div>
-
+    <div class="col-md-4">
+        <div class="card p-3 book-card">
+            <img src="{{ asset('storage/' . $book->image) }}">
+            <h6>{{ $book->title }}</h6>
+            <p>Condition: {{ $book->condition }}</p>
+            <p>Subject ID: {{ $book->subject_id }}</p>
+            @if($book->status == 'available')
+                <span style="color:green;">Available</span>
+            @else
+                <span style="color:red;">Reserved</span>
+            @endif
+            <a href="/book/{{ $book->id }}" class="btn btn-primary btn-sm w-100">
+                View
+            </a>
         </div>
+    </div>
     @empty
-        <p>No books available yet 😢</p>
+    <p>No books available 😢</p>
     @endforelse
 
-    </div>
 
 </div>
 
