@@ -33,6 +33,14 @@
                     <a href="/inbox" class="btn btn-dark mt-2">
                         📥 Inbox (Requests)
                     </a>
+                    <br><br>
+                    <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
+                        📤 Sent Requests
+                    </a>
+                    <br><br><br><br>
+                    <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
+                        ❤️ Saved Books
+                    </a>
                 </div>
             </div>
         </div>

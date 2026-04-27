@@ -74,3 +74,31 @@ Route::post('/book/{id}/request', [BookController::class, 'requestBook'])
 Route::get('/inbox', [BookController::class, 'inbox'])
     ->middleware('auth')
     ->name('inbox');
+
+Route::post('/request/{id}/approve', [BookController::class, 'approveRequest'])
+    ->middleware('auth')
+    ->name('request.approve');
+
+Route::post('/request/{id}/reject', [BookController::class, 'rejectRequest'])
+    ->middleware('auth')
+    ->name('request.reject');
+
+Route::get('/sent-requests', [BookController::class, 'sentRequests'])
+    ->middleware('auth')
+    ->name('sent.requests');
+
+Route::post('/request/{id}/cancel', [BookController::class, 'cancelRequest'])
+    ->middleware('auth')
+    ->name('request.cancel');
+
+Route::post('/book/{id}/save', [BookController::class, 'saveBook'])
+    ->middleware('auth')
+    ->name('book.save');
+
+Route::get('/saved-books', [BookController::class, 'savedBooks'])
+    ->middleware('auth')
+    ->name('book.saved');
+
+Route::post('/book/{id}/unsave', [BookController::class, 'unsaveBook'])
+    ->middleware('auth')
+    ->name('book.unsave');

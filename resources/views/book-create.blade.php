@@ -30,7 +30,20 @@
 
 <div class="container">
 
-    <!-- Back Button (outside card) -->
+    <!-- 🔔 SUCCESS MESSAGE -->
+    @if(session('success'))
+        <div class="alert alert-success text-center">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger text-center">
+            {{ session('error') }}
+        </div>
+    @endif
+
+    <!-- Back Button -->
     <div class="top-bar">
         <a href="/dashboard" class="btn btn-outline-secondary">
             ⬅️ Back
@@ -40,7 +53,6 @@
     <!-- Form Card -->
     <div class="card form-card shadow-sm">
 
-        <!-- Title INSIDE card -->
         <h4 class="mb-4 text-center">📚 Submit Book Listing</h4>
 
         <form method="POST" action="{{ route('book.store') }}" enctype="multipart/form-data">
@@ -84,6 +96,7 @@
             <button type="submit" class="btn btn-primary w-100">
                 🚀 Submit Listing
             </button>
+
         </form>
 
     </div>

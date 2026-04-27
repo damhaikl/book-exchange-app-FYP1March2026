@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>{{ $book->title }}</title>
+
     <style>
         body { 
             font-family: Arial; 
@@ -44,12 +45,14 @@
             text-decoration: underline;
         }
 
-        /* POPUP */
+        /* 🔔 POPUP */
         .popup {
             display: none;
             position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            top: 0; 
+            left: 0;
+            width: 100%; 
+            height: 100%;
             background: rgba(0,0,0,0.5);
         }
 
@@ -63,58 +66,91 @@
         }
     </style>
 
-    <!-- Bootstrap Icons (for arrow) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
+
 <body>
 
 <div class="container">
 
-    <!-- 🔙 Back Button -->
+    <!-- 🔙 Back -->
     <a href="/homepage" class="back-btn">
         <i class="bi bi-arrow-left"></i> Back
     </a>
 
-    <img src="{{ asset('storage/' . $book->image) }}" alt="Book Image" style="width:100%; height:300px; object-fit:cover; border-radius:10px;">
+    <!-- 📚 Book Info -->
+    <img src="{{ asset('storage/' . $book->image) }}" alt="Book Image">
+
     <h1>{{ $book->title }}</h1>
     <p>{{ $book->description }}</p>
+
     <h3>RM {{ $book->price }}</h3>
 
-    <div class="actions">
-        <button onclick="showPopup()">💬 Chat Seller</button>
-        <button onclick="showPopup()">❤️ Save Book</button>
-        <form method="POST" action="{{ route('book.request', $book->id) }}">
-            @csrf
-            <button type="submit" onclick="return confirm('Request this book?')">
-                🤝 Request Book
-            </button>
-        </form>
+    <!-- 🎯 ACTIONS -->
+    <div class="actions" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+
+        <!-- 💬 Chat -->
+        <button type="button" onclick="showPopup('Chat Seller', 'Chat feature coming soon 👀')">
+            💬 Chat Seller
+        </button>
+
+        <!-- ❤️ Save -->
+        @if($book->user_id != auth()->id())
+            <form method="POST" action="{{ route('book.save', $book->id) }}" onsubmit="handleSubmit(event, 'Saved ❤️', 'Book successfully saved!')">
+                @csrf
+                <button type="submit">❤️ Save Book</button>
+            </form>
+        @endif
+
+        <!-- 🤝 Request -->
+        @if($book->status == 'available')
+            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent to the seller!')">
+                @csrf
+                <button type="submit" onclick="return confirm('Request this book?')">
+                    🤝 Request Book
+                </button>
+            </form>
+        @else
+            <p style="color:red; margin:0;">
+                🚫 This book is no longer available
+            </p>
+        @endif
+
     </div>
+
 </div>
 
-<!-- POPUP -->
-<div id="loginPopup" class="popup">
+<!-- 🔔 POPUP -->
+<div id="popup" class="popup">
     <div class="popup-content">
-        <h3>Please login first</h3>
-        <p>You need an account to continue.</p>
+        <h3 id="popupTitle">Message</h3>
+        <p id="popupText"></p>
 
-        <a href="/login">
-            <button>Go to Login</button>
-        </a>
-
-        <br><br>
-
-        <button onclick="closePopup()">No Thanks</button>
+        <button onclick="closePopup()">OK</button>
     </div>
 </div>
 
 <script>
-function showPopup() {
-    document.getElementById('loginPopup').style.display = 'block';
+function showPopup(title, message) {
+    document.getElementById('popupTitle').innerText = title;
+    document.getElementById('popupText').innerText = message;
+    document.getElementById('popup').style.display = 'block';
 }
 
 function closePopup() {
-    document.getElementById('loginPopup').style.display = 'none';
+    document.getElementById('popup').style.display = 'none';
+}
+
+// ⭐ NEW: handle submit properly
+function handleSubmit(event, title, message) {
+    event.preventDefault(); // stop reload
+
+    showPopup(title, message);
+
+    // submit AFTER showing popup
+    setTimeout(() => {
+        event.target.submit();
+    }, 800);
 }
 </script>
 
