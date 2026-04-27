@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BookController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
 
 Route::get('/', function () {
@@ -102,3 +103,14 @@ Route::get('/saved-books', [BookController::class, 'savedBooks'])
 Route::post('/book/{id}/unsave', [BookController::class, 'unsaveBook'])
     ->middleware('auth')
     ->name('book.unsave');
+
+Route::middleware(['auth'])->group(function () {
+
+    // 📊 Admin dashboard
+    Route::get('/admin/dashboard', function () {
+        return view('dashboard-admin');
+    })->name('admin.dashboard');
+
+    // 🚨 Report request page
+
+});

@@ -15,11 +15,9 @@ class BookController extends Controller
         $query = Book::query();
         // 🔎 Search by title / description
         if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%' . $request->search . '%')
-                ->orWhere('description', 'like', '%' . $request->search . '%');
-            });
-            }
+            $query->where('title', 'LIKE', "% {$request->search}%")
+                ->orWhere('title', 'LIKE', "%{$request->search} %");
+        }    
 
         // 🎯 Filter by subject
         if ($request->filled('subject_id')) {

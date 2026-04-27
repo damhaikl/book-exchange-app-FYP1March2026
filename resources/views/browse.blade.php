@@ -43,6 +43,13 @@
             margin-bottom: 20px;
             border: 1px solid #e5e5e5;
         }
+
+        .book-img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
     </style>
 </head>
 
@@ -125,7 +132,7 @@
 
     <div class="col-md-4">
         <div class="card p-3 book-card">
-            <img src="{{ asset('storage/' . $book->image) }}">
+            <img src="{{ asset('storage/' . $book->image) }}" class="book-img">
             <h6>{{ $book->title }}</h6>
             <p>Condition: {{ $book->condition }}</p>
             <p>Subject ID: {{ $book->subject_id }}</p>
