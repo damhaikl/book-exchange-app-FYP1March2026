@@ -3,8 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BookController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AdminController;
 use Illuminate\Http\Request;
+use App\Http\Controllers\ReportController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -104,3 +104,48 @@ Route::post('/book/{id}/unsave', [BookController::class, 'unsaveBook'])
     ->middleware('auth')
     ->name('book.unsave');
 
+// Admin Dashboard //
+// 👤 USER submit report
+Route::post('/report/{bookId}', [ReportController::class, 'store'])
+    ->middleware('auth')
+    ->name('report.store');
+
+
+// 🛡️ ADMIN ONLY ROUTES
+Route::middleware(['auth', 'admin'])->group(function () {
+
+    // view ALL reports
+    Route::get('/admin/reports', [ReportController::class, 'index'])
+        ->name('admin.reports');
+
+    // update status
+    Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateStatus'])
+        ->name('admin.reports.update');
+
+    // View pending reports
+    Route::get('/admin/reports/pending', [ReportController::class, 'pendingReports'])
+        ->name('admin.reports.pending');
+
+    // View Resolved reports
+    Route::get('/admin/reports/resolved', [ReportController::class, 'resolvedReports'])
+        ->name('admin.reports.resolved');
+
+    // View Rejected reports
+    Route::get('/admin/reports/rejected', [ReportController::class, 'rejectedReports'])
+        ->name('admin.reports.rejected');
+
+});
+
+// User Own Report
+Route::get('/my-reports', [ReportController::class, 'myReports'])
+    ->middleware('auth')
+    ->name('report.my');
+
+// Delete User Own Report
+Route::delete('/report/{id}', [ReportController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('report.delete');
+
+// Delete Admin Report
+Route::delete('/admin/reports/{id}', [ReportController::class, 'adminDestroy'])
+    ->name('admin.reports.delete');

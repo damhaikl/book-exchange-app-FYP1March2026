@@ -28,11 +28,9 @@
 
         .actions button {
             padding: 10px;
-            margin-right: 10px;
             cursor: pointer;
         }
 
-        /* 🔙 Back button */
         .back-btn {
             text-decoration: none;
             font-size: 14px;
@@ -41,11 +39,6 @@
             margin-bottom: 15px;
         }
 
-        .back-btn:hover {
-            text-decoration: underline;
-        }
-
-        /* 🔔 POPUP */
         .popup {
             display: none;
             position: fixed;
@@ -63,6 +56,12 @@
             width: 300px;
             text-align: center;
             border-radius: 10px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
         }
     </style>
 
@@ -104,29 +103,50 @@
 
         <!-- 🤝 Request -->
         @if($book->status == 'available')
-            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent to the seller!')">
+            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent!')">
                 @csrf
                 <button type="submit" onclick="return confirm('Request this book?')">
                     🤝 Request Book
                 </button>
             </form>
         @else
-            <p style="color:red; margin:0;">
-                🚫 This book is no longer available
-            </p>
+            <p style="color:red;">🚫 Not available</p>
+        @endif
+
+        <!-- 🚨 REPORT BUTTON -->
+        @if($book->user_id != auth()->id())
+            <button onclick="openReportPopup()">🚨 Report Book</button>
         @endif
 
     </div>
 
 </div>
 
-<!-- 🔔 POPUP -->
+<!-- 🔔 NORMAL POPUP -->
 <div id="popup" class="popup">
     <div class="popup-content">
-        <h3 id="popupTitle">Message</h3>
+        <h3 id="popupTitle"></h3>
         <p id="popupText"></p>
-
         <button onclick="closePopup()">OK</button>
+    </div>
+</div>
+
+<!-- 🚨 REPORT POPUP -->
+<div id="reportPopup" class="popup">
+    <div class="popup-content">
+        <h3>Report Book</h3>
+
+        <form method="POST" action="{{ route('report.store', $book->id) }}">
+            @csrf
+
+            <input type="text" name="reason" placeholder="Reason (e.g. Fake, Spam)" required>
+
+            <textarea name="description" placeholder="Describe the issue"></textarea>
+
+            <br><br>
+            <button type="submit">Submit</button>
+            <button type="button" onclick="closeReportPopup()">Cancel</button>
+        </form>
     </div>
 </div>
 
@@ -141,16 +161,22 @@ function closePopup() {
     document.getElementById('popup').style.display = 'none';
 }
 
-// ⭐ NEW: handle submit properly
 function handleSubmit(event, title, message) {
-    event.preventDefault(); // stop reload
-
+    event.preventDefault();
     showPopup(title, message);
 
-    // submit AFTER showing popup
     setTimeout(() => {
         event.target.submit();
     }, 800);
+}
+
+// 🚨 Report popup
+function openReportPopup() {
+    document.getElementById('reportPopup').style.display = 'block';
+}
+
+function closeReportPopup() {
+    document.getElementById('reportPopup').style.display = 'none';
 }
 </script>
 

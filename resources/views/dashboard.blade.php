@@ -1,3 +1,16 @@
+<style>
+    .pending_text{
+        color: #f59e0b;
+    }
+
+    .resolved_text{
+        color: #16a34a;
+    }
+
+    .rejected_text{
+        color: #dc2626;
+    }
+</style>
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
@@ -20,20 +33,32 @@
                 @if(Auth::user()->role == 'admin')
 
                     {{-- ADMIN DASHBOARD --}}
-                    <div class="p-6 text-red-600 font-bold">
-                        ADMIN PANEL
-                    </div>
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        <a href="/homepage" class="btn btn-primary mt-2">
+                            View Book Listing
+                        </a>
 
-                    <a href="/admin/users" class="btn btn-danger mt-2">
-                        👤 Manage Users
-                    </a>
+                        <br><br>
+                        <a>Select a category to view reports:</a>
 
-                    <br><br>
 
-                    <a href="/admin/books" class="btn btn-warning mt-2">
-                        📚 Manage Books
-                    </a>
-                    
+                        <a href="{{ route('admin.reports.pending') }}" class="btn btn-danger mt-2">
+                            <div class="pending_text">
+                                Pending Reports
+                            </div>
+                        </a>
+
+                        <a href="{{ route('admin.reports.resolved') }}" class="btn btn-danger mt-2">
+                            <div class="resolved_text">
+                                Resolved Reports
+                            </div>
+                        </a>
+
+                        <a href="{{ route('admin.reports.rejected') }}" class="btn btn-danger mt-2">
+                            <div class="rejected_text">
+                                Rejected Reports
+                            </div>
+                        </a>
                 @else
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         <a href="/book/create" class="btn btn-success mt-2">
@@ -56,6 +81,9 @@
                             📤 Sent Requests
                         </a>
                         <br><br><br><br>
+                        <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
+                            🚨 My Reports
+                        </a><br><br>
                         <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
                             ❤️ Saved Books
                         </a>
