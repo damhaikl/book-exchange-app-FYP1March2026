@@ -104,13 +104,3 @@ Route::post('/book/{id}/unsave', [BookController::class, 'unsaveBook'])
     ->middleware('auth')
     ->name('book.unsave');
 
-Route::middleware(['auth'])->group(function () {
-
-    // 📊 Admin dashboard
-    Route::get('/admin/dashboard', function () {
-        return view('dashboard-admin');
-    })->name('admin.dashboard');
-
-    // 🚨 Report request page
-
-});
