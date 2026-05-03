@@ -30,10 +30,56 @@
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                @if(Auth::user()->role == 'admin')
+                @if(Auth::user()->role == 'super_admin')
+
+                    {{-- SUPER ADMIN PANEL --}}
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+
+                        <div style="font-weight:bold; color:#7c3aed;">
+                            SUPER ADMIN PANEL
+                        </div>
+
+                        <br>
+
+                        <a href="/homepage" class="btn btn-primary mt-2">
+                            View Book Listing
+                        </a>
+
+                        <br><br>
+
+                        <a>Select a category to view reports:</a>
+
+                        <a href="{{ route('admin.reports.pending') }}" class="btn btn-danger mt-2">
+                            <div class="pending_text">Pending Reports</div>
+                        </a>
+
+                        <a href="{{ route('admin.reports.resolved') }}" class="btn btn-danger mt-2">
+                            <div class="resolved_text">Resolved Reports</div>
+                        </a>
+
+                        <a href="{{ route('admin.reports.rejected') }}" class="btn btn-danger mt-2">
+                            <div class="rejected_text">Rejected Reports</div>
+                        </a>
+
+                        <br>
+
+                        {{-- 🔥 EXTRA FEATURE FOR SUPER ADMIN --}}
+                        <a href="{{ route('admin.create') }}" class="btn btn-success mt-2">
+                            ➕ Create New Admin
+                        </a>
+
+                    </div>
+                @elseif(Auth::user()->role == 'admin')
 
                     {{-- ADMIN DASHBOARD --}}
                     <div class="p-6 text-gray-900 dark:text-gray-100">
+
+                        <div style="font-weight:bold; color:#7c3aed;">
+                            ADMIN PANEL
+                        </div>
+
+                        <br>
+
                         <a href="/homepage" class="btn btn-primary mt-2">
                             View Book Listing
                         </a>
@@ -61,6 +107,13 @@
                         </a>
                 @else
                     <div class="p-6 text-gray-900 dark:text-gray-100">
+                        
+                        <div style="font-weight:bold; color:#7c3aed;">
+                            USER PANEL
+                        </div>
+
+                        <br>
+
                         <a href="/book/create" class="btn btn-success mt-2">
                             ➕ Sell a Book
                         </a>

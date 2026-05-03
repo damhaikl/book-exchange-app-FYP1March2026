@@ -5,6 +5,7 @@ use App\Http\Controllers\BookController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -134,6 +135,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/reports/rejected', [ReportController::class, 'rejectedReports'])
         ->name('admin.reports.rejected');
 
+    // Delete Admin Report
+    Route::delete('/admin/reports/{id}', [ReportController::class, 'adminDestroy'])
+        ->name('admin.reports.delete');
+
 });
 
 // User Own Report
@@ -146,6 +151,11 @@ Route::delete('/report/{id}', [ReportController::class, 'destroy'])
     ->middleware('auth')
     ->name('report.delete');
 
-// Delete Admin Report
-Route::delete('/admin/reports/{id}', [ReportController::class, 'adminDestroy'])
-    ->name('admin.reports.delete');
+// Super Admin Create Admin
+Route::get('/admin/create', [AdminController::class, 'create'])
+    ->name('admin.create')
+    ->middleware(['auth', 'superadmin']);
+
+Route::post('/admin/store', [AdminController::class, 'store'])
+    ->name('admin.store')
+    ->middleware(['auth', 'superadmin']);
