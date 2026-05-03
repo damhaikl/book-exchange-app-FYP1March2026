@@ -199,10 +199,11 @@
                         <option value="resolved">Resolved</option>
                         <option value="rejected">Rejected</option>
                     </select>
+                
+                <td>
+                    <button type="submit">Update</button>
+                </td>
                 </form>
-            </td>
-            <td>
-                <button type="submit">Update</button>
             </td>
         </tr>
         @empty

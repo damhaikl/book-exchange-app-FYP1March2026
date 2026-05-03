@@ -1,10 +1,3 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">
-            My Reports
-        </h2>
-    </x-slot>
-
 <style>
     .report-container {
         padding: 20px;
@@ -14,9 +7,10 @@
         font-size: 22px;
         font-weight: bold;
         margin-bottom: 15px;
-        color: red;
+        color: white;
+        text-decoration: underline;
     }
-
+    
     /* TABLE STYLE */
     table {
         width: 100%;
@@ -129,13 +123,19 @@
     .back-btn:hover {
         background: #374151;
     }
+    
 </style>
-
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200">
+            My Reports
+        </h2>
+    </x-slot>
 <div class="report-container">
 
     <!-- BACK BUTTON -->
     <a href="{{ route('dashboard') }}" class="back-btn">
-        Back to Dashboard
+        < Back to Dashboard
     </a>
 
     <h3 class="report-title">List of Report</h3>
