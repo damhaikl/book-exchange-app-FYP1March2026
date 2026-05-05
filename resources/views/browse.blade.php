@@ -95,7 +95,7 @@
 
             <!-- CONDITION FILTER -->
             <div class="col-md-3">
-                <select name="condition" class="form-select">
+                <select name="condition" class="form-select" onchange="this.form.submit()">
                     <option value="">All Condition</option>
                     <option value="New" {{ request('condition') == 'New' ? 'selected' : '' }}>
                         New
