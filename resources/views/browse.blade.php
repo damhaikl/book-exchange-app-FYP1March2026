@@ -138,8 +138,10 @@
             <p>Subject ID: {{ $book->subject_id }}</p>
             @if($book->status == 'available')
                 <span style="color:green;">Available</span>
-            @else
-                <span style="color:red;">Reserved</span>
+            @elseif($book->status == 'sold')
+                <span style="color: red;">Sold</span>
+            @elseif($book->status == 'reserved')
+                <span style="color: orange;">Reserved</span>
             @endif
             <a href="/book/{{ $book->id }}" class="btn btn-primary btn-sm w-100">
                 View

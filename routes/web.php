@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\RequestController;
+use App\Http\Controllers\ReviewController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -159,3 +161,17 @@ Route::get('/admin/create', [AdminController::class, 'create'])
 Route::post('/admin/store', [AdminController::class, 'store'])
     ->name('admin.store')
     ->middleware(['auth', 'superadmin']);
+
+// Take Book
+Route::post('/request/take/{id}', [RequestController::class, 'takeBook'])
+    ->name('request.take');
+
+// Rating & Review
+Route::get('/review/create/{requestId}', [ReviewController::class, 'create'])
+    ->middleware('auth')
+    ->name('review.create');
+
+// Store Review
+Route::post('/review/store/{requestId}', [ReviewController::class, 'store'])
+    ->middleware('auth')
+    ->name('review.store');

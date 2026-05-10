@@ -20,6 +20,11 @@
 @endif
 
 @forelse($requests as $req)
+@php
+    $hasReview = \App\Models\Review::where('book_id', $req->book_id)
+        ->where('user_id', auth()->id())
+        ->exists();
+@endphp
 
 <div class="card p-3 mb-3">
 
@@ -30,19 +35,58 @@
         <b>Status:</b>
         
         @if($req->status == 'pending')
+
             <span class="badge bg-warning text-dark">Pending</span>
-        @elseif($req->status == 'approved')
-        @if($req->status == 'approved')
-        <form method="POST" action="{{ route('request.cancel', $req->id) }}">
-            @csrf
-            <button class="btn btn-warning btn-sm" onclick="return confirm('Cancel this request?')">
-                ❌ Cancel Request
-            </button>
-        </form>
-        @endif
+
+            <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                @csrf
+                <button class="btn btn-warning btn-sm">
+                    ❌ Cancel Request
+                </button>
+            </form>
+
+        @elseif($req->status == 'approved' && !$req->is_taken)
+
             <span class="badge bg-success">Approved</span>
-        @else
+
+            <form method="POST" action="{{ route('request.take', $req->id) }}">
+                @csrf
+                <button class="btn btn-primary btn-sm">
+                    ✅ Already Take
+                </button>
+            </form>
+
+            <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                @csrf
+                <button class="btn btn-danger btn-sm">
+                    ❌ Cancel Request
+                </button>
+            </form>
+
+        @elseif($req->status == 'completed' || $req->is_taken)
+
+            <span class="badge bg-info">Completed</span>
+
+            <!-- ⭐ Review Button -->
+            @if(!$hasReview)
+                <a href="{{ route('review.create', $req->id) }}"
+                class="btn btn-success btn-sm mt-2">
+                    ⭐ Make Review & Rating
+                </a>
+            @else
+                <span class="badge bg-secondary mt-2">
+                    ✔ Already Reviewed
+                </span>
+            @endif
+
+        @elseif($req->status == 'cancelled')
+
+            <span class="badge bg-secondary">Cancelled</span>
+
+        @elseif($req->status == 'rejected')
+
             <span class="badge bg-danger">Rejected</span>
+
         @endif
     </p>
 

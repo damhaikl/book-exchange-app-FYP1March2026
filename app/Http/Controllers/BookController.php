@@ -38,7 +38,12 @@ class BookController extends Controller
     public function show($id)
     {
         $book = Book::findOrFail($id);
-        return view('book-details', compact('book'));
+        $existingRequest = BookRequest::where('book_id', $id)
+            ->where('requester_id', auth()->id())
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
+
+        return view('book-details', compact('book', 'existingRequest'));
     }
 
     // ✏️ Edit form
@@ -138,10 +143,16 @@ class BookController extends Controller
         // 🚫 prevent duplicate request
         $exists = BookRequest::where('book_id', $id)
             ->where('requester_id', auth()->id())
+            ->whereIn('status', ['pending', 'approved'])
             ->first();
 
         if ($exists) {
-            return back()->with('error', 'You already requested this book.');
+
+            if ($exists->status == 'pending') {
+                return back()->with('error', 'You already requested this book. Waiting for approval.');
+            }
+            
+            return back()->with('error', 'Your request is already approved for this book.');
         }
 
         BookRequest::create([
@@ -209,6 +220,11 @@ class BookController extends Controller
             'status' => 'rejected'
         ]);
 
+         $request->book->update([
+            'status' => 'available'
+        ]);
+
+
         return back()->with('success', 'Request rejected!');
     }
 
@@ -231,19 +247,16 @@ class BookController extends Controller
             return back()->with('error', 'Unauthorized action.');
         }
 
-        // 🚫 only approved requests can be cancelled
-        if ($request->status !== 'approved') {
-            return back()->with('error', 'Only approved requests can be cancelled.');
+        // 🔓 only unlock book if it was approved
+        if ($request->status === 'approved') {
+            $request->book->update([
+                'status' => 'available'
+            ]);
         }
 
-        // 🔁 update request
+        // 🔁 update request no matter what status it is
         $request->update([
             'status' => 'cancelled'
-        ]);
-
-        // 🔓 unlock book
-        $request->book->update([
-            'status' => 'available'
         ]);
 
         return back()->with('success', 'Request cancelled successfully!');

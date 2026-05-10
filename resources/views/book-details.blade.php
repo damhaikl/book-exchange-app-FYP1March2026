@@ -87,12 +87,6 @@
 
     <!-- 🎯 ACTIONS -->
     <div class="actions" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-
-        <!-- 💬 Chat -->
-        <button type="button" onclick="showPopup('Chat Seller', 'Chat feature coming soon 👀')">
-            💬 Chat Seller
-        </button>
-
         <!-- ❤️ Save -->
         @if($book->user_id != auth()->id())
             <form method="POST" action="{{ route('book.save', $book->id) }}" onsubmit="handleSubmit(event, 'Saved ❤️', 'Book successfully saved!')">
@@ -101,16 +95,42 @@
             </form>
         @endif
 
+        @if($book->user_id == auth()->id())
+
+        <p style="color: red; font-weight: bold;">
+            This is your book listing !
+        </p>
+
         <!-- 🤝 Request -->
-        @if($book->status == 'available')
-            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent!')">
-                @csrf
-                <button type="submit" onclick="return confirm('Request this book?')">
-                    🤝 Request Book
+        @elseif($book->status == 'available')
+
+            @if($existingRequest)
+
+                <button type="button" disabled>
+                    🚫 You already requested this book
                 </button>
-            </form>
+
+            @else
+
+                <form method="POST"
+                    action="{{ route('book.request', $book->id) }}"
+                    onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent!')">
+
+                    @csrf
+
+                    <button type="submit"
+                            onclick="return confirm('Request this book?')">
+                        🤝 Request Book
+                    </button>
+
+                </form>
+
+            @endif
+
         @else
+
             <p style="color:red;">🚫 Not available</p>
+
         @endif
 
         <!-- 🚨 REPORT BUTTON -->
