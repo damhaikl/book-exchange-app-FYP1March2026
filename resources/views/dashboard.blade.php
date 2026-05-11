@@ -127,13 +127,16 @@
                         </a>
                         <br><br><br><br>
                         <a href="/inbox" class="btn btn-dark mt-2">
-                            📥 Inbox (Requests)
+                            📥 Book Requests
                         </a>
                         <br><br>
                         <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
-                            📤 Sent Requests
+                            📤 Sent Book Requests
                         </a>
                         <br><br><br><br>
+                        <a href="{{ route('review.my') }}" class="btn btn-primary mt-2">
+                            ⭐ View Rating & Review
+                        </a><br><br>
                         <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
                             🚨 My Reports
                         </a><br><br>

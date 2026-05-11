@@ -1,4 +1,4 @@
-<h2>⭐ Review Book: {{ $request->book->title }}</h2>
+<h2>⭐ Review & Rating Book: {{ $request->book->title }}</h2>
 
 <form method="POST" action="{{ route('review.store', $request->id) }}">
     @csrf
@@ -12,8 +12,8 @@
         <option value="1">⭐</option>
     </select>
 
-    <label class="mt-2">Comment</label>
-    <textarea name="comment" class="form-control"></textarea>
+    <label class="mt-2">Review</label>
+    <textarea name="comment" class="form-control" required></textarea>
 
     <button class="btn btn-primary mt-3">
         Submit Review

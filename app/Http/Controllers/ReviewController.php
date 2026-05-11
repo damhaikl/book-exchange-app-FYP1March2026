@@ -51,4 +51,28 @@ class ReviewController extends Controller
 
         return redirect('/sent-requests')->with('success', 'Review submitted!');
     }
+
+    public function myReviews()
+    {
+        $reviews = Review::with('book')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get();
+
+        return view('my-reviews', compact('reviews'));
+    }
+
+    public function destroy($id)
+    {
+        $review = Review::findOrFail($id);
+
+        // only owner can delete
+        if ($review->user_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized');
+        }
+
+        $review->delete();
+
+        return back()->with('success', 'Review deleted successfully!');
+    }
 }

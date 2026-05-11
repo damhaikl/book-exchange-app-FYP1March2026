@@ -175,3 +175,13 @@ Route::get('/review/create/{requestId}', [ReviewController::class, 'create'])
 Route::post('/review/store/{requestId}', [ReviewController::class, 'store'])
     ->middleware('auth')
     ->name('review.store');
+
+// View My Review
+Route::get('/my-reviews', [ReviewController::class, 'myReviews'])
+    ->middleware('auth')
+    ->name('review.my');
+
+// Delete My Review
+Route::delete('/review/{id}', [ReviewController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('review.delete');
