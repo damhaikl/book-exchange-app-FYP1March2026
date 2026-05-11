@@ -5,6 +5,7 @@
 
     <label>Rating</label>
     <select name="rating" class="form-control" required>
+        <option value="">-- Select Rating --</option>
         <option value="5">⭐⭐⭐⭐⭐</option>
         <option value="4">⭐⭐⭐⭐</option>
         <option value="3">⭐⭐⭐</option>
