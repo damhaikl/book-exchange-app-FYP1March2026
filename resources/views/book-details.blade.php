@@ -161,7 +161,7 @@
 
             <input type="text" name="reason" placeholder="Reason (e.g. Fake, Spam)" required>
 
-            <textarea name="description" placeholder="Describe the issue"></textarea>
+            <textarea name="description" placeholder="Describe the issue" required></textarea>
 
             <br><br>
             <button type="submit">Submit</button>
