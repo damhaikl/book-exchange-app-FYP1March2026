@@ -6,6 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Models\BookRequest;
 use App\Models\SavedBook;
+use App\Models\Review;
+use App\Mail\BookStatusMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
 class BookController extends Controller
 {
@@ -38,7 +42,29 @@ class BookController extends Controller
     public function show($id)
     {
         $book = Book::findOrFail($id);
-        return view('book-details', compact('book'));
+        $existingRequest = BookRequest::where('book_id', $id)
+            ->where('requester_id', auth()->id())
+            ->whereIn('status', ['pending', 'approved'])
+            ->first();
+
+        // Seller Rating
+        $sellerRating = Review::whereHas('book', function ($q) use ($book) {
+                $q->where('user_id', $book->user_id);
+            })->avg('rating');
+
+        $sellerRating = number_format($sellerRating ?? 0, 1);
+
+        // Seller Review
+        $sellerReviews = Review::whereHas('book', function ($q) use ($book) {
+            $q->where('user_id', $book->user_id);
+        })->latest()->take(3)->get();
+
+        return view('book-details', compact(
+            'book',
+            'existingRequest',
+            'sellerRating',
+            'sellerReviews'
+        ));
     }
 
     // ✏️ Edit form
@@ -141,10 +167,16 @@ class BookController extends Controller
         // 🚫 prevent duplicate request
         $exists = BookRequest::where('book_id', $id)
             ->where('requester_id', auth()->id())
+            ->whereIn('status', ['pending', 'approved'])
             ->first();
 
         if ($exists) {
-            return back()->with('error', 'You already requested this book.');
+
+            if ($exists->status == 'pending') {
+                return back()->with('error', 'You already requested this book. Waiting for approval.');
+            }
+            
+            return back()->with('error', 'Your request is already approved for this book.');
         }
 
         BookRequest::create([
@@ -196,6 +228,13 @@ class BookController extends Controller
             'status' => 'reserved'
         ]);
 
+        $requester = User::find($request->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->send(new BookStatusMail($request, 'approved'));
+        }
+
         return back()->with('success', 'Request approved & book locked!');
     }
 
@@ -211,6 +250,17 @@ class BookController extends Controller
         $request->update([
             'status' => 'rejected'
         ]);
+
+         $request->book->update([
+            'status' => 'available'
+        ]);
+
+        $requester = User::find($request->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->send(new BookStatusMail($request, 'rejected'));
+        }
 
         return back()->with('success', 'Request rejected!');
     }
@@ -234,19 +284,16 @@ class BookController extends Controller
             return back()->with('error', 'Unauthorized action.');
         }
 
-        // 🚫 only approved requests can be cancelled
-        if ($request->status !== 'approved') {
-            return back()->with('error', 'Only approved requests can be cancelled.');
+        // 🔓 only unlock book if it was approved
+        if ($request->status === 'approved') {
+            $request->book->update([
+                'status' => 'available'
+            ]);
         }
 
-        // 🔁 update request
+        // 🔁 update request no matter what status it is
         $request->update([
             'status' => 'cancelled'
-        ]);
-
-        // 🔓 unlock book
-        $request->book->update([
-            'status' => 'available'
         ]);
 
         return back()->with('success', 'Request cancelled successfully!');

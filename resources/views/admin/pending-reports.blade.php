@@ -122,6 +122,10 @@
     .delete-btn:hover {
         background: #b91c1c;
     }
+
+    .searchbutton{
+        color: white;
+    }
 </style>
 
 <x-app-layout>
@@ -138,6 +142,27 @@
     </a>
 
     <div class="report-title">Pending Reports</div>
+
+    <form method="GET" action="{{ url()->current() }}" style="margin-bottom: 15px;">
+        <input type="text"
+            name="search"
+            placeholder="Search user / book / reason..."
+            value="{{ request('search') }}"
+            style="padding:6px; width:250px; border:1px solid #ccc; border-radius:6px;">
+
+        <button type="submit" style="padding:6px 10px;">
+            <div class="searchbutton">
+                Search    
+            </div>
+        </button>
+        
+        @if(request('search'))
+        <a href="{{ url()->current() }}"
+           style="padding:6px 10px; background:#6b7280; color:white; border-radius:6px; text-decoration:none;">
+            Reset
+        </a>
+        @endif
+    </form>
 
     <table>
         <tr>

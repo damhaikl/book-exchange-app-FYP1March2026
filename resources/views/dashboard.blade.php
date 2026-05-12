@@ -86,10 +86,18 @@
                             <div class="card-icon" style="background:#dcfce7; color:#15803d;">✅</div>
                             <div><p class="card-label">Resolved</p><p class="card-sub">Closed reports</p></div>
                         </a>
-                        <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
-                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
-                            <div><p class="card-label">Rejected</p><p class="card-sub">Dismissed reports</p></div>
+
+                        <a href="{{ route('admin.reports.rejected') }}" class="btn btn-danger mt-2">
+                            <div class="rejected_text">Rejected Reports</div>
                         </a>
+
+                        <br>
+
+                        {{-- 🔥 EXTRA FEATURE FOR SUPER ADMIN --}}
+                        <a href="{{ route('admin.create') }}" class="btn btn-success mt-2">
+                            ➕ Create New Admin
+                        </a>
+
                     </div>
 
                 @elseif(Auth::user()->role == 'admin')
@@ -120,52 +128,39 @@
                     </div>
 
                 @else
+                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                        
+                        <div style="font-weight:bold; color:#7c3aed;">
+                            USER PANEL
+                        </div>
 
-                    <div class="role-badge user">👤 User</div>
+                        <br>
 
-                    <div class="section-label">Books</div>
-                    <div class="card-grid-2">
-                        <a href="/book/create" class="dash-card">
-                            <div class="card-icon" style="background:#dcfce7; color:#15803d;">➕</div>
-                            <div><p class="card-label">Sell a book</p><p class="card-sub">Create a listing</p></div>
+                        <a href="/book/create" class="btn btn-success mt-2">
+                            ➕ Sell a Book
                         </a>
-                        <a href="/homepage" class="dash-card">
-                            <div class="card-icon" style="background:#dbeafe; color:#1d4ed8;">🌍</div>
-                            <div><p class="card-label">Browse books</p><p class="card-sub">Explore all listings</p></div>
+                        <br><br>
+                        <a href="/homepage" class="btn btn-primary mt-2">
+                            🌍 Browse Books
                         </a>
-                        <a href="{{ route('book.myListings') }}" class="dash-card">
-                            <div class="card-icon" style="background:#ede9fe; color:#6d28d9;">📚</div>
-                            <div><p class="card-label">My listings</p><p class="card-sub">Manage your books</p></div>
+                        <br><br>
+                        <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
+                            📚 My Listings
                         </a>
-                        <a href="{{ route('book.saved') }}" class="dash-card">
-                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❤️</div>
-                            <div><p class="card-label">Saved books</p><p class="card-sub">Your wishlist</p></div>
+                        <br><br><br><br>
+                        <a href="/inbox" class="btn btn-dark mt-2">
+                            📥 Inbox (Requests)
                         </a>
-                    </div>
-
-                    <hr class="dash-divider">
-                    <div class="section-label">Requests</div>
-                    <div class="card-grid-2">
-                        <a href="/inbox" class="dash-card">
-                            <div class="card-icon" style="background:#f3f4f6; color:#374151;">📥</div>
-                            <div><p class="card-label">Inbox</p><p class="card-sub">Incoming requests</p></div>
+                        <br><br>
+                        <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
+                            📤 Sent Requests
                         </a>
-                        <a href="{{ route('sent.requests') }}" class="dash-card">
-                            <div class="card-icon" style="background:#ccfbf1; color:#0f766e;">📤</div>
-                            <div><p class="card-label">Sent requests</p><p class="card-sub">Your outgoing requests</p></div>
-                        </a>
-                    </div>
-
-                    <hr class="dash-divider">
-                    <div class="section-label">Other</div>
-                    <div class="card-grid-2">
-                        <a href="{{ route('report.my') }}" class="dash-card">
-                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">🚨</div>
-                            <div><p class="card-label">My reports</p><p class="card-sub">Reports you submitted</p></div>
-                        </a>
-                        <a href="{{ route('ai.chat') }}" class="dash-card">
-                            <div class="card-icon" style="background:#f3f4f6; color:#374151;">🤖</div>
-                            <div><p class="card-label">AI assistant</p><p class="card-sub">Get help from AI</p></div>
+                        <br><br><br><br>
+                        <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
+                            🚨 My Reports
+                        </a><br><br>
+                        <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
+                            ❤️ Saved Books
                         </a>
                     </div>
 

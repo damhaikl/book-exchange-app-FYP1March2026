@@ -9,8 +9,8 @@ class AdminMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        if (!auth()->check() || auth()->user()->role !== 'admin') {
-            return redirect('/dashboard')->with('error', 'Access denied');
+        if (!in_array(auth()->user()->role, ['admin', 'super_admin'])) {
+        return redirect('/dashboard')->with('error', 'Access denied');
         }
 
         return $next($request);

@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\AIController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -124,6 +123,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/admin/reports/{id}/update', [ReportController::class, 'updateStatus'])
         ->name('admin.reports.update');
 
+    // Admin Report
     // View pending reports
     Route::get('/admin/reports/pending', [ReportController::class, 'pendingReports'])
         ->name('admin.reports.pending');
@@ -160,10 +160,3 @@ Route::get('/admin/create', [AdminController::class, 'create'])
 Route::post('/admin/store', [AdminController::class, 'store'])
     ->name('admin.store')
     ->middleware(['auth', 'superadmin']);
-
-Route::get('/ai-chat', [AIController::class, 'index'])
-    ->middleware('auth')
-    ->name('ai.chat');
-
-Route::post('/ai-chat/send', [AIController::class, 'send'])
-    ->middleware('auth');

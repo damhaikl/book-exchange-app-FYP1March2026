@@ -93,12 +93,6 @@
 
     <!-- 🎯 ACTIONS -->
     <div class="actions" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
-
-        <!-- 💬 Chat -->
-        <button type="button" onclick="showPopup('Chat Seller', 'Chat feature coming soon 👀')">
-            💬 Chat Seller
-        </button>
-
         <!-- ❤️ Save -->
         @if($book->user_id != auth()->id())
             <form method="POST" action="{{ route('book.save', $book->id) }}" onsubmit="handleSubmit(event, 'Saved ❤️', 'Book successfully saved!')">
@@ -107,16 +101,42 @@
             </form>
         @endif
 
+        @if($book->user_id == auth()->id())
+
+        <p style="color: red; font-weight: bold;">
+            This is your book listing !
+        </p>
+
         <!-- 🤝 Request -->
-        @if($book->status == 'available')
-            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent!')">
-                @csrf
-                <button type="submit" onclick="return confirm('Request this book?')">
-                    🤝 Request Book
+        @elseif($book->status == 'available')
+
+            @if($existingRequest)
+
+                <button type="button" disabled>
+                    🚫 You already requested this book
                 </button>
-            </form>
+
+            @else
+
+                <form method="POST"
+                    action="{{ route('book.request', $book->id) }}"
+                    onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent!')">
+
+                    @csrf
+
+                    <button type="submit"
+                            onclick="return confirm('Request this book?')">
+                        🤝 Request Book
+                    </button>
+
+                </form>
+
+            @endif
+
         @else
+
             <p style="color:red;">🚫 Not available</p>
+
         @endif
 
         <!-- 🚨 REPORT BUTTON -->
@@ -124,6 +144,32 @@
             <button onclick="openReportPopup()">🚨 Report Book</button>
         @endif
 
+    </div>
+    <div style="margin-top:15px; padding:10px; border-radius:5px; border:1px solid black; width:100%; max-width:350px;">
+
+        <h4>👤 Seller Information</h4>
+
+        <p>
+            <strong>Name:</strong> {{ $book->user->name }}
+        </p>
+
+        <p>
+            <strong>Average Rating:</strong> ⭐{{ number_format($sellerRating ?? 0, 1) }} / 5
+        </p>
+        <hr>
+
+        <h5>📝 Latest Reviews</h5>
+
+        @if($sellerReviews->count() > 0)
+            @foreach($sellerReviews as $review)
+                <div style="margin-bottom:8px; padding:5px; border-bottom:1px solid #ddd;">
+                    ⭐ {{ $review->rating }}/5 <br>
+                    💬 {{ $review->comment }}
+                </div>
+            @endforeach
+        @else
+            <p>No reviews yet.</p>
+        @endif
     </div>
 
 </div>
@@ -147,7 +193,7 @@
 
             <input type="text" name="reason" placeholder="Reason (e.g. Fake, Spam)" required>
 
-            <textarea name="description" placeholder="Describe the issue"></textarea>
+            <textarea name="description" placeholder="Describe the issue" required></textarea>
 
             <br><br>
             <button type="submit">Submit</button>
