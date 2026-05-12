@@ -7,6 +7,9 @@ use App\Models\Book;
 use App\Models\BookRequest;
 use App\Models\SavedBook;
 use App\Models\Review;
+use App\Mail\BookStatusMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
 class BookController extends Controller
 {
@@ -222,6 +225,13 @@ class BookController extends Controller
             'status' => 'reserved'
         ]);
 
+        $requester = User::find($request->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->send(new BookStatusMail($request, 'approved'));
+        }
+
         return back()->with('success', 'Request approved & book locked!');
     }
 
@@ -242,6 +252,12 @@ class BookController extends Controller
             'status' => 'available'
         ]);
 
+        $requester = User::find($request->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->send(new BookStatusMail($request, 'rejected'));
+        }
 
         return back()->with('success', 'Request rejected!');
     }
