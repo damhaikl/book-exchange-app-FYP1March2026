@@ -140,6 +140,10 @@
                         <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
                             ❤️ Saved Books
                         </a>
+                        <br><br><br><br>
+                        <a href="{{ route('ai.chat') }}" class="btn btn-dark">
+                            🤖 AI Assistant
+                        </a>
                     </div>
                 @endif
             </div>
