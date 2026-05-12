@@ -57,9 +57,17 @@
     </style>
 </head>
 
+
 <body>
 
 <div class="chat-container">
+
+    <div class="top-bar">
+        <a href="/dashboard" class="btn btn-outline-secondary">
+            ⬅️ Back
+        </a>
+    </div>
+    <br><br>
 
     <h3 class="mb-4">🤖 UniKLBook AI Assistant</h3>
 

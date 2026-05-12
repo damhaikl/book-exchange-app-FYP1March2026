@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AIController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -160,3 +161,7 @@ Route::get('/admin/create', [AdminController::class, 'create'])
 Route::post('/admin/store', [AdminController::class, 'store'])
     ->name('admin.store')
     ->middleware(['auth', 'superadmin']);
+
+Route::get('/ai-chat', [AIController::class, 'index'])->name('ai.chat');
+Route::post('/ai-chat/send', [AIController::class, 'send'])
+    ->middleware('auth');

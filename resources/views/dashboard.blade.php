@@ -97,6 +97,9 @@
                         <a href="{{ route('admin.create') }}" class="btn btn-success mt-2">
                             ➕ Create New Admin
                         </a>
+                        <a href="{{ route('ai.chat') }}" class="btn btn-primary">
+                            🤖 AI Chat
+                        </a>
 
                     </div>
 
@@ -125,7 +128,12 @@
                             <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
                             <div><p class="card-label">Rejected</p><p class="card-sub">Dismissed reports</p></div>
                         </a>
+                        <br><br><br>
+                        <a href="{{ route('ai.chat') }}" class="btn btn-primary">
+                            🤖 AI Chat
+                        </a>
                     </div>
+                    
 
                 @else
                     <div class="p-6 text-gray-900 dark:text-gray-100">
@@ -161,6 +169,9 @@
                         </a><br><br>
                         <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
                             ❤️ Saved Books
+                        </a><br><br>
+                        <a href="{{ route('ai.chat') }}" class="btn btn-primary">
+                            🤖 AI Chat
                         </a>
                     </div>
 
