@@ -13,6 +13,7 @@ class Book extends Model
         'subject_id',
         'image',
         'user_id',
-        'status' 
+        'status',
+        'price'
     ];
 }

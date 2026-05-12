@@ -1,16 +1,55 @@
 <style>
-    .pending_text{
-        color: #f59e0b;
-    }
-
-    .resolved_text{
-        color: #16a34a;
-    }
-
-    .rejected_text{
-        color: #dc2626;
-    }
+.dash-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.875rem 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: background 0.15s, border-color 0.15s;
+    margin-bottom: 10px;
+}
+.dash-card:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+.dark .dash-card {
+    background: #1f2937;
+    border-color: #374151;
+}
+.dark .dash-card:hover {
+    background: #374151;
+}
+.card-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+}
+.card-label { font-size: 14px; font-weight: 500; margin: 0; }
+.card-sub { font-size: 12px; color: #9ca3af; margin: 1px 0 0; }
+.section-label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #9ca3af;
+    margin: 1.25rem 0 0.6rem;
+}
+.role-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 600;
+    margin-bottom: 1.25rem;
+}
+.role-badge.super { background:#ede9fe; color:#6d28d9; }
+.role-badge.admin { background:#dbeafe; color:#1d4ed8; }
+.role-badge.user  { background:#dcfce7; color:#15803d; }
+.card-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.dash-divider { border: none; border-top: 1px solid #f3f4f6; margin: 1rem 0; }
+.dark .dash-divider { border-color: #374151; }
 </style>
+
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
@@ -19,133 +58,119 @@
     </x-slot>
 
     <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    {{ __("You're logged in!") }}
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+
                 @if(Auth::user()->role == 'super_admin')
 
-                    {{-- SUPER ADMIN PANEL --}}
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                    <div class="role-badge super">⚡ Super Admin</div>
 
-                        <div style="font-weight:bold; color:#7c3aed;">
-                            SUPER ADMIN PANEL
-                        </div>
+                    <div class="section-label">Quick actions</div>
+                    <a href="/homepage" class="dash-card">
+                        <div class="card-icon" style="background:#dbeafe; color:#1d4ed8;">📚</div>
+                        <div><p class="card-label">View book listing</p><p class="card-sub">Browse all listed books</p></div>
+                    </a>
+                    <a href="{{ route('admin.create') }}" class="dash-card">
+                        <div class="card-icon" style="background:#ede9fe; color:#6d28d9;">➕</div>
+                        <div><p class="card-label">Create new admin</p><p class="card-sub">Add a new admin account</p></div>
+                    </a>
 
-                        <br>
-
-                        <a href="/homepage" class="btn btn-primary mt-2">
-                            View Book Listing
+                    <hr class="dash-divider">
+                    <div class="section-label">Reports</div>
+                    <div class="card-grid-2">
+                        <a href="{{ route('admin.reports.pending') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fef3c7; color:#92400e;">🕐</div>
+                            <div><p class="card-label">Pending</p><p class="card-sub">Awaiting review</p></div>
                         </a>
-
-                        <br><br>
-
-                        <a>Select a category to view reports:</a>
-
-                        <a href="{{ route('admin.reports.pending') }}" class="btn btn-danger mt-2">
-                            <div class="pending_text">Pending Reports</div>
+                        <a href="{{ route('admin.reports.resolved') }}" class="dash-card">
+                            <div class="card-icon" style="background:#dcfce7; color:#15803d;">✅</div>
+                            <div><p class="card-label">Resolved</p><p class="card-sub">Closed reports</p></div>
                         </a>
-
-                        <a href="{{ route('admin.reports.resolved') }}" class="btn btn-danger mt-2">
-                            <div class="resolved_text">Resolved Reports</div>
+                        <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
+                            <div><p class="card-label">Rejected</p><p class="card-sub">Dismissed reports</p></div>
                         </a>
-
-                        <a href="{{ route('admin.reports.rejected') }}" class="btn btn-danger mt-2">
-                            <div class="rejected_text">Rejected Reports</div>
-                        </a>
-
-                        <br>
-
-                        {{-- 🔥 EXTRA FEATURE FOR SUPER ADMIN --}}
-                        <a href="{{ route('admin.create') }}" class="btn btn-success mt-2">
-                            ➕ Create New Admin
-                        </a>
-
                     </div>
+
                 @elseif(Auth::user()->role == 'admin')
 
-                    {{-- ADMIN DASHBOARD --}}
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
+                    <div class="role-badge admin">🛡️ Admin</div>
 
-                        <div style="font-weight:bold; color:#7c3aed;">
-                            ADMIN PANEL
-                        </div>
+                    <div class="section-label">Quick actions</div>
+                    <a href="/homepage" class="dash-card">
+                        <div class="card-icon" style="background:#dbeafe; color:#1d4ed8;">📚</div>
+                        <div><p class="card-label">View book listing</p><p class="card-sub">Browse all listed books</p></div>
+                    </a>
 
-                        <br>
-
-                        <a href="/homepage" class="btn btn-primary mt-2">
-                            View Book Listing
+                    <hr class="dash-divider">
+                    <div class="section-label">Reports</div>
+                    <div class="card-grid-2">
+                        <a href="{{ route('admin.reports.pending') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fef3c7; color:#92400e;">🕐</div>
+                            <div><p class="card-label">Pending</p><p class="card-sub">Awaiting review</p></div>
                         </a>
-
-                        <br><br>
-                        <a>Select a category to view reports:</a>
-
-
-                        <a href="{{ route('admin.reports.pending') }}" class="btn btn-danger mt-2">
-                            <div class="pending_text">
-                                Pending Reports
-                            </div>
+                        <a href="{{ route('admin.reports.resolved') }}" class="dash-card">
+                            <div class="card-icon" style="background:#dcfce7; color:#15803d;">✅</div>
+                            <div><p class="card-label">Resolved</p><p class="card-sub">Closed reports</p></div>
                         </a>
-
-                        <a href="{{ route('admin.reports.resolved') }}" class="btn btn-danger mt-2">
-                            <div class="resolved_text">
-                                Resolved Reports
-                            </div>
-                        </a>
-
-                        <a href="{{ route('admin.reports.rejected') }}" class="btn btn-danger mt-2">
-                            <div class="rejected_text">
-                                Rejected Reports
-                            </div>
-                        </a>
-                @else
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
-                        
-                        <div style="font-weight:bold; color:#7c3aed;">
-                            USER PANEL
-                        </div>
-
-                        <br>
-
-                        <a href="/book/create" class="btn btn-success mt-2">
-                            ➕ Sell a Book
-                        </a>
-                        <br><br>
-                        <a href="/homepage" class="btn btn-primary mt-2">
-                            🌍 Browse Books
-                        </a>
-                        <br><br>
-                        <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
-                            📚 My Listings
-                        </a>
-                        <br><br><br><br>
-                        <a href="/inbox" class="btn btn-dark mt-2">
-                            📥 Inbox (Requests)
-                        </a>
-                        <br><br>
-                        <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
-                            📤 Sent Requests
-                        </a>
-                        <br><br><br><br>
-                        <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
-                            🚨 My Reports
-                        </a><br><br>
-                        <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
-                            ❤️ Saved Books
-                        </a>
-                        <br><br><br><br>
-                        <a href="{{ route('ai.chat') }}" class="btn btn-dark">
-                            🤖 AI Assistant
+                        <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
+                            <div><p class="card-label">Rejected</p><p class="card-sub">Dismissed reports</p></div>
                         </a>
                     </div>
+
+                @else
+
+                    <div class="role-badge user">👤 User</div>
+
+                    <div class="section-label">Books</div>
+                    <div class="card-grid-2">
+                        <a href="/book/create" class="dash-card">
+                            <div class="card-icon" style="background:#dcfce7; color:#15803d;">➕</div>
+                            <div><p class="card-label">Sell a book</p><p class="card-sub">Create a listing</p></div>
+                        </a>
+                        <a href="/homepage" class="dash-card">
+                            <div class="card-icon" style="background:#dbeafe; color:#1d4ed8;">🌍</div>
+                            <div><p class="card-label">Browse books</p><p class="card-sub">Explore all listings</p></div>
+                        </a>
+                        <a href="{{ route('book.myListings') }}" class="dash-card">
+                            <div class="card-icon" style="background:#ede9fe; color:#6d28d9;">📚</div>
+                            <div><p class="card-label">My listings</p><p class="card-sub">Manage your books</p></div>
+                        </a>
+                        <a href="{{ route('book.saved') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❤️</div>
+                            <div><p class="card-label">Saved books</p><p class="card-sub">Your wishlist</p></div>
+                        </a>
+                    </div>
+
+                    <hr class="dash-divider">
+                    <div class="section-label">Requests</div>
+                    <div class="card-grid-2">
+                        <a href="/inbox" class="dash-card">
+                            <div class="card-icon" style="background:#f3f4f6; color:#374151;">📥</div>
+                            <div><p class="card-label">Inbox</p><p class="card-sub">Incoming requests</p></div>
+                        </a>
+                        <a href="{{ route('sent.requests') }}" class="dash-card">
+                            <div class="card-icon" style="background:#ccfbf1; color:#0f766e;">📤</div>
+                            <div><p class="card-label">Sent requests</p><p class="card-sub">Your outgoing requests</p></div>
+                        </a>
+                    </div>
+
+                    <hr class="dash-divider">
+                    <div class="section-label">Other</div>
+                    <div class="card-grid-2">
+                        <a href="{{ route('report.my') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">🚨</div>
+                            <div><p class="card-label">My reports</p><p class="card-sub">Reports you submitted</p></div>
+                        </a>
+                        <a href="{{ route('ai.chat') }}" class="dash-card">
+                            <div class="card-icon" style="background:#f3f4f6; color:#374151;">🤖</div>
+                            <div><p class="card-label">AI assistant</p><p class="card-sub">Get help from AI</p></div>
+                        </a>
+                    </div>
+
                 @endif
+
             </div>
         </div>
     </div>

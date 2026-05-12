@@ -58,6 +58,7 @@ class BookController extends Controller
             'bookdescription' => 'required',
             'condition' => 'required',
             'subject_id' => 'required',
+            'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
         ]);
 
@@ -66,6 +67,7 @@ class BookController extends Controller
             'description' => $request->bookdescription,
             'condition' => $request->condition,
             'subject_id' => $request->subject_id,
+            'price' => $request->price
         ];
 
         if ($request->hasFile('image')) {
@@ -107,7 +109,8 @@ class BookController extends Controller
             'subject_id' => $request->subject_id,
             'image' => $path,
             'user_id' => auth()->id(),
-            'status' => 'available'
+            'status' => 'available',
+            'price' => $request->price
         ]);
 
         return redirect('/book/create')->with('success', 'Book added successfully!');

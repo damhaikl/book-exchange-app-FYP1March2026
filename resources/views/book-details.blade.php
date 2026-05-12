@@ -83,7 +83,13 @@
     <h1>{{ $book->title }}</h1>
     <p>{{ $book->description }}</p>
 
-    <h3>RM {{ $book->price }}</h3>
+    <h3>
+        @if($book->price)
+        💰 RM {{ number_format($book->price, 2) }}
+        @else
+        💰 Free / Not set
+        @endif
+    </h3>
 
     <!-- 🎯 ACTIONS -->
     <div class="actions" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
