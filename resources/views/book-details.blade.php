@@ -139,6 +139,32 @@
         @endif
 
     </div>
+    <div style="margin-top:15px; padding:10px; border-radius:5px; border:1px solid black; width:100%; max-width:350px;">
+
+        <h4>👤 Seller Information</h4>
+
+        <p>
+            <strong>Name:</strong> {{ $book->user->name }}
+        </p>
+
+        <p>
+            <strong>Average Rating:</strong> ⭐{{ number_format($sellerRating ?? 0, 1) }} / 5
+        </p>
+        <hr>
+
+        <h5>📝 Latest Reviews</h5>
+
+        @if($sellerReviews->count() > 0)
+            @foreach($sellerReviews as $review)
+                <div style="margin-bottom:8px; padding:5px; border-bottom:1px solid #ddd;">
+                    ⭐ {{ $review->rating }}/5 <br>
+                    💬 {{ $review->comment }}
+                </div>
+            @endforeach
+        @else
+            <p>No reviews yet.</p>
+        @endif
+    </div>
 
 </div>
 

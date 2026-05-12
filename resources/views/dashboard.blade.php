@@ -68,6 +68,12 @@
                             ➕ Create New Admin
                         </a>
 
+                        <br>
+                        
+                        <a href="{{ route('admin.list') }}" class="btn btn-primary mt-2">
+                            👥 View All Admins
+                        </a>
+
                     </div>
                 @elseif(Auth::user()->role == 'admin')
 
@@ -113,35 +119,53 @@
                         </div>
 
                         <br>
+                        <div style="margin-bottom:20px;">
+
+                            <div style="font-weight:bold;">
+                                Your Rating Summary:
+                            </div>
+
+                            <div style="font-size:18px; margin-top:10px;">
+                                Average Rating: 
+                                <span style="font-weight:bold; color:#f59e0b;">
+                                    ⭐{{ $averageRating ?? '0.0' }} / 5
+                                </span>
+                            </div>
+
+                            <a href="{{ route('review.received') }}" class="btn btn-primary mt-2" style="text-decoration: underline;">
+                                View Rating & Review Received
+                            </a>
+
+                        </div>
 
                         <a href="/book/create" class="btn btn-success mt-2">
-                            ➕ Sell a Book
+                            Sell a Book
                         </a>
                         <br><br>
                         <a href="/homepage" class="btn btn-primary mt-2">
-                            🌍 Browse Books
+                            Browse Books
                         </a>
                         <br><br>
                         <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
-                            📚 My Listings
+                            My Listings
                         </a>
-                        <br><br><br><br>
+                        <br><br>
                         <a href="/inbox" class="btn btn-dark mt-2">
-                            📥 Book Requests
+                            Book Requests
                         </a>
                         <br><br>
                         <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
-                            📤 Sent Book Requests
+                            Sent Book Requests
                         </a>
-                        <br><br><br><br>
+                        <br><br>
                         <a href="{{ route('review.my') }}" class="btn btn-primary mt-2">
-                            ⭐ View Rating & Review
+                            View Rating & Review
                         </a><br><br>
                         <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
-                            🚨 My Reports
+                            My Reports
                         </a><br><br>
                         <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
-                            ❤️ Saved Books
+                            Saved Books
                         </a>
                     </div>
                 @endif

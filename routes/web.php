@@ -8,6 +8,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\RequestController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -186,3 +187,22 @@ Route::get('/my-reviews', [ReviewController::class, 'myReviews'])
 Route::delete('/review/{id}', [ReviewController::class, 'destroy'])
     ->middleware('auth')
     ->name('review.delete');
+
+// View Rating & Review Received
+Route::get('/reviews/received', [ReviewController::class, 'receivedReviews'])
+    ->name('review.received');
+
+// Display dashboard and average rating received
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+// CRUD Admin List
+Route::get('/admin/list', [AdminController::class, 'listAdmins'])->name('admin.list');
+
+Route::get('/admin/edit/{id}', [AdminController::class, 'edit'])->name('admin.edit');
+
+Route::put('/admin/update/{id}', [AdminController::class, 'update'])
+    ->name('admin.update');
+
+Route::delete('/admin/delete/{id}', [AdminController::class, 'destroy'])->name('admin.delete');

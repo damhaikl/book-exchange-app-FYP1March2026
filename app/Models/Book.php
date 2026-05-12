@@ -15,4 +15,10 @@ class Book extends Model
         'user_id',
         'status' 
     ];
+
+    // 👤 Seller (owner of book)
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

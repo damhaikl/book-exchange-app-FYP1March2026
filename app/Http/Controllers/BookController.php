@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Book;
 use App\Models\BookRequest;
 use App\Models\SavedBook;
+use App\Models\Review;
 
 class BookController extends Controller
 {
@@ -43,7 +44,24 @@ class BookController extends Controller
             ->whereIn('status', ['pending', 'approved'])
             ->first();
 
-        return view('book-details', compact('book', 'existingRequest'));
+        // Seller Rating
+        $sellerRating = Review::whereHas('book', function ($q) use ($book) {
+                $q->where('user_id', $book->user_id);
+            })->avg('rating');
+
+        $sellerRating = number_format($sellerRating ?? 0, 1);
+
+        // Seller Review
+        $sellerReviews = Review::whereHas('book', function ($q) use ($book) {
+            $q->where('user_id', $book->user_id);
+        })->latest()->take(3)->get();
+
+        return view('book-details', compact(
+            'book',
+            'existingRequest',
+            'sellerRating',
+            'sellerReviews'
+        ));
     }
 
     // ✏️ Edit form

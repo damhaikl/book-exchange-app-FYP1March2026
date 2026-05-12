@@ -44,7 +44,7 @@
 </div>
 
 @empty
-<p>No reviews yet 😢</p>
+<p>No reviews yet...</p>
 @endforelse
 
 </body>
