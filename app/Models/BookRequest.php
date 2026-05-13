@@ -10,7 +10,13 @@ class BookRequest extends Model
         'book_id',
         'requester_id',
         'owner_id',
-        'status'
+        'status',
+
+        // 🧠 SMART MEETING
+        'proposed_location',
+        'proposed_date',
+        'proposed_time',
+        'schedule_type'
     ];
 
     public function book()

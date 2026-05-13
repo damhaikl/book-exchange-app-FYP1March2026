@@ -66,6 +66,7 @@
     </style>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
 <body>
@@ -81,33 +82,52 @@
     <img src="{{ asset('storage/' . $book->image) }}" alt="Book Image">
 
     <h1>{{ $book->title }}</h1>
+
+    <!-- 📍 Meeting Info -->
+    <h5>📍 Seller Meeting Schedule</h5>
+    <div style="margin-top:15px; padding:10px; border:1px solid #ddd; border-radius:8px;">
+        <p>📍 Location:
+            <strong>{{ $book->meeting_location ?? 'Not set yet' }}</strong>
+        </p>
+
+        <p>📅 Date:
+            <strong>{{ $book->meeting_date ?? 'Not set yet' }}</strong>
+        </p>
+
+        <p>⏰ Time:
+            <strong>{{ $book->meeting_time ?? 'Not set yet' }}</strong>
+        </p>
+    </div>
+
     <p>{{ $book->description }}</p>
 
     <h3>
         @if($book->price)
-        💰 RM {{ number_format($book->price, 2) }}
+            💰 RM {{ number_format($book->price, 2) }}
         @else
-        💰 Free / Not set
+            💰 Free / Not set
         @endif
     </h3>
 
     <!-- 🎯 ACTIONS -->
     <div class="actions" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+
         <!-- ❤️ Save -->
         @if($book->user_id != auth()->id())
-            <form method="POST" action="{{ route('book.save', $book->id) }}" onsubmit="handleSubmit(event, 'Saved ❤️', 'Book successfully saved!')">
+            <form method="POST" action="{{ route('book.save', $book->id) }}"
+                onsubmit="handleSubmit(event, 'Saved ❤️', 'Book successfully saved!')">
                 @csrf
                 <button type="submit">❤️ Save Book</button>
             </form>
         @endif
 
+        <!-- 🤝 Request / Owner -->
         @if($book->user_id == auth()->id())
 
-        <p style="color: red; font-weight: bold;">
-            This is your book listing !
-        </p>
+            <p style="color: red; font-weight: bold;">
+                This is your book listing!
+            </p>
 
-        <!-- 🤝 Request -->
         @elseif($book->status == 'available')
 
             @if($existingRequest)
@@ -118,44 +138,54 @@
 
             @else
 
+                <!-- REQUEST -->
                 <form method="POST"
                     action="{{ route('book.request', $book->id) }}"
                     onsubmit="handleSubmit(event, 'Request Sent 🤝', 'Your request has been sent!')">
-
                     @csrf
 
-                    <button type="submit"
-                            onclick="return confirm('Request this book?')">
+                    <button type="submit" onclick="return confirm('Request this book?')">
                         🤝 Request Book
                     </button>
-
                 </form>
+
+                <!-- PROPOSE NEW SCHEDULE -->
+                <button type="button"
+                    class="btn btn-warning"
+                    data-bs-toggle="modal"
+                    data-bs-target="#proposeModal">
+                    🔁 Propose New Schedule
+                </button>
 
             @endif
 
         @else
-
             <p style="color:red;">🚫 Not available</p>
-
         @endif
 
-        <!-- 🚨 REPORT BUTTON -->
+        <!-- EDIT SCHEDULE -->
+        @if(auth()->id() == $book->user_id)
+            <a href="{{ route('book.schedule.edit', $book->id) }}" class="btn btn-primary">
+                📅 Edit Availability
+            </a>
+        @endif
+
+        <!-- 🚨 REPORT -->
         @if($book->user_id != auth()->id())
             <button onclick="openReportPopup()">🚨 Report Book</button>
         @endif
 
     </div>
+
+    <!-- 👤 Seller Info -->
     <div style="margin-top:15px; padding:10px; border-radius:5px; border:1px solid black; width:100%; max-width:350px;">
 
         <h4>👤 Seller Information</h4>
 
-        <p>
-            <strong>Name:</strong> {{ $book->user->name }}
-        </p>
+        <p><strong>Name:</strong> {{ $book->user->name }}</p>
 
-        <p>
-            <strong>Average Rating:</strong> ⭐{{ number_format($sellerRating ?? 0, 1) }} / 5
-        </p>
+        <p><strong>Average Rating:</strong> ⭐ {{ number_format($sellerRating ?? 0, 1) }} / 5</p>
+
         <hr>
 
         <h5>📝 Latest Reviews</h5>
@@ -170,11 +200,13 @@
         @else
             <p>No reviews yet.</p>
         @endif
-    </div>
 
+    </div>
 </div>
 
-<!-- 🔔 NORMAL POPUP -->
+<!-- ================= POPUPS ================= -->
+
+<!-- NORMAL POPUP -->
 <div id="popup" class="popup">
     <div class="popup-content">
         <h3 id="popupTitle"></h3>
@@ -183,7 +215,7 @@
     </div>
 </div>
 
-<!-- 🚨 REPORT POPUP -->
+<!-- REPORT POPUP -->
 <div id="reportPopup" class="popup">
     <div class="popup-content">
         <h3>Report Book</h3>
@@ -191,9 +223,8 @@
         <form method="POST" action="{{ route('report.store', $book->id) }}">
             @csrf
 
-            <input type="text" name="reason" placeholder="Reason (e.g. Fake, Spam)" required>
-
-            <textarea name="description" placeholder="Describe the issue" required></textarea>
+            <input type="text" name="reason" placeholder="Reason" required>
+            <textarea name="description" placeholder="Describe issue" required></textarea>
 
             <br><br>
             <button type="submit">Submit</button>
@@ -201,6 +232,38 @@
         </form>
     </div>
 </div>
+
+<!-- PROPOSE MODAL -->
+<div class="modal fade" id="proposeModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Proposal</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                By proposing a new schedule, you agree to request this book. Proceed?
+            </div>
+
+            <div class="modal-footer">
+
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <a href="{{ route('book.proposeScheduleForm', $book->id) }}" class="btn btn-success">
+                    Proceed
+                </a>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= SCRIPTS ================= -->
 
 <script>
 function showPopup(title, message) {
@@ -222,7 +285,7 @@ function handleSubmit(event, title, message) {
     }, 800);
 }
 
-// 🚨 Report popup
+// report popup
 function openReportPopup() {
     document.getElementById('reportPopup').style.display = 'block';
 }
@@ -231,6 +294,9 @@ function closeReportPopup() {
     document.getElementById('reportPopup').style.display = 'none';
 }
 </script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>

@@ -14,12 +14,20 @@ class Book extends Model
         'image',
         'user_id',
         'status',
-        'price'
+        'price',
+        'meeting_location',
+        'meeting_date',
+        'meeting_time'
     ];
 
     // 👤 Seller (owner of book)
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    
+    public function schedule()
+    {
+        return $this->hasOne(BookSchedule::class);
     }
 }

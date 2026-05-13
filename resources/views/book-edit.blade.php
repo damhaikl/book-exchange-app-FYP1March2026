@@ -14,11 +14,13 @@
 </head>
 
 <body>
+
 <div class="top-bar">
     <a href="{{ route('book.myListings') }}" class="btn btn-outline-secondary">
         ⬅️ Back
     </a>
 </div>
+
 <div class="container mt-5">
 
     <h3>Edit Book</h3>
@@ -27,13 +29,14 @@
         @csrf
         @method('PUT')
 
+        <!-- 📖 BOOK INFO -->
         <input type="text" name="booktitle" class="form-control mb-2" value="{{ $book->title }}" required>
 
         <textarea name="bookdescription" class="form-control mb-2" required>{{ $book->description }}</textarea>
 
         <div class="mb-3">
             <label>Price (RM)</label>
-            <input type="number" step="0.01" name="price" class="form-control" required>
+            <input type="number" step="0.01" name="price" class="form-control" value="{{ $book->price }}" required>
         </div>
 
         <select name="condition" class="form-control mb-2">
@@ -46,7 +49,30 @@
 
         <input type="file" name="image" class="form-control mb-3">
 
-        <button class="btn btn-primary">Update Book</button>
+        <hr>
+
+        <!-- 📍 SMART MEETING SECTION -->
+        <h5>📍 Meeting Details</h5>
+
+        <div class="mb-2">
+            <label>Location</label>
+            <input type="text" name="meeting_location" class="form-control"
+                   value="{{ $book->meeting_location }}">
+        </div>
+
+        <div class="mb-2">
+            <label>Date</label>
+            <input type="date" name="meeting_date" class="form-control"
+                   value="{{ $book->meeting_date }}">
+        </div>
+
+        <div class="mb-3">
+            <label>Time</label>
+            <input type="time" name="meeting_time" class="form-control"
+                   value="{{ $book->meeting_time }}">
+        </div>
+
+        <button class="btn btn-primary w-100">Update Book</button>
     </form>
 
 </div>

@@ -19,15 +19,26 @@
         .card-box {
             background: white;
             border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
         }
 
         .back-btn {
             text-decoration: none;
             display: inline-block;
             margin-bottom: 15px;
+        }
+
+        .schedule-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .status-badge {
+            font-size: 13px;
         }
     </style>
 </head>
@@ -39,9 +50,9 @@
     <i class="bi bi-arrow-left"></i> Back
 </a>
 
-<h2>📥 Book Requests</h2>
+<h2 class="mb-4">📥 Book Requests Inbox</h2>
 
-<!-- 🔔 Messages (IMPORTANT PLACE) -->
+<!-- 🔔 Success/Error -->
 @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
@@ -54,48 +65,104 @@
     </div>
 @endif
 
-
-<!-- 📚 Requests List -->
+<!-- 📚 Request List -->
 @forelse($requests as $req)
 
-<div class="card-box">
+<div class="card-box shadow-sm">
 
-    <p><b>Book:</b> {{ $req->book->title }}</p>
-    <p><b>Requested by:</b> {{ $req->requester->name }}</p>
-    <p><b>Status:</b> {{ $req->status }}</p>
-    
-    @if($req->status == 'cancelled')
-    <div class="alert alert-warning">
-        ⚠️ {{ $req->requester->name }} cancelled request for 
-        <b>{{ $req->book->title }}</b>
+    <h5>{{ $req->book->title }}</h5>
+
+    <p>
+        👤 <b>Requested by:</b> {{ $req->requester->name }}
+    </p>
+
+    <p>
+        <b>Status:</b>
+
+        @if($req->status == 'pending')
+            <span class="badge bg-warning text-dark">Pending</span>
+
+        @elseif($req->status == 'approved')
+            <span class="badge bg-success">Approved</span>
+
+        @elseif($req->status == 'rejected')
+            <span class="badge bg-danger">Rejected</span>
+
+        @elseif($req->status == 'negotiation')
+            <span class="badge bg-info text-dark">Negotiation</span>
+
+        @elseif($req->status == 'cancelled')
+            <span class="badge bg-secondary">Cancelled</span>
+        @endif
+
+    </p>
+
+    <hr>
+
+    <div class="schedule-box">
+        <h6>📍 Seller Schedule</h6>
+
+        <p><b>Location:</b> {{ $req->book->meeting_location }}</p>
+        <p><b>Date:</b> {{ $req->book->meeting_date }}</p>
+        <p><b>Time:</b> {{ $req->book->meeting_time }}</p>
+    </div>
+
+    @if($req->status == 'negotiation')
+    <div class="schedule-box mt-3 border border-warning">
+
+        <h6>🔁 Buyer Proposed Schedule</h6>
+
+        <p><b>Location:</b> {{ $req->proposed_location }}</p>
+        <p><b>Date:</b> {{ $req->proposed_date }}</p>
+        <p><b>Time:</b> {{ $req->proposed_time }}</p>
+
     </div>
     @endif
-    @if($req->status == 'pending')
 
-        <!-- ✅ Approve -->
+    @if($req->status == 'approved')
+    <div class="schedule-box mt-3 border border-success">
+
+        <h6>✅ Final Agreed Schedule</h6>
+
+        <p><b>Location:</b> {{ $req->proposed_location ?? $req->book->meeting_location }}</p>
+        <p><b>Date:</b> {{ $req->proposed_date ?? $req->book->meeting_date }}</p>
+        <p><b>Time:</b> {{ $req->proposed_time ?? $req->book->meeting_time }}</p>
+
+    </div>
+    @endif
+
+    @if($req->status == 'cancelled')
+        <div class="alert alert-warning mt-3">
+            ⚠️ {{ $req->requester->name }} cancelled this request.
+        </div>
+    @endif
+
+    @if(in_array($req->status, ['pending', 'negotiation']))
+
+    <div class="mt-3">
+
         <form method="POST" action="{{ route('request.approve', $req->id) }}" style="display:inline;">
             @csrf
-            <button class="btn btn-success btn-sm">
-                ✅ Approve
-            </button>
+            <button class="btn btn-success btn-sm">✅ Approve</button>
         </form>
 
-        <!-- ❌ Reject -->
         <form method="POST" action="{{ route('request.reject', $req->id) }}" style="display:inline;">
             @csrf
-            <button class="btn btn-danger btn-sm">
-                ❌ Reject
-            </button>
+            <button class="btn btn-danger btn-sm">❌ Reject</button>
         </form>
 
-    @else
-        <span class="text-muted">Decision made</span>
+    </div>
+
     @endif
 
 </div>
 
 @empty
-    <p>No requests yet 😴</p>
+
+<div class="alert alert-secondary">
+    No requests yet 😴
+</div>
+
 @endforelse
 
 </body>

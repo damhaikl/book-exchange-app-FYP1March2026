@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Sell Book</title>
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
@@ -23,6 +22,13 @@
             max-width: 600px;
             margin: 40px auto 0;
         }
+
+        .section-title {
+            font-weight: 600;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #333;
+        }
     </style>
 </head>
 
@@ -30,7 +36,6 @@
 
 <div class="container">
 
-    <!-- 🔔 SUCCESS MESSAGE -->
     @if(session('success'))
         <div class="alert alert-success text-center">
             {{ session('success') }}
@@ -43,14 +48,12 @@
         </div>
     @endif
 
-    <!-- Back Button -->
     <div class="top-bar">
         <a href="{{ route('book.myListings') }}" class="btn btn-outline-secondary">
             ⬅️ Back
         </a>
     </div>
 
-    <!-- Form Card -->
     <div class="card form-card shadow-sm">
 
         <h4 class="mb-4 text-center">📚 Submit Book Listing</h4>
@@ -58,27 +61,26 @@
         <form method="POST" action="{{ route('book.store') }}" enctype="multipart/form-data">
             @csrf
 
-            <!-- Book Title -->
+            <!-- 📖 BOOK INFO -->
+            <div class="section-title">📖 Book Info</div>
+
             <div class="mb-3">
-                <label class="form-label">Book Title</label>
+                <label>Book Title</label>
                 <input type="text" name="booktitle" class="form-control" required>
             </div>
 
-            <!-- Description -->
             <div class="mb-3">
-                <label class="form-label">Book Description</label>
+                <label>Book Description</label>
                 <textarea name="bookdescription" class="form-control" rows="3" required></textarea>
             </div>
 
-            <!--Price-->
             <div class="mb-3">
                 <label>Price (RM)</label>
                 <input type="number" step="0.01" name="price" class="form-control" required>
             </div>
 
-            <!-- Condition -->
             <div class="mb-3">
-                <label class="form-label">Condition</label>
+                <label>Condition</label>
                 <select name="condition" class="form-control" required>
                     <option disabled selected>Select condition</option>
                     <option value="New">New</option>
@@ -87,16 +89,31 @@
                 </select>
             </div>
 
-            <!-- Image -->
             <div class="mb-3">
-                <label class="form-label">Book Image</label>
+                <label>Book Image</label>
                 <input type="file" name="image" class="form-control" required>
             </div>
 
-            <!-- Subject ID -->
             <div class="mb-3">
-                <label class="form-label">Subject ID</label>
+                <label>Subject ID</label>
                 <input type="text" name="subject_id" class="form-control" required>
+            </div>
+            <div class="alert alert-info">
+                Smart Meeting Tip: Choose a safe public location and time you are available to meet buyers.
+            </div>
+            <!-- 🧠 SMART MEETING SECTION -->
+            <div class="section-title">📍 Smart Meeting Setup</div>
+
+            <div class="mb-3">
+                <input type="text" name="meeting_location" class="form-control" placeholder="e.g. UniKL MIIT Lobby / Library Entrance">
+            </div>
+
+            <div class="mb-3">
+                <input type="date" name="meeting_date" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <input type="time" name="meeting_time" class="form-control">
             </div>
 
             <button type="submit" class="btn btn-primary w-100">

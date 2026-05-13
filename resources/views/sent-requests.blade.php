@@ -89,6 +89,22 @@
 
         @endif
     </p>
+    <div class="card-box">
+        <p><b>Book:</b> {{ $req->book->title }}</p>
+        <p><b>Status:</b> {{ $req->status }}</p>
+        <hr>
+        <h5>📍 Meeting Details</h5>
+        <p>📍 Location:
+            <strong>{{ $req->book->meeting_location ?? 'Not set' }}</strong>
+        </p>
+        <p>📅 Date:
+            <strong>{{ $req->book->meeting_date ?? 'Not set' }}</strong>
+        </p>
+        <p>⏰ Time:
+            <strong>{{ $req->book->meeting_time ?? 'Not set' }}</strong>
+        </p>
+    </div>
+    
 
 </div>
 
