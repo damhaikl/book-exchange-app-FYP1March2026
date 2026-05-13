@@ -238,6 +238,7 @@
                     <!-- ✅ ADMIN REVIEW FIELD -->
                     <textarea name="admin_review"
                             placeholder="Write admin review..."
+                            required
                             style="width:100%; margin-top:5px; padding:6px; border:1px solid #ccc; border-radius:6px;">{{ $report->admin_review }}</textarea>
 
                     <button type="submit" class="btn-box">

@@ -142,7 +142,7 @@
             <th>Submitted</th>
             <th>Updated</th>
             <th>View</th>
-            <th>Action</th>
+            <th>Delete</th>
         </tr>
 
         @forelse($reports as $report)
