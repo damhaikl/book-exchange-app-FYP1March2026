@@ -94,7 +94,7 @@
 
                         <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
                             <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
-                            <div><p class="rejected_text">Resolved</p><p class="card-sub">Closed reports</p></div>
+                            <div><p class="rejected_text">Rejected</p><p class="card-sub">Closed reports</p></div>
                         </a>
 
                     </div>
@@ -136,7 +136,7 @@
 
                         <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
                             <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
-                            <div><p class="rejected_text">Resolved</p><p class="card-sub">Closed reports</p></div>
+                            <div><p class="rejected_text">Rejected</p><p class="card-sub">Closed reports</p></div>
                         </a>
                     </div>
                 @else
@@ -178,7 +178,7 @@
                         </a>
                         <br><br>
                         <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
-                            📤 Sent Requests
+                            📤 Sent Book Request
                         </a>
                         <br><br><br><br>
                         <a href="{{ route('reviews.my') }}" class="btn btn-danger mt-2">
