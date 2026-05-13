@@ -176,12 +176,21 @@ class BookController extends Controller
             return back()->with('error', 'Your request is already approved for this book.');
         }
 
-        BookRequest::create([
+        // Create Request
+        $BookRequest = BookRequest::create([
             'book_id' => $id,
             'requester_id' => auth()->id(),
             'owner_id' => $book->user_id,
             'status' => 'pending'
         ]);
+
+        // 📧 SEND EMAIL TO OWNER
+        $owner = User::find($book->user_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($BookRequest, 'pending'));
+        }
 
         return back()->with('success', 'Book request sent!');
     }

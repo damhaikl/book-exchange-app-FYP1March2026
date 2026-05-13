@@ -14,8 +14,11 @@
     <p><strong>Book Name:</strong> {{ $bookRequest->book->title ?? 'Unknown Book' }}</p>
 
     <p><strong>Status:</strong> {{ strtoupper($status) }}</p>
-
-    @if($status == 'approved')
+    @if($status == 'pending')
+        <p style="color: orange;">
+            📚 Someone has requested your book.
+        </p>
+    @elseif($status == 'approved')
         <p style="color: green;">✅ Your request has been approved.</p>
     @elseif($status == 'rejected')
         <p style="color: red;">❌ Your request has been rejected.</p>

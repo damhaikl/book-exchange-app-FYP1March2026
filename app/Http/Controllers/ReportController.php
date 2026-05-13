@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Report;
 use Illuminate\Http\Request;
+use App\Mail\ReportStatusMail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 
 class ReportController extends Controller
 {
@@ -16,13 +19,24 @@ class ReportController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Report::create([
+        // Create Report
+        $report = Report::create([
             'book_id' => $bookId,
             'user_id' => auth()->id(),
             'reason' => $request->reason,
             'description' => $request->description,
             'status' => 'pending'
         ]);
+
+        $report->load(['user', 'book']);
+
+        // 📧 NOTIFY ADMIN & SUPERADMIN
+        $admins = User::whereIn('role', ['admin', 'super_admin'])->get();
+
+        foreach ($admins as $admin) {
+            Mail::to($admin->email)
+                ->queue(new ReportStatusMail($report, 'pending'));
+        }
 
         return back()->with('success', 'Report submitted!');
     }
@@ -84,12 +98,28 @@ class ReportController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,resolved,rejected'
+            'status' => 'required|in:pending,resolved,rejected',
+            'admin_review' => 'nullable|string|max:1000'
         ]);
 
         $report = Report::findOrFail($id);
+
+        $oldStatus = $report->status;
+
         $report->status = $request->status;
+
+         // ✅ SAVE ADMIN REVIEW
+        $report->admin_review = $request->admin_review;
+        
         $report->save();
+
+        // 📧 NOTIFY USER WHO MADE REPORT
+        $user = $report->user;
+
+        if ($user && $oldStatus !== $request->status) {
+            Mail::to($user->email)
+                ->queue(new ReportStatusMail($report, $request->status));
+        }
 
         return back()->with('success', 'Status updated');
     }

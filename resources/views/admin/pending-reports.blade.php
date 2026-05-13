@@ -52,7 +52,7 @@
     th:nth-child(8), td:nth-child(8) { width: 7%; } /* View */
     th:nth-child(9), td:nth-child(9) { width: 7%; }  /* Delete */
     th:nth-child(10), td:nth-child(10) { width: 10%; } /* Action */
-    th:nth-child(11), td:nth-child(11) { width: 6%; } /* Update */
+    th:nth-child(11), td:nth-child(11) { width: 0%; } /* Update */
 
     .status-pending {
         color: #f59e0b;
@@ -125,6 +125,16 @@
 
     .searchbutton{
         color: white;
+    }
+
+    .btn-box {
+        margin-top: 10px;
+        padding: 10px 16px;
+        border: 1px solid #ccc;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
     }
 </style>
 
@@ -220,14 +230,19 @@
                     @csrf
 
                     <select name="status">
-                        <option value="pending">Pending</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="rejected">Rejected</option>
+                        <option value="pending" {{ $report->status == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="resolved" {{ $report->status == 'resolved' ? 'selected' : '' }}>Resolved</option>
+                        <option value="rejected" {{ $report->status == 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
-                
-                <td>
-                    <button type="submit">Update</button>
-                </td>
+
+                    <!-- ✅ ADMIN REVIEW FIELD -->
+                    <textarea name="admin_review"
+                            placeholder="Write admin review..."
+                            style="width:100%; margin-top:5px; padding:6px; border:1px solid #ccc; border-radius:6px;">{{ $report->admin_review }}</textarea>
+
+                    <button type="submit" class="btn-box">
+                        Update
+                    </button>
                 </form>
             </td>
         </tr>
