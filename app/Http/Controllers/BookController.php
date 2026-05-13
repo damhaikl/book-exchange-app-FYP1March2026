@@ -306,12 +306,12 @@ class BookController extends Controller
         ]);
 
         // Notify seller
-        $seller = $request->book->owner;
+        $owner = User::find($request->owner_id);
 
-        Mail::to($seller->email)->queue(
-            new BookStatusMail($request)
-        );
-
+            if ($owner && $owner->email) {
+                Mail::to($owner->email)
+                    ->send(new BookStatusMail($request, 'cancelled'));
+            }
         return back()->with('success', 'Request cancelled successfully!');
     }
 

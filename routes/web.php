@@ -9,6 +9,11 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\RequestController;
+
+Route::get('/test-key', function () {
+    dd(env('GROQ_API_KEY'));
+});
 
 
 
@@ -170,5 +175,33 @@ Route::get('/ai-chat', [AIController::class, 'index'])->name('ai.chat');
 Route::post('/ai-chat/send', [AIController::class, 'send'])
     ->middleware('auth');
 
+Route::get('/my-reviews', [ReviewController::class, 'myReviews'])
+    ->name('reviews.my');
+
+Route::post('/review/store/{id}', [ReviewController::class, 'store'])
+    ->name('review.store');
+
+Route::delete('/review/delete/{id}', [ReviewController::class, 'destroy'])
+    ->name('review.delete');
+
 Route::get('/reviews/received', [ReviewController::class, 'received'])
     ->name('reviews.received');
+
+Route::get('/review/create/{bookId}', [ReviewController::class, 'create'])
+    ->name('review.create');
+
+Route::post('/request/{id}/take', [RequestController::class, 'takeBook'])
+    ->middleware('auth')
+    ->name('request.take');
+
+Route::get('/admin/list', [AdminController::class, 'listAdmins'])
+    ->name('admin.list');
+
+Route::get('/admin/edit/{id}', [AdminController::class, 'edit'])
+    ->name('admin.edit');
+
+Route::delete('/admin/delete/{id}', [AdminController::class, 'destroy'])
+    ->name('admin.delete');
+
+Route::put('/admin/update/{id}', [AdminController::class, 'update'])
+    ->name('admin.update');

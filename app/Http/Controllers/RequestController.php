@@ -27,12 +27,23 @@ class RequestController extends Controller
             'status' => 'sold'
         ]);
 
+        // Notify seller
+        $owner = User::find($request->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->send(new BookStatusMail($request, 'completed'));
+        }
+
+        // Notify buyer
+
         $requester = User::find($request->requester_id);
 
         if ($requester) {
             Mail::to($requester->email)
                 ->send(new BookStatusMail($request, 'completed'));
         }
+
 
         return back()->with('success', 'Marked as taken!');
     }

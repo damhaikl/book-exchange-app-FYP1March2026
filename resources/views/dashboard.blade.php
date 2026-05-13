@@ -98,6 +98,14 @@
                         </a>
 
                     </div>
+                    <hr class="dash-divider">
+                    <div class="section-label">Admin</div>
+                    <div class="card-grid-2">
+                        <a href="{{ route('admin.list') }}" class="dash-card">
+                            <div class="card-icon" style="background:orange; color:#92400e;">🕐</div>
+                            <div><p class="card-label">Admin List</p><p class="card-sub">View All Admin</p></div>
+                        </a>
+                    </div>
 
                 @elseif(Auth::user()->role == 'admin')
 
@@ -173,6 +181,9 @@
                             📤 Sent Requests
                         </a>
                         <br><br><br><br>
+                        <a href="{{ route('reviews.my') }}" class="btn btn-danger mt-2">
+                            ⭐ My Reviews
+                        </a><br><br>
                         <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
                             🚨 My Reports
                         </a><br><br>

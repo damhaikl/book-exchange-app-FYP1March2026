@@ -66,7 +66,7 @@ Link: http://127.0.0.1:8000/book/{$book->id}
             'Content-Type' => 'application/json',
         ])->post('https://api.groq.com/openai/v1/chat/completions', [
 
-            'model' => 'llama-3.1-8b-instant',
+            'model' => 'llama3-8b-8192',
 
             'messages' => [
                 [

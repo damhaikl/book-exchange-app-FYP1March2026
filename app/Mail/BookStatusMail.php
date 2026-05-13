@@ -15,14 +15,16 @@ class BookStatusMail extends Mailable implements ShouldQueue
 
     public $bookRequest;
     public $status;
+    public $isCompleted;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($bookRequest, $status)
+    public function __construct($bookRequest, $status, $isCompleted = false)
     {
         $this->bookRequest = $bookRequest;
         $this->status = $status;
+        $this->isCompleted = $isCompleted;
     }
 
     /**
