@@ -76,11 +76,11 @@ class ReviewController extends Controller
         return back()->with('success', 'Review deleted successfully!');
     }
 
-    public function receivedReviews()
+    public function received()
     {
         $reviews = Review::whereHas('book', function ($q) {
-            $q->where('user_id', auth()->id()); // books owned by seller
-        })->with('book')->latest()->get();
+            $q->where('user_id', auth()->id());
+        })->latest()->get();
 
         return view('received', compact('reviews'));
     }

@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AIController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ReviewController;
+
+
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -48,9 +52,9 @@ Route::delete('/book/{id}', [BookController::class, 'destroy'])
 
 Route::get('/homepage', [BookController::class, 'index'])->name('homepage');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 
 /* =========================
@@ -165,3 +169,6 @@ Route::post('/admin/store', [AdminController::class, 'store'])
 Route::get('/ai-chat', [AIController::class, 'index'])->name('ai.chat');
 Route::post('/ai-chat/send', [AIController::class, 'send'])
     ->middleware('auth');
+
+Route::get('/reviews/received', [ReviewController::class, 'received'])
+    ->name('reviews.received');

@@ -24,6 +24,11 @@
         <p style="color: red;">❌ Your request has been rejected.</p>
     @elseif($status == 'completed')
         <p style="color: blue;">📦 Transaction completed.</p>
+    @elseif($status == 'cancelled')
+        <p>The request for your book has been cancelled.</p>
+
+        <p><strong>Book:</strong> {{ $bookRequest->book->title }}</p>
+        <p><strong>By:</strong> {{ $bookRequest->requester->name }}</p>
     @endif
 
 </body>

@@ -63,7 +63,7 @@
 
 <div class="page-container">
 
-    <a href="{{ url()->previous() }}" class="back-btn">
+    <a href="{{ route('dashboard') }}" class="back-btn">
         ← Back
     </a>
 

@@ -75,42 +75,9 @@
                         <div><p class="card-label">Create new admin</p><p class="card-sub">Add a new admin account</p></div>
                     </a>
 
-                    <hr class="dash-divider">
-                    <div class="section-label">Reports</div>
-                    <div class="card-grid-2">
-                        <a href="{{ route('admin.reports.pending') }}" class="dash-card">
-                            <div class="card-icon" style="background:#fef3c7; color:#92400e;">🕐</div>
-                            <div><p class="card-label">Pending</p><p class="card-sub">Awaiting review</p></div>
-                        </a>
-                        <a href="{{ route('admin.reports.resolved') }}" class="dash-card">
-                            <div class="card-icon" style="background:#dcfce7; color:#15803d;">✅</div>
-                            <div><p class="card-label">Resolved</p><p class="card-sub">Closed reports</p></div>
-                        </a>
-
-                        <a href="{{ route('admin.reports.rejected') }}" class="btn btn-danger mt-2">
-                            <div class="rejected_text">Rejected Reports</div>
-                        </a>
-
-                        <br>
-
-                        {{-- 🔥 EXTRA FEATURE FOR SUPER ADMIN --}}
-                        <a href="{{ route('admin.create') }}" class="btn btn-success mt-2">
-                            ➕ Create New Admin
-                        </a>
-                        <a href="{{ route('ai.chat') }}" class="btn btn-primary">
-                            🤖 AI Chat
-                        </a>
-
-                    </div>
-
-                @elseif(Auth::user()->role == 'admin')
-
-                    <div class="role-badge admin">🛡️ Admin</div>
-
-                    <div class="section-label">Quick actions</div>
-                    <a href="/homepage" class="dash-card">
-                        <div class="card-icon" style="background:#dbeafe; color:#1d4ed8;">📚</div>
-                        <div><p class="card-label">View book listing</p><p class="card-sub">Browse all listed books</p></div>
+                    <a href="{{ route('ai.chat') }}" class="dash-card">
+                        <div class="card-icon" style="background:#ede9fe; color: lightpink;">🤖</div>
+                        <div><p class="card-label">AI Chat</p></div>
                     </a>
 
                     <hr class="dash-divider">
@@ -124,22 +91,64 @@
                             <div class="card-icon" style="background:#dcfce7; color:#15803d;">✅</div>
                             <div><p class="card-label">Resolved</p><p class="card-sub">Closed reports</p></div>
                         </a>
+
                         <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
                             <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
-                            <div><p class="card-label">Rejected</p><p class="card-sub">Dismissed reports</p></div>
+                            <div><p class="rejected_text">Resolved</p><p class="card-sub">Closed reports</p></div>
                         </a>
-                        <br><br><br>
-                        <a href="{{ route('ai.chat') }}" class="btn btn-primary">
-                            🤖 AI Chat
+
+                    </div>
+
+                @elseif(Auth::user()->role == 'admin')
+
+                    <div class="role-badge admin">🛡️ Admin</div>
+
+                    <div class="section-label">Quick actions</div>
+                        <a href="/homepage" class="dash-card">
+                            <div class="card-icon" style="background:#dbeafe; color:#1d4ed8;">📚</div>
+                            <div><p class="card-label">View book listing</p><p class="card-sub">Browse all listed books</p></div>
+                        </a>
+                        <a href="{{ route('ai.chat') }}" class="dash-card">
+                            <div class="card-icon" style="background:#ede9fe; color: lightpink;">🤖</div>
+                            <div><p class="card-label">AI Chat</p></div>
                         </a>
                     </div>
-                    
 
+                    <hr class="dash-divider">
+                    <div class="section-label">Reports</div>
+                    <div class="card-grid-2">
+                        <a href="{{ route('admin.reports.pending') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fef3c7; color:#92400e;">🕐</div>
+                            <div><p class="card-label">Pending</p><p class="card-sub">Awaiting review</p></div>
+                        </a>
+                        <a href="{{ route('admin.reports.resolved') }}" class="dash-card">
+                            <div class="card-icon" style="background:#dcfce7; color:#15803d;">✅</div>
+                            <div><p class="card-label">Resolved</p><p class="card-sub">Closed reports</p></div>
+                        </a>
+
+                        <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
+                            <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
+                            <div><p class="rejected_text">Resolved</p><p class="card-sub">Closed reports</p></div>
+                        </a>
+                    </div>
                 @else
                     <div class="p-6 text-gray-900 dark:text-gray-100">
                         
                         <div style="font-weight:bold; color:#7c3aed;">
                             USER PANEL
+                        </div>
+
+                        <br>
+                        <div style="padding:10px; background:#f9fafb; border-radius:10px;">
+                            <div style="font-weight:bold; color:#111827;">
+                                ⭐ Average Rating:
+                                {{ $averageRating }} / 5
+                            </div>
+
+                            <a href="{{ route('reviews.received') }}"
+                            style="display:inline-block; margin-top:8px; color:#2563eb; font-weight:600;">
+                                🔗 View Received Rating & Review
+                            </a>
                         </div>
 
                         <br>
