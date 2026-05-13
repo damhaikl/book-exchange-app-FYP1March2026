@@ -19,6 +19,11 @@
 
         <textarea name="bookdescription" class="form-control mb-2" required>{{ $book->description }}</textarea>
 
+        <div class="mb-3">
+            <label>Price (RM)</label>
+            <input type="number" step="0.01" name="price" class="form-control" required>
+        </div>
+
         <select name="condition" class="form-control mb-2">
             <option value="New" {{ $book->condition == 'New' ? 'selected' : '' }}>New</option>
             <option value="Like New" {{ $book->condition == 'Like New' ? 'selected' : '' }}>Like New</option>

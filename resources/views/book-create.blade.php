@@ -70,6 +70,12 @@
                 <textarea name="bookdescription" class="form-control" rows="3" required></textarea>
             </div>
 
+            <!--Price-->
+            <div class="mb-3">
+                <label>Price (RM)</label>
+                <input type="number" step="0.01" name="price" class="form-control" required>
+            </div>
+
             <!-- Condition -->
             <div class="mb-3">
                 <label class="form-label">Condition</label>

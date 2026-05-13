@@ -15,6 +15,11 @@
             background-color: #f8f9fa;
         }
 
+        input:-webkit-autofill {
+            background-color: white !important;
+            box-shadow: 0 0 0px 1000px white inset;
+        }
+
         .auth-card {
             max-width: 420px;
             margin: 80px auto;
@@ -75,19 +80,20 @@
         @endif
 
         <!-- FORM -->
-        <form method="POST" action="{{ route('login') }}">
+        <form method="POST" action="{{ route('login') }}" autocomplete="off">
             @csrf
 
             <!-- Email -->
             <div class="mb-3">
                 <label class="form-label">Email</label>
                 <input id="email"
-                       type="email"
-                       name="email"
-                       value="{{ old('email') }}"
-                       required
-                       autofocus
-                       class="form-control">
+                type="email"
+                name="email"
+                value="{{ old('email') }}"
+                required
+                autofocus
+                class="form-control"
+                autocomplete="username">
 
                 @error('email')
                     <small class="text-danger">{{ $message }}</small>
@@ -98,10 +104,11 @@
             <div class="mb-3">
                 <label class="form-label">Password</label>
                 <input id="password"
-                       type="password"
-                       name="password"
-                       required
-                       class="form-control">
+                type="password"
+                name="password"
+                required
+                autocomplete="off"
+                class="form-control">
 
                 @error('password')
                     <small class="text-danger">{{ $message }}</small>
@@ -149,4 +156,31 @@
 </div>
 
 </body>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const emailInput = document.getElementById("email");
+    const rememberCheckbox = document.getElementById("remember_me");
+
+    // 🧠 Load saved email (if exists)
+    const savedEmail = localStorage.getItem("remembered_email");
+
+    if (savedEmail) {
+        emailInput.value = savedEmail;
+        rememberCheckbox.checked = true;
+    }
+
+    // 💾 When form submits
+    document.querySelector("form").addEventListener("submit", function () {
+
+        if (rememberCheckbox.checked) {
+            localStorage.setItem("remembered_email", emailInput.value);
+        } else {
+            localStorage.removeItem("remembered_email");
+        }
+
+    });
+
+});
+</script>
 </html>

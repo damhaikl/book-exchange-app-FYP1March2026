@@ -6,9 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\RequestController;
-use App\Http\Controllers\ReviewController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AIController;
 
 Route::get('/', function () {
     return redirect('/homepage');
@@ -164,45 +162,6 @@ Route::post('/admin/store', [AdminController::class, 'store'])
     ->name('admin.store')
     ->middleware(['auth', 'superadmin']);
 
-// Take Book
-Route::post('/request/take/{id}', [RequestController::class, 'takeBook'])
-    ->name('request.take');
-
-// Rating & Review
-Route::get('/review/create/{requestId}', [ReviewController::class, 'create'])
-    ->middleware('auth')
-    ->name('review.create');
-
-// Store Review
-Route::post('/review/store/{requestId}', [ReviewController::class, 'store'])
-    ->middleware('auth')
-    ->name('review.store');
-
-// View My Review
-Route::get('/my-reviews', [ReviewController::class, 'myReviews'])
-    ->middleware('auth')
-    ->name('review.my');
-
-// Delete My Review
-Route::delete('/review/{id}', [ReviewController::class, 'destroy'])
-    ->middleware('auth')
-    ->name('review.delete');
-
-// View Rating & Review Received
-Route::get('/reviews/received', [ReviewController::class, 'receivedReviews'])
-    ->name('review.received');
-
-// Display dashboard and average rating received
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
-
-// CRUD Admin List
-Route::get('/admin/list', [AdminController::class, 'listAdmins'])->name('admin.list');
-
-Route::get('/admin/edit/{id}', [AdminController::class, 'edit'])->name('admin.edit');
-
-Route::put('/admin/update/{id}', [AdminController::class, 'update'])
-    ->name('admin.update');
-
-Route::delete('/admin/delete/{id}', [AdminController::class, 'destroy'])->name('admin.delete');
+Route::get('/ai-chat', [AIController::class, 'index'])->name('ai.chat');
+Route::post('/ai-chat/send', [AIController::class, 'send'])
+    ->middleware('auth');
