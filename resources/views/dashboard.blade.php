@@ -80,6 +80,14 @@
                         <div><p class="card-label">AI Chat</p></div>
                     </a>
 
+                    <a href="{{ route('admin.reviews.adminreview') }}" class="dash-card">
+                        <div class="card-icon" style="background:#f1f5f9; color:#0f172a;">⭐</div>
+                        <div>
+                            <p class="card-label">View Student Rating & Review</p>
+                            <p class="card-sub">See all student reviews</p>
+                        </div>
+                    </a>
+
                     <hr class="dash-divider">
                     <div class="section-label">Reports</div>
                     <div class="card-grid-2">
@@ -119,6 +127,14 @@
                         <a href="{{ route('ai.chat') }}" class="dash-card">
                             <div class="card-icon" style="background:#ede9fe; color: lightpink;">🤖</div>
                             <div><p class="card-label">AI Chat</p></div>
+                        </a>
+
+                        <a href="{{ route('admin.reviews.adminreview') }}" class="dash-card">
+                            <div class="card-icon" style="background:#f1f5f9; color:#0f172a;">⭐</div>
+                            <div>
+                                <p class="card-label">View Student Rating & Review</p>
+                                <p class="card-sub">See all student reviews</p>
+                            </div>
                         </a>
                     </div>
 

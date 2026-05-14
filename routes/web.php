@@ -227,3 +227,9 @@
 
     Route::post('/request/cancel/{id}',[BookController::class, 'cancelRequest'])
         ->name('book.cancelRequest');
+
+    Route::get('/admin/reviews', [ReviewController::class, 'adminreview'])
+    ->name('admin.reviews.adminreview');
+
+    Route::delete('/admin/reviews/{id}', [ReviewController::class, 'adminDestroy'])
+    ->name('admin.reviews.delete');

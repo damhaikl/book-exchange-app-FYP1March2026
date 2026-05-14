@@ -84,4 +84,27 @@ class ReviewController extends Controller
 
         return view('received', compact('reviews'));
     }
+
+    public function adminreview()
+    {
+        $reviews = Review::with(['user', 'book'])
+            ->latest()
+            ->get();
+
+        return view('admin.reviews.adminreview', compact('reviews'));
+    }
+
+    public function adminDestroy($id)
+    {
+        $review = Review::findOrFail($id);
+
+        // optional: restrict only admin/super_admin
+        if (!in_array(auth()->user()->role, ['admin', 'super_admin'])) {
+            return back()->with('error', 'Unauthorized');
+        }
+
+        $review->delete();
+
+        return back()->with('success', 'Review deleted successfully!');
+    }
 }
