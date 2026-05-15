@@ -328,6 +328,14 @@ class BookController extends Controller
         'is_taken' => 1
     ]);
 
+    // 📧 SEND EMAIL TO REQUESTER
+    $requester = User::find($request->requester_id);
+
+    if ($requester) {
+        Mail::to($requester->email)
+            ->queue(new BookStatusMail($request, 'approved'));
+    }
+
     return back()->with('success', 'Request approved successfully!');
 }
 
@@ -344,10 +352,13 @@ class BookController extends Controller
 
         $request->book->update(['status' => 'available']);
 
-        $request->book->schedule?->update([
-            'status' => 'rejected',
-            'buyer_id' => null
-        ]);
+        // 📧 SEND EMAIL TO REQUESTER
+        $requester = User::find($request->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->queue(new BookStatusMail($request, 'rejected'));
+        }
 
         return back()->with('success', 'Rejected!');
     }
@@ -445,6 +456,14 @@ class BookController extends Controller
             $request->book->update([
                 'status' => 'available'
             ]);
+        }
+
+        // 📧 SEND EMAIL TO OWNER
+        $owner = User::find($request->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($request, 'cancelled'));
         }
 
         return back()->with('success', 'Request cancelled successfully.');
