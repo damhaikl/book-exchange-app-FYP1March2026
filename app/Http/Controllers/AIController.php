@@ -23,7 +23,7 @@ class AIController extends Controller
         // 🔑 CHECK API KEY
         if (!env('GROQ_API_KEY')) {
             return response()->json([
-                'reply' => 'Missing GROQ_API_KEY in .env'
+                'reply' => 'AI is currently under maintenance. Please try again later.'
             ]);
         }
 
@@ -43,9 +43,7 @@ class AIController extends Controller
         $bookData = "";
 
         if ($books->count() > 0) {
-
             foreach ($books as $book) {
-
                 $bookData .= "
 Title: {$book->title}
 Condition: {$book->condition}
@@ -55,56 +53,77 @@ Link: http://127.0.0.1:8000/book/{$book->id}
 
 ";
             }
-
         } else {
             $bookData = "No matching books found.";
         }
 
-        // 🤖 CALL GROQ AI
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
-            'Content-Type' => 'application/json',
-        ])->post('https://api.groq.com/openai/v1/chat/completions', [
-
-            'model' => 'llama3-8b-8192',
-
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => "
+        try {
+            // 🤖 CALL GROQ AI
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
+                'Content-Type' => 'application/json',
+            ])->post('https://api.groq.com/openai/v1/chat/completions', [
+                'model' => 'llama-3.1-8b-instant',
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => "
 You are a helpful AI assistant for a university book exchange system.
 
 Use database results to answer users naturally.
 Recommend books clearly if found.
 If none found, say politely no books found.
 "
-                ],
-                [
-                    'role' => 'user',
-                    'content' => "
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => "
 User message:
 {$message}
 
 Database results:
 {$bookData}
 "
+                    ]
                 ]
-            ]
+            ]);
 
-        ]);
+            // ❌ HANDLE API FAILURE CLEANLY
+            if (!$response->successful()) {
 
-        // ❌ ERROR HANDLING
-        if (!$response->successful()) {
+                \Log::error('Groq AI Error', [
+                    'status' => $response->status(),
+                    'body' => $response->body()
+                ]);
+
+                return response()->json([
+                    'reply' => 'AI is currently under maintenance. Please try again later.'
+                ]);
+            }
+
+            // ✅ RESPONSE SAFE CHECK
+            $reply = $response->json()['choices'][0]['message']['content'] ?? null;
+
+            if (!$reply) {
+                return response()->json([
+                    'reply' => 'AI is currently under maintenance. Please try again later.'
+                ]);
+            }
+
             return response()->json([
-                'reply' => 'AI error: ' . $response->status() . ' - ' . $response->body()
+                'reply' => nl2br($reply)
+            ]);
+
+        } catch (\Exception $e) {
+
+            // ⚠️ NETWORK / TIMEOUT / UNEXPECTED ERROR
+            \Log::error('AI Exception Error', [
+                'message' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'reply' => 'AI is currently under maintenance. Please try again later.'
             ]);
         }
-
-        // ✅ RESPONSE
-        $reply = $response->json()['choices'][0]['message']['content'];
-
-        return response()->json([
-            'reply' => nl2br($reply)
-        ]);
     }
 }
