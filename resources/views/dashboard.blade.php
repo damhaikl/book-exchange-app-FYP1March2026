@@ -155,63 +155,137 @@
                             <div><p class="rejected_text">Rejected</p><p class="card-sub">Closed reports</p></div>
                         </a>
                     </div>
-                @else
-                    <div class="p-6 text-gray-900 dark:text-gray-100">
-                        
-                        <div style="font-weight:bold; color:#7c3aed;">
-                            USER PANEL
-                        </div>
+                    @else
 
-                        <br>
-                        <div style="padding:10px; background:#f9fafb; border-radius:10px;">
-                            <div style="font-weight:bold; color:#111827;">
-                                ⭐ Average Rating:
-                                {{ $averageRating }} / 5
+                        {{-- User Panel Header --}}
+                        <div class="role-badge user">👤 Student Panel</div>
+
+                        <div class="section-label">My Rating</div>
+
+                        <div class="dash-card">
+                            <div class="card-icon"
+                                style="background:#fef3c7; color:#92400e;">⭐</div>
+                            <div>
+                                <p class="card-label">
+                                    Average Rating: {{ number_format((float) $averageRating, 1) }} / 5
+                                </p>
+                                <a href="{{ route('reviews.received') }}"
+                                style="font-size:12px; color:#2563eb; text-decoration:none;">
+                                    View Received Ratings & Reviews →
+                                </a>
                             </div>
-
-                            <a href="{{ route('reviews.received') }}"
-                            style="display:inline-block; margin-top:8px; color:#2563eb; font-weight:600;">
-                                🔗 View Received Rating & Review
-                            </a>
                         </div>
 
-                        <br>
+                        {{-- Book Management --}}
+                        <hr class="dash-divider">
+                        <div class="section-label">Book Management</div>
 
-                        <a href="/book/create" class="btn btn-success mt-2">
-                            ➕ Sell a Book
-                        </a>
-                        <br><br>
-                        <a href="/homepage" class="btn btn-primary mt-2">
-                            🌍 Browse Books
-                        </a>
-                        <br><br>
-                        <a href="{{ route('book.myListings') }}" class="btn btn-warning mt-2">
-                            📚 My Listings
-                        </a>
-                        <br><br><br><br>
-                        <a href="/inbox" class="btn btn-dark mt-2">
-                            📥 Inbox (Requests)
-                        </a>
-                        <br><br>
-                        <a href="{{ route('sent.requests') }}" class="btn btn-info mt-2">
-                            📤 Sent Book Request
-                        </a>
-                        <br><br><br><br>
-                        <a href="{{ route('reviews.my') }}" class="btn btn-danger mt-2">
-                            ⭐ My Reviews
-                        </a><br><br>
-                        <a href="{{ route('report.my') }}" class="btn btn-danger mt-2">
-                            🚨 My Reports
-                        </a><br><br>
-                        <a href="{{ route('book.saved') }}" class="btn btn-danger mt-2">
-                            ❤️ Saved Books
-                        </a><br><br>
-                        <a href="{{ route('ai.chat') }}" class="btn btn-primary">
-                            🤖 AI Chat
-                        </a>
-                    </div>
+                        <div class="card-grid-2">
 
-                @endif
+                            <a href="/book/create" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#dcfce7; color:#15803d;">➕</div>
+                                <div>
+                                    <p class="card-label">Sell a Book</p>
+                                    <p class="card-sub">Create a listing</p>
+                                </div>
+                            </a>
+
+                            <a href="/homepage" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#dbeafe; color:#1d4ed8;">🌍</div>
+                                <div>
+                                    <p class="card-label">Browse Books</p>
+                                    <p class="card-sub">Discover books</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('book.myListings') }}" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#fef3c7; color:#92400e;">📚</div>
+                                <div>
+                                    <p class="card-label">My Listings</p>
+                                    <p class="card-sub">Manage your books</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('book.saved') }}" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#fce7f3; color:#be185d;">❤️</div>
+                                <div>
+                                    <p class="card-label">Saved Books</p>
+                                    <p class="card-sub">Your saved books</p>
+                                </div>
+                            </a>
+
+                        </div>
+
+                        {{-- Exchange Management --}}
+                        <hr class="dash-divider">
+                        <div class="section-label">Exchange Management</div>
+
+                        <div class="card-grid-2">
+
+                            <a href="/inbox" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#e0e7ff; color:#4338ca;">📥</div>
+                                <div>
+                                    <p class="card-label">Received Requests</p>
+                                    <p class="card-sub">Manage incoming requests</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('sent.requests') }}" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#cffafe; color:#0e7490;">📤</div>
+                                <div>
+                                    <p class="card-label">Sent Requests</p>
+                                    <p class="card-sub">Track your requests</p>
+                                </div>
+                            </a>
+
+                        </div>
+
+                        {{-- Reviews and Reports --}}
+                        <hr class="dash-divider">
+                        <div class="section-label">Reviews & Reports</div>
+
+                        <div class="card-grid-2">
+
+                            <a href="{{ route('reviews.my') }}" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#f3e8ff; color:#7e22ce;">⭐</div>
+                                <div>
+                                    <p class="card-label">My Reviews</p>
+                                    <p class="card-sub">Reviews you submitted</p>
+                                </div>
+                            </a>
+
+                            <a href="{{ route('report.my') }}" class="dash-card">
+                                <div class="card-icon"
+                                    style="background:#fee2e2; color:#b91c1c;">🚨</div>
+                                <div>
+                                    <p class="card-label">My Reports</p>
+                                    <p class="card-sub">Track submitted reports</p>
+                                </div>
+                            </a>
+
+                        </div>
+
+                        {{-- AI Assistant --}}
+                        <hr class="dash-divider">
+                        <div class="section-label">Support & Assistance</div>
+
+                        <a href="{{ route('ai.chat') }}" class="dash-card">
+                            <div class="card-icon"
+                                style="background:#ede9fe; color:#7c3aed;">🤖</div>
+                            <div>
+                                <p class="card-label">AI Chat</p>
+                                <p class="card-sub">Get help from the BookHub AI assistant</p>
+                            </div>
+                        </a>
+
+                    @endif
 
             </div>
         </div>
