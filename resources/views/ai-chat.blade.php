@@ -145,7 +145,7 @@ document.getElementById('chatForm').addEventListener('submit', async function(e)
         // 🤖 AI MESSAGE
         chatBox.innerHTML += `
             <div class="ai-msg">
-                <div class="bubble">${data.reply}</div>
+                <div class="bubble">${escapeHtml(data.reply || 'AI is currently under maintenance. Please try again later.').replace(/\n/g, '<br>')}</div>
             </div>
         `;
 
@@ -158,7 +158,7 @@ document.getElementById('chatForm').addEventListener('submit', async function(e)
         chatBox.innerHTML += `
             <div class="ai-msg">
                 <div class="bubble">
-                    ⚠️ AI error, try again later.
+                    AI is currently under maintenance. Please try again later.
                 </div>
             </div>
         `;

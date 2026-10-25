@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use App\Models\Book;
+use Throwable;
 
 class AIController extends Controller
 {
@@ -15,29 +17,37 @@ class AIController extends Controller
 
     public function send(Request $request)
     {
-        // ✅ CLEAN INPUT
-        $message = trim(strtolower($request->message));
-        $message = str_replace(['"', "'"], '', $message);
-        $message = preg_replace('/[^a-z0-9\s]/', '', $message);
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:2000'],
+        ]);
 
-        // 🔑 CHECK API KEY
-        if (!env('GROQ_API_KEY')) {
-            return response()->json([
-                'reply' => 'AI is currently under maintenance. Please try again later.'
-            ]);
+        $message = trim($validated['message']);
+        $apiKey = config('services.groq.key');
+
+        if (!$apiKey) {
+            Log::warning('Groq AI is unavailable because GROQ_API_KEY is not configured.');
+            return $this->maintenanceResponse();
         }
 
-        // 🔍 SEARCH DATABASE
-        $keywords = explode(' ', $message);
+        // Search using meaningful words while preserving the original message for the AI.
+        $searchText = strtolower(preg_replace('/[^a-z0-9\s]/i', ' ', $message) ?? '');
+        $keywords = array_values(array_filter(
+            array_unique(preg_split('/\s+/', trim($searchText)) ?: []),
+            fn (string $word): bool => strlen($word) >= 3
+        ));
 
-        $books = Book::query();
-
-        foreach ($keywords as $word) {
-            $books->orWhere('title', 'like', "%{$word}%")
-                  ->orWhere('description', 'like', "%{$word}%");
+        $books = collect();
+        if ($keywords !== []) {
+            $books = Book::query()
+                ->where(function ($query) use ($keywords) {
+                    foreach ($keywords as $word) {
+                        $query->orWhere('title', 'like', "%{$word}%")
+                            ->orWhere('description', 'like', "%{$word}%");
+                    }
+                })
+                ->limit(20)
+                ->get();
         }
-
-        $books = $books->get();
 
         // 📚 FORMAT DATA
         $bookData = "";
@@ -59,71 +69,73 @@ Link: http://127.0.0.1:8000/book/{$book->id}
 
         try {
             // 🤖 CALL GROQ AI
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . env('GROQ_API_KEY'),
-                'Content-Type' => 'application/json',
-            ])->post('https://api.groq.com/openai/v1/chat/completions', [
-                'model' => 'llama-3.1-8b-instant',
-                'messages' => [
-                    [
-                        'role' => 'system',
-                        'content' => "
+            $response = Http::withToken($apiKey)
+                ->acceptJson()
+                ->connectTimeout(10)
+                ->timeout(30)
+                ->post('https://api.groq.com/openai/v1/chat/completions', [
+                    'model' => config('services.groq.model'),
+                    'messages' => [
+                        [
+                            'role' => 'system',
+                            'content' => "
 You are a helpful AI assistant for a university book exchange system.
 
 Use database results to answer users naturally.
 Recommend books clearly if found.
 If none found, say politely no books found.
 "
-                    ],
-                    [
-                        'role' => 'user',
-                        'content' => "
+                        ],
+                        [
+                            'role' => 'user',
+                            'content' => "
 User message:
 {$message}
 
 Database results:
 {$bookData}
 "
+                        ],
                     ]
-                ]
-            ]);
+                ]);
 
             // ❌ HANDLE API FAILURE CLEANLY
             if (!$response->successful()) {
 
-                \Log::error('Groq AI Error', [
+                Log::error('Groq AI request failed.', [
                     'status' => $response->status(),
-                    'body' => $response->body()
+                    'error' => $response->json('error.message'),
                 ]);
 
-                return response()->json([
-                    'reply' => 'AI is currently under maintenance. Please try again later.'
-                ]);
+                return $this->maintenanceResponse();
             }
 
             // ✅ RESPONSE SAFE CHECK
             $reply = $response->json()['choices'][0]['message']['content'] ?? null;
 
             if (!$reply) {
-                return response()->json([
-                    'reply' => 'AI is currently under maintenance. Please try again later.'
-                ]);
+                Log::warning('Groq AI response did not contain a reply.');
+                return $this->maintenanceResponse();
             }
 
             return response()->json([
-                'reply' => nl2br($reply)
+                'reply' => $reply
             ]);
 
-        } catch (\Exception $e) {
+        } catch (Throwable $e) {
 
-            // ⚠️ NETWORK / TIMEOUT / UNEXPECTED ERROR
-            \Log::error('AI Exception Error', [
+            Log::error('Groq AI request raised an exception.', [
                 'message' => $e->getMessage()
             ]);
 
-            return response()->json([
-                'reply' => 'AI is currently under maintenance. Please try again later.'
-            ]);
+            return $this->maintenanceResponse();
         }
+    }
+
+    private function maintenanceResponse()
+    {
+        return response()->json([
+            'reply' => 'AI is currently under maintenance. Please try again later.',
+        ]);
     }
 }

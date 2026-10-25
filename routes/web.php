@@ -11,12 +11,6 @@
     use App\Http\Controllers\ReviewController;
     use App\Http\Controllers\RequestController;
 
-    Route::get('/test-key', function () {
-        dd(env('GROQ_API_KEY'));
-    });
-
-
-
     Route::get('/', function () {
         return redirect('/homepage');
     });
