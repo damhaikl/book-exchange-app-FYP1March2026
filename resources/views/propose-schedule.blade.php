@@ -35,6 +35,7 @@
         <form method="POST"
               action="{{ route('book.proposeSchedule', $book->id) }}">
 
+            <p>Form action: {{ route('book.proposeSchedule', $book->id) }}</p>
             @csrf
 
             <div class="mb-3">

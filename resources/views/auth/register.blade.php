@@ -72,10 +72,24 @@
 
             <!-- Student ID -->
             <div class="mb-3">
-                <label class="form-label">Student ID</label>
-                <input type="text" name="studentid" class="form-control" required>
+                <label for="studentid" class="form-label">Student ID</label>
+
+                <input
+                    type="text"
+                    id="studentid"
+                    name="studentid"
+                    class="form-control"
+                    value="{{ old('studentid') }}"
+                    placeholder="Enter your Student ID"
+                    required
+                >
+
+                <small id="studentid_message" class="text-muted">
+                    Enter your Student ID to detect your education level.
+                </small>
+
                 @error('studentid')
-                    <small class="text-danger">{{ $message }}</small>
+                    <small class="text-danger d-block">{{ $message }}</small>
                 @enderror
             </div>
 
@@ -114,13 +128,20 @@
 
             <!-- Education Level -->
             <div class="mb-3">
-                <label class="form-label">Education Level</label>
-                <select id="education_level" name="education_level" class="form-control" required>
-                    <option disabled selected>Select level</option>
-                    <option value="Foundation">Foundation</option>
-                    <option value="Diploma">Diploma</option>
-                    <option value="Bachelor">Bachelor</option>
-                </select>
+                <label for="education_level" class="form-label">
+                    Education Level
+                </label>
+
+                <input
+                    type="text"
+                    id="education_level"
+                    name="education_level"
+                    class="form-control"
+                    placeholder="Automatically detected"
+                    value="{{ old('education_level') }}"
+                    readonly
+                    required
+                >
             </div>
 
             <!-- Programme -->
@@ -150,49 +171,126 @@
 
 </div>
 
-<!-- ⚡ DEPENDENT DROPDOWN SCRIPT -->
+
+<!-- AUTOMATIC EDUCATION LEVEL AND PROGRAMME -->
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
+    const studentId = document.getElementById("studentid");
     const education = document.getElementById("education_level");
     const programme = document.getElementById("programme");
+    const message = document.getElementById("studentid_message");
 
     const data = {
         Foundation: [
-            "Foundation IT 1",
-            "Foundation IT 2",
-            "Foundation IT 3"
+            "Foundation in Computer Technology",
+            "Foundation in Science and Technology for Korean University"
         ],
+
         Diploma: [
-            "Diploma CS 1",
-            "Diploma CS 2",
-            "Diploma CS 3"
+            "Diploma in Networking Technology",
+            "Diploma in Information Technology",
+            "Diploma in Animation",
+            "Diploma in Multimedia"
         ],
+
         Bachelor: [
-            "Software Engineering",
-            "Computer Security",
-            "Artificial Intelligence"
+            "Bachelor of Game Development Technology with Honours",
+            "Bachelor in Information Technology (Honours) (Internet of Things)",
+            "Bachelor of Multimedia Technology (Hons.) in Interactive Multimedia Design",
+            "Bachelor of Computer Engineering Technology (Networking Systems) with Honours",
+            "Bachelor of Software Engineering with Honours",
+            "Bachelor of Cybersecurity Technology with Honours",
+            "Bachelor of Multimedia Technology (Hons.) in Computer Animation",
+            "Bachelor of Artificial Intelligence Technology with Honours"
         ]
     };
 
-    education.addEventListener("change", function () {
+    function detectEducationLevel() {
 
-        const selected = this.value;
+        const id = studentId.value.trim();
 
-        programme.innerHTML = '<option disabled selected>Select programme</option>';
+        // Reset the fields whenever the ID changes
+        education.value = "";
 
-        if (data[selected]) {
-            data[selected].forEach(function (item) {
-                let option = document.createElement("option");
-                option.value = item;
-                option.textContent = item;
-                programme.appendChild(option);
-            });
+        programme.innerHTML =
+            '<option value="">Select programme</option>';
+
+        message.className = "text-muted";
+        message.textContent =
+            "Enter your Student ID to detect your education level.";
+
+        if (id.length === 0) {
+            programme.innerHTML =
+                '<option value="">Enter Student ID first</option>';
+            return;
         }
-    });
+
+        // Check that the ID contains digits only
+        if (!/^\d+$/.test(id)) {
+            message.className = "text-danger";
+            message.textContent =
+                "Student ID must contain digits only.";
+
+            programme.innerHTML =
+                '<option value="">Invalid Student ID</option>';
+            return;
+        }
+
+        if (id.length < 3) {
+            programme.innerHTML =
+                '<option value="">Enter at least 3 digits</option>';
+            return;
+        }
+
+        const prefix = id.substring(0, 3);
+        let level = "";
+
+        // Detect education level from the Student ID prefix
+        if (prefix === "520") {
+            level = "Foundation";
+        } else if (prefix === "521") {
+            level = "Diploma";
+        } else if (prefix === "522") {
+            level = "Bachelor";
+        } else {
+            message.className = "text-danger";
+            message.textContent =
+                "Student ID prefix not recognised for UniKL MIIT.";
+
+            programme.innerHTML =
+                '<option value="">No programmes available</option>';
+            return;
+        }
+
+        // Automatically display education level
+        education.value = level;
+
+        message.className = "text-success";
+        message.textContent =
+            "Education level detected: " + level;
+
+        // Populate the programme dropdown
+        data[level].forEach(function (item) {
+
+            const option = document.createElement("option");
+
+            option.value = item;
+            option.textContent = item;
+
+            programme.appendChild(option);
+        });
+    }
+
+    // Update automatically while the student types
+    studentId.addEventListener("input", detectEducationLevel);
+
+    // Also detect an ID restored by Laravel after validation errors
+    detectEducationLevel();
 
 });
 </script>
+
 
 </body>
 </html>
