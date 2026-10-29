@@ -1,2 +1,5 @@
 *
 !.gitignore
+!books/
+books/*
+!books/demo-cover.svg

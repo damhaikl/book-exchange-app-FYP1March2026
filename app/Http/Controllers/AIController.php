@@ -59,6 +59,9 @@ Title: {$book->title}
 Condition: {$book->condition}
 Subject ID: {$book->subject_id}
 Status: {$book->status}
+Meeting location: {$book->meeting_location}
+Meeting date: {$book->meeting_date}
+Meeting time: {$book->meeting_time} - {$book->meeting_end_time}
 Link: http://127.0.0.1:8000/book/{$book->id}
 
 ";

@@ -13,10 +13,12 @@ class BookSchedule extends Model
         'location',
         'meeting_date',
         'meeting_time',
+        'meeting_end_time',
         'status',
         'proposed_location',
         'proposed_date',
-        'proposed_time'
+        'proposed_time',
+        'proposed_end_time'
     ];
 
     public function book()

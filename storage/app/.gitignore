@@ -1,4 +1,8 @@
 *
 !private/
 !public/
+public/*
+!public/.gitignore
+!public/books/
+!public/books/demo-cover.svg
 !.gitignore

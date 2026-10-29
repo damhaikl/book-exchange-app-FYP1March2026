@@ -104,7 +104,12 @@
 
         <p><b>Location:</b> {{ $req->book->meeting_location }}</p>
         <p><b>Date:</b> {{ $req->book->meeting_date }}</p>
-        <p><b>Time:</b> {{ $req->book->meeting_time }}</p>
+        <p><b>Time:</b>
+            {{ $req->book->meeting_time ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A') : 'Not set' }}
+            @if($req->book->meeting_end_time)
+                – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
+            @endif
+        </p>
     </div>
 
     @if($req->status == 'negotiation')
@@ -114,7 +119,12 @@
 
         <p><b>Location:</b> {{ $req->proposed_location }}</p>
         <p><b>Date:</b> {{ $req->proposed_date }}</p>
-        <p><b>Time:</b> {{ $req->proposed_time }}</p>
+        <p><b>Time:</b>
+            {{ $req->proposed_time ? \Carbon\Carbon::parse($req->proposed_time)->format('g:i A') : 'Not set' }}
+            @if($req->proposed_end_time)
+                – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
+            @endif
+        </p>
 
     </div>
     @endif
@@ -126,7 +136,19 @@
 
         <p><b>Location:</b> {{ $req->proposed_location ?? $req->book->meeting_location }}</p>
         <p><b>Date:</b> {{ $req->proposed_date ?? $req->book->meeting_date }}</p>
-        <p><b>Time:</b> {{ $req->proposed_time ?? $req->book->meeting_time }}</p>
+        <p><b>Time:</b>
+            @if($req->proposed_time)
+                {{ \Carbon\Carbon::parse($req->proposed_time)->format('g:i A') }}
+                @if($req->proposed_end_time)
+                    – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
+                @endif
+            @else
+                {{ $req->book->meeting_time ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A') : 'Not set' }}
+                @if($req->book->meeting_end_time)
+                    – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
+                @endif
+            @endif
+        </p>
 
     </div>
     @endif

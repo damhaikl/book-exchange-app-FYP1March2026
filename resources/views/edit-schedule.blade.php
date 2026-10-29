@@ -38,11 +38,20 @@
             </div>
 
             <div class="mb-3">
-                <label>⏰ Time</label>
+                <label>⏰ Start time</label>
                 <input type="time"
                        name="meeting_time"
                        class="form-control"
-                       value="{{ $book->meeting_time }}"
+                       value="{{ $book->meeting_time ? substr($book->meeting_time, 0, 5) : '' }}"
+                       required>
+            </div>
+
+            <div class="mb-3">
+                <label>⏰ End time</label>
+                <input type="time"
+                       name="meeting_end_time"
+                       class="form-control"
+                       value="{{ $book->meeting_end_time ? substr($book->meeting_end_time, 0, 5) : '' }}"
                        required>
             </div>
 

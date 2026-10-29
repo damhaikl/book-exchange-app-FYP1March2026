@@ -205,13 +205,24 @@
         ->name('book.schedule.store');
 
     Route::post('/book/change-schedule/{id}', [BookController::class, 'proposeSchedule'])
+        ->middleware('auth')
         ->name('book.changeSchedule');
 
     Route::get('/book/propose-schedule/{id}',[BookController::class, 'showProposeSchedule'])
+        ->middleware('auth')
         ->name('book.proposeScheduleForm');
 
     Route::post('/book/propose-schedule/{id}',[BookController::class, 'proposeSchedule'])
+        ->middleware('auth')
         ->name('book.proposeSchedule');
+
+    Route::put('/book/propose-schedule/{id}', [BookController::class, 'updateProposedSchedule'])
+        ->middleware('auth')
+        ->name('book.proposeSchedule.update');
+
+    Route::delete('/book/propose-schedule/{id}', [BookController::class, 'deleteProposedSchedule'])
+        ->middleware('auth')
+        ->name('book.proposeSchedule.delete');
 
     Route::get('/book/{id}/schedule/edit',[BookController::class, 'editSchedule'])
         ->name('book.schedule.edit');

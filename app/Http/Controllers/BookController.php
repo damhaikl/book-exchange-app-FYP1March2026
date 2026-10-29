@@ -43,7 +43,7 @@ class BookController extends Controller
 
         $existingRequest = BookRequest::where('book_id', $id)
             ->where('requester_id', auth()->id())
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', ['pending', 'approved', 'negotiation'])
             ->first();
 
         $sellerRating = Review::whereHas('book', function ($q) use ($book) {
@@ -82,7 +82,11 @@ class BookController extends Controller
             'condition' => 'required',
             'subject_id' => 'required',
             'price' => 'required|numeric|min:0',
-            'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2048'
+            'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
+            'meeting_location' => 'nullable|string|max:255',
+            'meeting_date' => 'nullable|date',
+            'meeting_time' => 'nullable|date_format:H:i',
+            'meeting_end_time' => 'nullable|date_format:H:i|after:meeting_time',
         ]);
 
         $data = [
@@ -90,7 +94,11 @@ class BookController extends Controller
             'description' => $request->bookdescription,
             'condition' => $request->condition,
             'subject_id' => $request->subject_id,
-            'price' => $request->price
+            'price' => $request->price,
+            'meeting_location' => $request->meeting_location,
+            'meeting_date' => $request->meeting_date,
+            'meeting_time' => $request->meeting_time,
+            'meeting_end_time' => $request->meeting_end_time,
         ];
 
         if ($request->hasFile('image')) {
@@ -124,7 +132,8 @@ class BookController extends Controller
         // 🧠 SMART MEETING VALIDATION
         'meeting_location' => 'required|string|max:255',
         'meeting_date' => 'required|date',
-        'meeting_time' => 'required'
+        'meeting_time' => 'required|date_format:H:i',
+        'meeting_end_time' => 'required|date_format:H:i|after:meeting_time',
     ]);
 
     Book::create([
@@ -141,6 +150,7 @@ class BookController extends Controller
         'meeting_location' => $request->meeting_location,
         'meeting_date' => $request->meeting_date,
         'meeting_time' => $request->meeting_time,
+        'meeting_end_time' => $request->meeting_end_time,
     ]);
 
     return redirect('/book/create')->with('success', 'Book added with meeting schedule!');
@@ -193,13 +203,25 @@ class BookController extends Controller
 
         return back()->with('success', 'Book request sent!');
     }
-    public function showProposeSchedule($id)
+    public function showProposeSchedule(Request $request, $id)
     {
         $book = Book::findOrFail($id);
 
-        return view('propose-schedule', compact('book'));
+        if ($book->user_id == auth()->id()) {
+            return redirect('/book/' . $book->id)
+                ->with('error', 'You cannot propose a schedule for your own book.');
+        }
 
-        
+        $proposal = BookRequest::where('book_id', $book->id)
+            ->where('requester_id', auth()->id())
+            ->where('status', 'negotiation')
+            ->first();
+
+        $returnTo = $request->query('return_to') === 'sent-requests'
+            ? 'sent-requests'
+            : 'book-details';
+
+        return view('propose-schedule', compact('book', 'proposal', 'returnTo'));
 
     }
     public function proposeSchedule(Request $request, $id)
@@ -211,11 +233,16 @@ class BookController extends Controller
             return back()->with('error', 'You cannot request your own book.');
         }
 
+        if ($book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available.');
+        }
+
         // ✅ Validate
         $request->validate([
             'proposed_location' => 'required|string|max:255',
             'proposed_date' => 'required|date',
-            'proposed_time' => 'required'
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
         ]);
 
         // ❌ Prevent duplicate request
@@ -225,7 +252,8 @@ class BookController extends Controller
             ->first();
 
         if ($existingRequest) {
-            return back()->with('error', 'You already requested this book.');
+            return redirect('/book/' . $book->id)
+                ->with('error', 'You already have an active request for this book.');
         }
 
         // ✅ Create negotiation request
@@ -239,12 +267,61 @@ class BookController extends Controller
             'proposed_location' => $request->proposed_location,
             'proposed_date' => $request->proposed_date,
             'proposed_time' => $request->proposed_time,
+            'proposed_end_time' => $request->proposed_end_time,
 
             'schedule_type' => 'buyer'
         ]);
 
         return redirect('/homepage')
             ->with('success', 'New schedule proposed to seller!');
+    }
+
+    public function updateProposedSchedule(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'proposed_location' => 'required|string|max:255',
+            'proposed_date' => 'required|date',
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
+        ]);
+
+        $proposal = BookRequest::where('book_id', $id)
+            ->where('requester_id', auth()->id())
+            ->where('status', 'negotiation')
+            ->firstOrFail();
+
+        $proposal->update($validated);
+
+        $redirect = $request->input('return_to') === 'sent-requests'
+            ? redirect()->route('sent.requests')
+            : redirect('/book/' . $id);
+
+        return $redirect->with('success', 'Your proposed schedule has been updated.');
+    }
+
+    public function deleteProposedSchedule(Request $request, $id)
+    {
+        $proposal = BookRequest::where('book_id', $id)
+            ->where('requester_id', auth()->id())
+            ->where('status', 'negotiation')
+            ->firstOrFail();
+
+        // Keep the book request, but remove the buyer's proposed schedule.
+        // The book's meeting fields still contain the seller's original schedule.
+        $proposal->update([
+            'status' => 'pending',
+            'proposed_location' => null,
+            'proposed_date' => null,
+            'proposed_time' => null,
+            'proposed_end_time' => null,
+            'schedule_type' => 'seller',
+        ]);
+
+        $redirect = $request->input('return_to') === 'sent-requests'
+            ? redirect()->route('sent.requests')
+            : redirect('/book/' . $id);
+
+        return $redirect->with('success', 'Your proposal was removed. The request will use the seller’s original schedule.');
     }
 
     // 📥 Inbox
@@ -273,7 +350,8 @@ class BookController extends Controller
         $request->validate([
             'location' => 'required|string',
             'meeting_date' => 'required|date',
-            'meeting_time' => 'required'
+            'meeting_time' => 'required|date_format:H:i',
+            'meeting_end_time' => 'required|date_format:H:i|after:meeting_time',
         ]);
 
         $book = Book::findOrFail($bookId);
@@ -285,6 +363,7 @@ class BookController extends Controller
                 'location' => $request->location,
                 'meeting_date' => $request->meeting_date,
                 'meeting_time' => $request->meeting_time,
+                'meeting_end_time' => $request->meeting_end_time,
                 'status' => 'available',
                 'buyer_id' => null
             ]
@@ -311,6 +390,7 @@ class BookController extends Controller
             'meeting_location' => $request->proposed_location,
             'meeting_date' => $request->proposed_date,
             'meeting_time' => $request->proposed_time,
+            'meeting_end_time' => $request->proposed_end_time,
             'status' => 'reserved'
         ]);
     }
@@ -423,13 +503,15 @@ class BookController extends Controller
         $request->validate([
             'meeting_location' => 'required|string|max:255',
             'meeting_date' => 'required|date',
-            'meeting_time' => 'required'
+            'meeting_time' => 'required|date_format:H:i',
+            'meeting_end_time' => 'required|date_format:H:i|after:meeting_time',
         ]);
 
         $book->update([
             'meeting_location' => $request->meeting_location,
             'meeting_date' => $request->meeting_date,
-            'meeting_time' => $request->meeting_time
+            'meeting_time' => $request->meeting_time,
+            'meeting_end_time' => $request->meeting_end_time,
         ]);
 
         return redirect('/homepage')->with('success', 'Schedule updated successfully!');

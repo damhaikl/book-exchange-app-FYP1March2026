@@ -16,6 +16,7 @@ class BookRequest extends Model
         'proposed_location',
         'proposed_date',
         'proposed_time',
+        'proposed_end_time',
         'schedule_type'
     ];
 

@@ -105,15 +105,21 @@
             <div class="section-title">📍 Smart Meeting Setup</div>
 
             <div class="mb-3">
-                <input type="text" name="meeting_location" class="form-control" placeholder="e.g. UniKL MIIT Lobby / Library Entrance">
+                <input type="text" name="meeting_location" class="form-control" placeholder="e.g. UniKL MIIT Lobby / Library Entrance" required>
             </div>
 
             <div class="mb-3">
-                <input type="date" name="meeting_date" class="form-control">
+                <input type="date" name="meeting_date" class="form-control" required>
             </div>
 
             <div class="mb-3">
-                <input type="time" name="meeting_time" class="form-control">
+                <label>Meeting start time</label>
+                <input type="time" name="meeting_time" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label>Meeting end time</label>
+                <input type="time" name="meeting_end_time" class="form-control" required>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">

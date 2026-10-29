@@ -67,9 +67,15 @@
         </div>
 
         <div class="mb-3">
-            <label>Time</label>
+            <label>Meeting start time</label>
             <input type="time" name="meeting_time" class="form-control"
-                   value="{{ $book->meeting_time }}">
+                   value="{{ $book->meeting_time ? substr($book->meeting_time, 0, 5) : '' }}">
+        </div>
+
+        <div class="mb-3">
+            <label>Meeting end time</label>
+            <input type="time" name="meeting_end_time" class="form-control"
+                   value="{{ $book->meeting_end_time ? substr($book->meeting_end_time, 0, 5) : '' }}">
         </div>
 
         <button class="btn btn-primary w-100">Update Book</button>

@@ -101,9 +101,61 @@
             <strong>{{ $req->book->meeting_date ?? 'Not set' }}</strong>
         </p>
         <p>⏰ Time:
-            <strong>{{ $req->book->meeting_time ?? 'Not set' }}</strong>
+            <strong>
+                {{ $req->book->meeting_time ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A') : 'Not set' }}
+                @if($req->book->meeting_end_time)
+                    – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
+                @endif
+            </strong>
         </p>
     </div>
+
+    @if($req->status === 'negotiation')
+        <div class="card-box mt-3">
+            <h5>Your proposed meeting schedule</h5>
+            <p>📍 Location: <strong>{{ $req->proposed_location }}</strong></p>
+            <p>📅 Date: <strong>{{ $req->proposed_date }}</strong></p>
+            <p>⏰ Time:
+                <strong>
+                    {{ $req->proposed_time ? \Carbon\Carbon::parse($req->proposed_time)->format('g:i A') : 'Not set' }}
+                    @if($req->proposed_end_time)
+                        – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
+                    @endif
+                </strong>
+            </p>
+            <button type="button"
+                    class="btn btn-warning btn-sm"
+                    data-bs-toggle="modal"
+                    data-bs-target="#proposalModal-{{ $req->id }}">
+                Manage proposed schedule
+            </button>
+        </div>
+
+        <div class="modal fade" id="proposalModal-{{ $req->id }}" tabindex="-1" aria-labelledby="proposalModalTitle-{{ $req->id }}" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="proposalModalTitle-{{ $req->id }}">Schedule proposal already sent</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>You already proposed a new meeting schedule. Would you like to change it?</p>
+                        <p class="mb-0">Deleting the proposal keeps your book request active and returns it to the seller’s original meeting schedule.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="POST" action="{{ route('book.proposeSchedule.delete', $req->book_id) }}">
+                            @csrf
+                            @method('DELETE')
+                            <input type="hidden" name="return_to" value="sent-requests">
+                            <button type="submit" class="btn btn-outline-danger">Delete proposal</button>
+                        </form>
+                        <a href="{{ route('book.proposeScheduleForm', $req->book_id) }}?return_to=sent-requests" class="btn btn-primary">Edit proposal</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
     
 
 </div>
@@ -112,5 +164,6 @@
 <p>No requests yet 😢</p>
 @endforelse
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

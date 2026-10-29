@@ -17,7 +17,8 @@ class Book extends Model
         'price',
         'meeting_location',
         'meeting_date',
-        'meeting_time'
+        'meeting_time',
+        'meeting_end_time'
     ];
 
     // 👤 Seller (owner of book)

@@ -73,6 +73,14 @@
 
 <div class="container">
 
+    @if(session('success'))
+        <div class="alert alert-success" role="status">{{ session('success') }}</div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger" role="alert">{{ session('error') }}</div>
+    @endif
+
     <!-- 🔙 Back -->
     <a href="/homepage" class="back-btn">
         <i class="bi bi-arrow-left"></i> Back
@@ -95,7 +103,12 @@
         </p>
 
         <p>⏰ Time:
-            <strong>{{ $book->meeting_time ?? 'Not set yet' }}</strong>
+            <strong>
+                {{ $book->meeting_time ? \Carbon\Carbon::parse($book->meeting_time)->format('g:i A') : 'Not set yet' }}
+                @if($book->meeting_end_time)
+                    – {{ \Carbon\Carbon::parse($book->meeting_end_time)->format('g:i A') }}
+                @endif
+            </strong>
         </p>
     </div>
 
@@ -132,9 +145,18 @@
 
             @if($existingRequest)
 
-                <button type="button" disabled>
-                    🚫 You already requested this book
-                </button>
+                @if($existingRequest->status === 'negotiation')
+                    <button type="button"
+                        class="btn btn-warning"
+                        data-bs-toggle="modal"
+                        data-bs-target="#existingProposalModal">
+                        🔁 Manage Your Schedule Proposal
+                    </button>
+                @else
+                    <button type="button" disabled>
+                        🚫 You already requested this book
+                    </button>
+                @endif
 
             @else
 
@@ -232,6 +254,32 @@
         </form>
     </div>
 </div>
+
+@if($existingRequest && $existingRequest->status === 'negotiation')
+<div class="modal fade" id="existingProposalModal" tabindex="-1" aria-labelledby="existingProposalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="existingProposalTitle">Schedule proposal already sent</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>You already proposed a new meeting schedule. Would you like to change it?</p>
+                <p class="mb-0">Deleting the proposal keeps your book request active and returns it to the seller’s original meeting schedule.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{{ route('book.proposeSchedule.delete', $book->id) }}">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger">Delete proposal</button>
+                </form>
+                <a href="{{ route('book.proposeScheduleForm', $book->id) }}" class="btn btn-primary">Edit proposal</a>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 
 <!-- PROPOSE MODAL -->
 <div class="modal fade" id="proposeModal" tabindex="-1">
