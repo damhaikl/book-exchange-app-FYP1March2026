@@ -8,18 +8,44 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('studentid')->nullable()->unique();
-            $table->string('education_level')->nullable();
-            $table->string('programme')->nullable();
-        });
+        if (!Schema::hasColumn('users', 'studentid')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('studentid')->nullable();
+            });
+        }
+
+        if (!Schema::hasIndex('users', ['studentid'], 'unique')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->unique('studentid');
+            });
+        }
+
+        foreach (['education_level', 'programme'] as $column) {
+            if (!Schema::hasColumn('users', $column)) {
+                Schema::table('users', function (Blueprint $table) use ($column) {
+                    $table->string($column)->nullable();
+                });
+            }
+        }
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropUnique(['studentid']);
-            $table->dropColumn(['studentid', 'education_level', 'programme']);
-        });
+        if (Schema::hasIndex('users', ['studentid'], 'unique')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropUnique(['studentid']);
+            });
+        }
+
+        $columns = array_filter(
+            ['studentid', 'education_level', 'programme'],
+            fn (string $column): bool => Schema::hasColumn('users', $column),
+        );
+
+        if ($columns !== []) {
+            Schema::table('users', function (Blueprint $table) use ($columns) {
+                $table->dropColumn($columns);
+            });
+        }
     }
 };
