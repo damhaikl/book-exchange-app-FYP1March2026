@@ -41,6 +41,12 @@
         .popup { display:none; position:fixed; inset:0; z-index:1100; align-items:center; justify-content:center; padding:1rem; background:rgba(17,24,39,.55); }
         .popup-content { width:min(440px,100%); background:#fff; padding:1.5rem; border:1px solid var(--line); border-radius:12px; box-shadow:0 16px 40px rgba(17,24,39,.18); }
         .popup-content input,.popup-content textarea { width:100%; padding:.65rem .75rem; margin-top:.5rem; border:1px solid #d1d5db; border-radius:8px; }
+        .modal-dialog { max-width:440px; }
+        .modal-content { overflow:hidden; background:#fff; border:1px solid var(--line)!important; border-radius:12px!important; box-shadow:0 16px 40px rgba(17,24,39,.18)!important; }
+        .modal-header { padding:1.25rem 1.5rem 1rem; border-bottom:1px solid var(--line); }
+        .modal-header .modal-title { color:var(--ink); font-weight:600; }
+        .modal-body { padding:1.25rem 1.5rem; }
+        .modal-footer { gap:.5rem; padding:0 1.5rem 1.5rem; border-top:0; }
         @media(max-width:767.98px) { .book-cover { min-height:220px; max-height:340px; } }
     </style>
 </head>
@@ -78,6 +84,7 @@
                     <span class="badge-soft {{ $statusClass }}"><i class="bi bi-circle-fill" style="font-size:7px"></i>{{ ucfirst($book->status) }}</span>
                     <span class="badge-soft badge-neutral"><i class="bi bi-bookmark"></i>{{ $book->condition }}</span>
                     <span class="badge-soft badge-neutral"><i class="bi bi-journal-text"></i>Subject {{ $book->subject_id }}</span>
+                    <span class="badge-soft badge-neutral"><i class="bi bi-tag"></i>{{ $book->subject_category ?? 'Category not set' }}</span>
                 </div>
                 <div class="page-kicker mb-2">Book details</div>
                 <h1 class="book-title mb-3">{{ $book->title }}</h1>

@@ -6,11 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class Book extends Model
 {
+    public const SUBJECT_CATEGORIES = [
+        'Elective Subject',
+        'Common Core Subject',
+        'University Compulsory Subject',
+        'Final Year Project',
+        'MPU Subject',
+    ];
+
     protected $fillable = [
         'title',
         'description',
         'condition',
         'subject_id',
+        'subject_category',
         'image',
         'user_id',
         'status',

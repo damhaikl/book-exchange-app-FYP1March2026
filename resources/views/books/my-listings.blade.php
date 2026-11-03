@@ -65,6 +65,7 @@ use Illuminate\Support\Str;
                 <th>Image</th>
                 <th>Title</th>
                 <th>Condition</th>
+                <th>Subject Category</th>
                 <th>Description</th>
                 <th>Actions</th>
             </tr>
@@ -84,6 +85,9 @@ use Illuminate\Support\Str;
 
                 <!-- Condition -->
                 <td>{{ $book->condition }}</td>
+
+                <!-- Subject category -->
+                <td>{{ $book->subject_category ?? 'Not set' }}</td>
 
                 <!-- Description -->
                 <td>{{ Str::limit($book->description, 50) }}</td>
@@ -110,7 +114,7 @@ use Illuminate\Support\Str;
             </tr>
         @empty
             <tr>
-                <td colspan="5" class="text-center text-muted">
+                <td colspan="6" class="text-center text-muted">
                     No books found 😢
                 </td>
             </tr>
@@ -122,4 +126,4 @@ use Illuminate\Support\Str;
 </div>
 
 </body>
-</html> 
+</html>

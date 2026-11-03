@@ -98,6 +98,18 @@
                 <label>Subject ID</label>
                 <input type="text" name="subject_id" class="form-control" required>
             </div>
+
+            <div class="mb-3">
+                <label for="subject_category">Subject Category</label>
+                <select id="subject_category" name="subject_category" class="form-select" required>
+                    <option value="" disabled {{ old('subject_category') ? '' : 'selected' }}>Select a category</option>
+                    @foreach(\App\Models\Book::SUBJECT_CATEGORIES as $category)
+                        <option value="{{ $category }}" {{ old('subject_category') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                    @endforeach
+                </select>
+                @error('subject_category')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+                <small class="text-muted">Choose the category that best describes this book’s subject.</small>
+            </div>
             <div class="alert alert-info">
                 Smart Meeting Tip: Choose a safe public location and time you are available to meet buyers.
             </div>

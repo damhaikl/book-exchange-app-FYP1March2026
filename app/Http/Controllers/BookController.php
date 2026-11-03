@@ -11,6 +11,8 @@ use App\Mail\BookStatusMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Models\BookSchedule;
+use Illuminate\Validation\Rule;
+use App\Notifications\BookRequestStatusNotification;
 
 class BookController extends Controller
 {
@@ -25,6 +27,10 @@ class BookController extends Controller
 
         if ($request->filled('subject_id')) {
             $query->where('subject_id', $request->subject_id);
+        }
+
+        if ($request->filled('subject_category')) {
+            $query->where('subject_category', $request->subject_category);
         }
 
         if ($request->filled('condition')) {
@@ -81,6 +87,7 @@ class BookController extends Controller
             'bookdescription' => 'required',
             'condition' => 'required',
             'subject_id' => 'required',
+            'subject_category' => ['required', 'string', Rule::in(Book::SUBJECT_CATEGORIES)],
             'price' => 'required|numeric|min:0',
             'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
             'meeting_location' => 'nullable|string|max:255',
@@ -94,6 +101,7 @@ class BookController extends Controller
             'description' => $request->bookdescription,
             'condition' => $request->condition,
             'subject_id' => $request->subject_id,
+            'subject_category' => $request->subject_category,
             'price' => $request->price,
             'meeting_location' => $request->meeting_location,
             'meeting_date' => $request->meeting_date,
@@ -126,6 +134,7 @@ class BookController extends Controller
         'bookdescription' => 'required',
         'condition' => 'required',
         'subject_id' => 'required',
+        'subject_category' => ['required', 'string', Rule::in(Book::SUBJECT_CATEGORIES)],
         'price' => 'required|numeric|min:0',
         'image' => 'required|image|mimes:jpg,png,jpeg|max:2048',
 
@@ -141,6 +150,7 @@ class BookController extends Controller
         'description' => $request->bookdescription,
         'condition' => $request->condition,
         'subject_id' => $request->subject_id,
+        'subject_category' => $request->subject_category,
         'image' => $request->file('image')->store('books', 'public'),
         'user_id' => auth()->id(),
         'status' => 'available',
@@ -164,24 +174,42 @@ class BookController extends Controller
     }
 
     // 🤝 REQUEST BOOK (FIXED)
-    public function requestBook($id)
+    public function requestBook(Request $request, $id)
     {
         $book = Book::findOrFail($id);
 
         if ($book->user_id == auth()->id()) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'You cannot request your own book.'], 422);
+            }
+
             return back()->with('error', 'You cannot request your own book.');
         }
 
         if ($book->status !== 'available') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'This book is no longer available.',
+                    'alternatives' => $this->similarAvailableBooks($book, auth()->id()),
+                ], 422);
+            }
+
             return back()->with('error', 'Book not available.');
         }
 
         $existingRequest = BookRequest::where('book_id', $id)
             ->where('requester_id', auth()->id())
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', ['pending', 'approved', 'negotiation'])
             ->first();
 
         if ($existingRequest) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'You already have an active request for this book.',
+                    'alternatives' => $this->similarAvailableBooks($book, auth()->id()),
+                ], 422);
+            }
+
             return back()->with('error', 'You already requested this book.');
         }
 
@@ -201,8 +229,130 @@ class BookController extends Controller
                 ->queue(new BookStatusMail($bookRequest, 'pending'));
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'message' => 'Book request sent! The seller has been notified.',
+                'status' => 'pending',
+            ], 201);
+        }
+
         return back()->with('success', 'Book request sent!');
     }
+
+    private function similarAvailableBooks(Book $book, int $studentId): array
+    {
+        $activeBookIds = BookRequest::where('requester_id', $studentId)
+            ->whereIn('status', ['pending', 'approved', 'negotiation'])
+            ->pluck('book_id');
+
+        $candidateBooks = Book::query()
+            ->where('status', 'available')
+            ->where('user_id', '!=', $studentId)
+            ->where('id', '!=', $book->id)
+            ->whereNotIn('id', $activeBookIds)
+            ->latest()
+            ->limit(100)
+            ->get();
+
+        $targetTokens = $this->similarityTokens($book->title . ' ' . $book->description);
+        $targetSubjectId = strtolower(trim((string) $book->subject_id));
+        $targetCategory = strtolower(trim((string) $book->subject_category));
+
+        return $candidateBooks->map(function (Book $candidate) use ($targetTokens, $targetSubjectId, $targetCategory) {
+            $candidateTokens = $this->similarityTokens($candidate->title . ' ' . $candidate->description);
+            $sharedTokens = array_values(array_intersect($targetTokens, $candidateTokens));
+            $sameSubjectId = $targetSubjectId !== ''
+                && strtolower(trim((string) $candidate->subject_id)) === $targetSubjectId;
+            $sameCategory = $targetCategory !== ''
+                && strtolower(trim((string) $candidate->subject_category)) === $targetCategory;
+
+            $score = ($sameSubjectId ? 8 : 0)
+                + ($sameCategory ? 4 : 0)
+                + min(count($sharedTokens), 3);
+
+            if ($sameSubjectId) {
+                $reason = 'Same subject ID: ' . $candidate->subject_id;
+            } elseif ($sameCategory) {
+                $reason = 'Same subject category';
+            } elseif ($sharedTokens !== []) {
+                $reason = 'Related topics: ' . implode(', ', array_slice($sharedTokens, 0, 3));
+            } else {
+                $reason = null;
+            }
+
+            return [
+                'book' => $candidate,
+                'score' => $score,
+                'reason' => $reason,
+            ];
+        })
+            ->filter(fn (array $match) => $match['score'] > 0)
+            ->sortByDesc('score')
+            ->take(3)
+            ->map(fn (array $match) => [
+                'id' => $match['book']->id,
+                'title' => $match['book']->title,
+                'subject_category' => $match['book']->subject_category,
+                'subject_id' => $match['book']->subject_id,
+                'price' => $match['book']->price,
+                'reason' => $match['reason'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function similarityTokens(string $text): array
+    {
+        $tokens = preg_split('/[^a-z0-9]+/i', strtolower($text)) ?: [];
+        $stopWords = ['about', 'after', 'book', 'books', 'covers', 'from', 'into', 'that', 'this', 'with', 'their', 'your', 'and', 'the'];
+
+        return array_values(array_unique(array_filter(
+            $tokens,
+            fn (string $token) => strlen($token) >= 4 && !in_array($token, $stopWords, true)
+        )));
+    }
+
+    public function proposeScheduleFromChat(Request $request, $id)
+    {
+        $book = Book::findOrFail($id);
+
+        if ($book->user_id == auth()->id()) {
+            return response()->json(['message' => 'You cannot propose a schedule for your own book.'], 422);
+        }
+
+        if ($book->status !== 'available') {
+            return response()->json(['message' => 'This book is no longer available.'], 422);
+        }
+
+        $validated = $request->validate([
+            'proposed_location' => 'required|string|max:255',
+            'proposed_date' => 'required|date|after_or_equal:today',
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
+        ]);
+
+        $bookRequest = BookRequest::where('book_id', $book->id)
+            ->where('requester_id', auth()->id())
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$bookRequest) {
+            return response()->json([
+                'message' => 'Your pending request was not found. Please check Sent Requests before trying again.',
+            ], 422);
+        }
+
+        $bookRequest->update(array_merge($validated, [
+            'status' => 'negotiation',
+            'schedule_type' => 'buyer',
+        ]));
+
+        return response()->json([
+            'message' => 'Your proposed meeting schedule has been sent to the seller.',
+            'schedule' => $validated,
+        ], 201);
+    }
+
     public function showProposeSchedule(Request $request, $id)
     {
         $book = Book::findOrFail($id);
@@ -412,6 +562,7 @@ class BookController extends Controller
     $requester = User::find($request->requester_id);
 
     if ($requester) {
+        $requester->notify(new BookRequestStatusNotification($request));
         Mail::to($requester->email)
             ->queue(new BookStatusMail($request, 'approved'));
     }
@@ -436,6 +587,7 @@ class BookController extends Controller
         $requester = User::find($request->requester_id);
 
         if ($requester) {
+            $requester->notify(new BookRequestStatusNotification($request));
             Mail::to($requester->email)
                 ->queue(new BookStatusMail($request, 'rejected'));
         }
@@ -532,6 +684,11 @@ class BookController extends Controller
         $request->update([
             'status' => 'cancelled'
         ]);
+
+        $requester = User::find($request->requester_id);
+        if ($requester) {
+            $requester->notify(new BookRequestStatusNotification($request));
+        }
 
         // 🔁 if it was already approved, revert book back to available
         if ($wasApproved) {

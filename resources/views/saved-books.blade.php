@@ -62,6 +62,7 @@
                                 <span class="small text-secondary"><i class="bi bi-bookmark me-1"></i>{{ $item->book->condition }}</span>
                                 <span class="fw-semibold">{{ $item->book->price ? 'RM ' . number_format($item->book->price, 2) : 'Free / Not set' }}</span>
                             </div>
+                            <p class="small text-secondary"><i class="bi bi-tag me-1"></i>{{ $item->book->subject_category ?? 'Category not set' }}</p>
                             <div class="d-flex gap-2">
                                 <a href="{{ url('/book/' . $item->book->id) }}" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-eye me-1"></i>View details</a>
                                 <form method="POST" action="{{ route('book.unsave', $item->book->id) }}" onsubmit="return confirm('Remove this book from your saved list?')">

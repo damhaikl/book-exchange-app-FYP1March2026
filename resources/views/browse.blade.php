@@ -75,18 +75,27 @@
 
     <form method="GET" action="{{ route('homepage') }}" class="catalogue-panel mb-4">
         <div class="row g-3 align-items-end">
-            <div class="col-12 col-md-4">
+            <div class="col-12 col-md-3">
                 <label for="search" class="form-label small fw-semibold">Search by title</label>
                 <div class="input-group">
                     <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                     <input id="search" type="text" name="search" class="form-control" placeholder="e.g. Introduction to Programming" value="{{ request('search') }}">
                 </div>
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label for="subject_id" class="form-label small fw-semibold">Subject ID</label>
                 <input id="subject_id" type="text" name="subject_id" class="form-control" placeholder="Enter subject ID" value="{{ request('subject_id') }}">
             </div>
             <div class="col-12 col-md-3">
+                <label for="subject_category" class="form-label small fw-semibold">Category</label>
+                <select id="subject_category" name="subject_category" class="form-select">
+                    <option value="">All categories</option>
+                    @foreach(\App\Models\Book::SUBJECT_CATEGORIES as $category)
+                        <option value="{{ $category }}" {{ request('subject_category') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 col-md-2">
                 <label for="condition" class="form-label small fw-semibold">Condition</label>
                 <select id="condition" name="condition" class="form-select">
                     <option value="">All conditions</option>
@@ -119,6 +128,7 @@
                             <span class="badge-soft {{ $statusClass }}">{{ ucfirst($book->status) }}</span>
                         </div>
                         <div class="book-meta"><i class="bi bi-bookmark me-1"></i>{{ $book->condition }} <span class="mx-1">·</span> Subject {{ $book->subject_id }}</div>
+                        <div class="book-meta"><i class="bi bi-tag me-1"></i>{{ $book->subject_category ?? 'Category not set' }}</div>
                         @if($book->meeting_location)
                             <div class="book-meta"><i class="bi bi-geo-alt me-1"></i>{{ $book->meeting_location }}</div>
                         @endif
@@ -142,7 +152,7 @@
                 <div class="empty-state">
                     <div class="fs-2 text-primary mb-2"><i class="bi bi-search"></i></div>
                     <h3 class="h6 fw-semibold text-dark">No books found</h3>
-                    <p class="mb-3">Try another title, subject ID, or condition.</p>
+                    <p class="mb-3">Try another title, subject ID, category, or condition.</p>
                     <a href="{{ route('homepage') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Clear filters</a>
                 </div>
             </div>

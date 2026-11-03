@@ -47,6 +47,17 @@
 
         <input type="text" name="subject_id" class="form-control mb-2" value="{{ $book->subject_id }}">
 
+        <div class="mb-3">
+            <label for="subject_category">Subject Category</label>
+            <select id="subject_category" name="subject_category" class="form-select" required>
+                <option value="" disabled {{ old('subject_category', $book->subject_category) ? '' : 'selected' }}>Select a category</option>
+                @foreach(\App\Models\Book::SUBJECT_CATEGORIES as $category)
+                    <option value="{{ $category }}" {{ old('subject_category', $book->subject_category) === $category ? 'selected' : '' }}>{{ $category }}</option>
+                @endforeach
+            </select>
+            @error('subject_category')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
+        </div>
+
         <input type="file" name="image" class="form-control mb-3">
 
         <hr>

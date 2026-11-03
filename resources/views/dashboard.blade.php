@@ -48,6 +48,20 @@
 .card-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .dash-divider { border: none; border-top: 1px solid #f3f4f6; margin: 1rem 0; }
 .dark .dash-divider { border-color: #374151; }
+.request-bot { position:fixed; right:24px; bottom:24px; z-index:50; font-family:inherit; }
+.request-bot-toggle { position:relative; display:flex; align-items:center; gap:9px; border:0; border-radius:999px; padding:12px 17px; color:#fff; background:#123a66; box-shadow:0 8px 24px rgba(15,23,42,.25); font-weight:600; cursor:pointer; }
+.request-bot-toggle:hover { background:#0f2f52; }
+.request-bot-badge { position:absolute; top:-5px; right:-4px; min-width:21px; height:21px; padding:0 5px; border:2px solid #fff; border-radius:999px; display:flex; align-items:center; justify-content:center; color:#fff; background:#dc2626; font-size:11px; line-height:1; }
+.request-bot-panel { position:absolute; right:0; bottom:68px; width:min(360px, calc(100vw - 32px)); overflow:hidden; border:1px solid #dbe3ef; border-radius:14px; background:#fff; box-shadow:0 16px 40px rgba(15,23,42,.22); color:#1f2937; }
+.request-bot-panel-header { padding:15px 17px; color:#fff; background:#123a66; }
+.request-bot-panel-header h3 { margin:0; font-size:15px; font-weight:700; }
+.request-bot-panel-header p { margin:4px 0 0; color:#dbeafe; font-size:12px; }
+.request-bot-list { max-height:300px; overflow-y:auto; margin:0; padding:8px 16px; list-style:none; }
+.request-bot-item { display:flex; gap:10px; padding:11px 0; border-bottom:1px solid #eef2f7; font-size:13px; }
+.request-bot-item:last-child { border-bottom:0; }
+.request-bot-item-icon { color:#1d4ed8; font-size:16px; }
+.request-bot-empty { padding:20px 16px; color:#64748b; text-align:center; font-size:13px; }
+@media (max-width: 576px) { .request-bot { right:16px; bottom:16px; } }
 </style>
 
 <x-app-layout>
@@ -284,6 +298,133 @@
                                 <p class="card-sub">Get help from the BookHub AI assistant</p>
                             </div>
                         </a>
+
+                        <div id="requestBot" class="request-bot">
+                            <section id="requestBotPanel" class="request-bot-panel" aria-label="Book exchange notifications" hidden>
+                                <div class="request-bot-panel-header">
+                                    <h3>Notifications</h3>
+                                    <p>Requests received and updates on requests you sent.</p>
+                                </div>
+                                <p id="requestBotEmpty" class="request-bot-empty mb-0">No new notifications.</p>
+                                <ul id="requestBotList" class="request-bot-list" aria-live="polite"></ul>
+                            </section>
+                            <button id="requestBotToggle" class="request-bot-toggle" type="button" aria-expanded="false" aria-controls="requestBotPanel">
+                                <span aria-hidden="true">🔔</span><span>Notifications</span>
+                                <span id="requestBotBadge" class="request-bot-badge" aria-label="Unread notifications" hidden>0</span>
+                            </button>
+                        </div>
+
+                        <script>
+                        (function () {
+                            const root = document.getElementById('requestBot');
+                            if (!root) return;
+
+                            const toggle = document.getElementById('requestBotToggle');
+                            const panel = document.getElementById('requestBotPanel');
+                            const badge = document.getElementById('requestBotBadge');
+                            const list = document.getElementById('requestBotList');
+                            const emptyMessage = document.getElementById('requestBotEmpty');
+                            let currentSignature = '';
+                            let unreadStatusCount = 0;
+                            let polling = false;
+
+                            toggle.addEventListener('click', function () {
+                                const isOpening = panel.hidden;
+                                panel.hidden = !isOpening;
+                                toggle.setAttribute('aria-expanded', String(isOpening));
+                                if (isOpening && unreadStatusCount > 0) markStatusNotificationsRead();
+                            });
+
+                            function updateBadge(count) {
+                                badge.textContent = count > 9 ? '9+' : String(count);
+                                badge.hidden = count === 0;
+                            }
+
+                            function renderNotifications(data) {
+                                const notifications = [];
+                                if (data.request) {
+                                    notifications.push({
+                                        key: `received-${data.request.id}`,
+                                        icon: '📥',
+                                        message: `${data.request.requester_name} requested “${data.request.book_title}”.`,
+                                        createdAt: data.request.created_at || null,
+                                        kind: 'received'
+                                    });
+                                }
+                                (data.status_updates || []).forEach(notification => {
+                                    notifications.push({
+                                        key: `status-${notification.id}`,
+                                        icon: notification.status === 'approved' ? '✅' : (notification.status === 'cancelled' ? '↩️' : '📤'),
+                                        message: notification.message,
+                                        createdAt: notification.created_at || null,
+                                        kind: 'status',
+                                        unread: Boolean(notification.unread)
+                                    });
+                                });
+
+                                notifications.sort((a, b) => (Date.parse(b.createdAt || '') || 0) - (Date.parse(a.createdAt || '') || 0));
+                                unreadStatusCount = Number(data.unread_status_count) || 0;
+                                updateBadge((data.request ? 1 : 0) + unreadStatusCount);
+
+                                const signature = notifications.map(notification => `${notification.key}:${notification.message}:${notification.unread ? 'unread' : 'read'}`).join('|');
+                                if (signature === currentSignature) return;
+                                currentSignature = signature;
+                                list.replaceChildren();
+                                emptyMessage.hidden = notifications.length > 0;
+
+                                notifications.forEach(notification => {
+                                    const item = document.createElement('li');
+                                    item.className = `request-bot-item${notification.unread ? ' notification-unread' : ''}`;
+                                    const icon = document.createElement('span');
+                                    icon.className = 'request-bot-item-icon';
+                                    icon.setAttribute('aria-hidden', 'true');
+                                    icon.textContent = notification.icon;
+                                    const text = document.createElement('span');
+                                    if (notification.unread) text.className = 'fw-semibold';
+                                    text.textContent = notification.message;
+                                    item.append(icon, text);
+                                    list.append(item);
+                                });
+                            }
+
+                            async function markStatusNotificationsRead() {
+                                try {
+                                    const response = await fetch(`{{ route('dashboard.request-notifications.read-status-updates') }}`, {
+                                        method: 'POST',
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': @json(csrf_token())
+                                        }
+                                    });
+                                    if (response.ok) checkForRequests();
+                                } catch (error) {
+                                    // Keep the updates unread and retry when the panel is opened again.
+                                }
+                            }
+
+                            async function checkForRequests() {
+                                if (polling || document.visibilityState !== 'visible') return;
+                                polling = true;
+                                try {
+                                    const response = await fetch(`{{ route('dashboard.request-notifications') }}`, {
+                                        headers: { 'Accept': 'application/json' },
+                                        cache: 'no-store'
+                                    });
+                                    if (!response.ok) return;
+                                    const data = await response.json();
+                                    renderNotifications(data);
+                                } catch (error) {
+                                    // Keep polling; a temporary network issue should not disable notifications.
+                                } finally {
+                                    polling = false;
+                                }
+                            }
+
+                            checkForRequests();
+                            window.setInterval(checkForRequests, 15000);
+                            document.addEventListener('visibilitychange', checkForRequests);
+                        })();
+                        </script>
 
                     @endif
 

@@ -102,13 +102,20 @@
 
             <!-- Password -->
             <div class="mb-3">
-                <label class="form-label">Password</label>
-                <input id="password"
-                type="password"
-                name="password"
-                required
-                autocomplete="off"
-                class="form-control">
+                <label for="password" class="form-label">Password</label>
+                <div class="input-group">
+                    <input id="password"
+                    type="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    class="form-control">
+                    <button id="togglePassword" class="btn btn-outline-secondary" type="button"
+                            aria-label="Show password" aria-controls="password" aria-pressed="false">
+                        <i class="bi bi-eye" aria-hidden="true"></i>
+                        <span class="visually-hidden">Show password</span>
+                    </button>
+                </div>
 
                 @error('password')
                     <small class="text-danger">{{ $message }}</small>
@@ -161,6 +168,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const emailInput = document.getElementById("email");
     const rememberCheckbox = document.getElementById("remember_me");
+    const passwordInput = document.getElementById("password");
+    const togglePasswordButton = document.getElementById("togglePassword");
+
+    togglePasswordButton.addEventListener("click", function () {
+        const showPassword = passwordInput.type === "password";
+        passwordInput.type = showPassword ? "text" : "password";
+        togglePasswordButton.setAttribute("aria-label", showPassword ? "Hide password" : "Show password");
+        togglePasswordButton.setAttribute("aria-pressed", String(showPassword));
+        togglePasswordButton.querySelector("i").className = showPassword ? "bi bi-eye-slash" : "bi bi-eye";
+        togglePasswordButton.querySelector(".visually-hidden").textContent = showPassword ? "Hide password" : "Show password";
+    });
 
     // 🧠 Load saved email (if exists)
     const savedEmail = localStorage.getItem("remembered_email");

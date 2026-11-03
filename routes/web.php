@@ -55,6 +55,14 @@
         ->middleware(['auth', 'verified'])
         ->name('dashboard');
 
+    Route::get('/dashboard/book-request-notifications', [DashboardController::class, 'requestNotifications'])
+        ->middleware(['auth', 'verified'])
+        ->name('dashboard.request-notifications');
+
+    Route::post('/dashboard/book-request-notifications/read-status-updates', [DashboardController::class, 'markStatusNotificationsRead'])
+        ->middleware(['auth', 'verified'])
+        ->name('dashboard.request-notifications.read-status-updates');
+
 
     /* =========================
     👤 PROFILE
@@ -76,6 +84,10 @@
     Route::post('/book/{id}/request', [BookController::class, 'requestBook'])
         ->middleware('auth')
         ->name('book.request');
+
+    Route::post('/ai-chat/propose-schedule/{id}', [BookController::class, 'proposeScheduleFromChat'])
+        ->middleware('auth')
+        ->name('ai-chat.propose-schedule');
 
     Route::get('/inbox', [BookController::class, 'inbox'])
         ->middleware('auth')
