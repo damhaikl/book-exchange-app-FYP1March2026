@@ -34,6 +34,7 @@
         .requester i { color:var(--navy-mid); }
         .status-badge { display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:8px;color:#825711;background:#fff2d7;font-size:.74rem;font-weight:800;white-space:nowrap; }
         .status-badge.approved { color:#23744a;background:#e4f4eb; }
+        .status-badge.completed { color:#23744a;background:#e4f4eb; }
         .status-badge.rejected { color:#aa3038;background:#fde8e9; }
         .status-badge.negotiation { color:#245586;background:#e6f1fb; }
         .status-badge.cancelled { color:#526579;background:#e9eef4; }
@@ -89,7 +90,7 @@
         @endif
 
         @forelse($requests as $req)
-            @php($statusClass = in_array($req->status, ['pending', 'approved', 'rejected', 'negotiation', 'cancelled'], true) ? $req->status : '')
+            @php($statusClass = in_array($req->status, ['pending', 'approved', 'rejected', 'negotiation', 'cancelled', 'completed'], true) ? $req->status : '')
             <div class="request-list mb-3">
                 <article class="request-card">
                     <header class="request-card-header">
