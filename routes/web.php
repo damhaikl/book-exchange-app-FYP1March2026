@@ -12,8 +12,8 @@
     use App\Http\Controllers\RequestController;
 
     Route::get('/', function () {
-        return redirect('/homepage');
-    });
+        return view('welcome');
+    })->name('welcome');
 
     /* =========================
     📚 BOOK ROUTES (IMPORTANT ORDER)
