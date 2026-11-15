@@ -64,6 +64,52 @@
         .alert { border:0;border-radius:12px; }
         @media(max-width:760px) { .report-body { grid-template-columns:1fr; } }
         @media(max-width:600px) { .header-inner { padding:14px 18px; } .page-intro { padding:25px 20px 42px; } .page-main { padding:0 14px 36px; } .search-panel { align-items:stretch;flex-direction:column;padding:14px; } .search-panel .btn { width:100%; } .report-header { padding:16px; } .report-body { gap:15px;padding:16px; } .back-link span { display:none; } }
+        .reviewed-by {
+        padding: 12px 14px;
+        margin-bottom: 15px;
+        border: 1px solid #dce5ef;
+        border-radius: 10px;
+        background: #fff;
+        }
+
+        .reviewed-by-label {
+            margin-bottom: 9px;
+            color: #71849a;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .reviewed-by-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reviewer-avatar {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            color: #245586;
+            background: #dceafb;
+            font-size: 1.1rem;
+        }
+
+        .reviewer-name {
+            margin: 0;
+            color: #102f53;
+            font-size: .88rem;
+            font-weight: 800;
+        }
+
+        .reviewer-role {
+            margin: 2px 0 0;
+            color: #63758a;
+            font-size: .75rem;
+        }
     </style>
 </head>
 <body>
@@ -128,6 +174,22 @@
                         <form method="POST" action="{{ route('admin.reports.update', $report->id) }}" class="review-form">
                             @csrf
                             <h3 class="review-form-title"><i class="bi bi-clipboard-check" aria-hidden="true"></i>Review this report</h3>
+                            <div class="reviewed-by">
+                                <p class="reviewed-by-label">
+                                    <i class="bi bi-person-check me-1"></i>
+                                    Reviewed By
+                                </p>
+
+                                <div class="reviewed-by-content">
+                                    <div class="reviewer-avatar">
+                                        <i class="bi bi-person-fill"></i>
+                                    </div>
+                                    <div>
+                                        <p class="reviewer-name">{{ auth()->user()->name }}</p>
+                                        <p class="reviewer-role">Administrator</p>
+                                    </div>
+                                </div>
+                            </div>
                             <label for="status-{{ $report->id }}" class="form-label">Outcome</label>
                             <select id="status-{{ $report->id }}" name="status" class="form-select">
                                 <option value="pending" {{ $report->status == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -145,7 +207,7 @@
             <section class="empty-state">
                 <div class="empty-icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></div>
                 <h2>No pending reports found</h2>
-                <p>There are no reports matching this search in the pending review queue.</p>
+                <p>There are currently no reports waiting for review.</p>
             </section>
         @endforelse
     </main>
