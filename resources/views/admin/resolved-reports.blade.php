@@ -59,7 +59,45 @@
         .empty-state p { max-width:440px;margin:0 auto;color:var(--muted);line-height:1.6; }
         @media(max-width:760px) { .report-body { flex-direction:column; } .report-actions { width:100%; } }
         @media(max-width:600px) { .header-inner { padding:14px 18px; } .page-intro { padding:25px 20px 42px; } .page-main { padding:0 14px 36px; } .search-panel { align-items:stretch;flex-direction:column;padding:14px; } .search-panel .btn { width:100%; } .report-header { padding:16px; } .report-body { gap:14px;padding:16px; } .report-actions .btn { flex:1; } .back-link span { display:none; } }
-    </style>
+        .reviewed-by {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid #dce5ef;
+            border-radius: 10px;
+            background: #f5f8fc;
+        }
+
+        .reviewer-avatar {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border-radius: 10px;
+            color: #245586;
+            background: #dceafb;
+            font-size: 1.1rem;
+        }
+
+        .reviewer-label {
+            margin: 0 0 3px;
+            color: #71849a;
+            font-size: .7rem;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+
+        .reviewer-name {
+            margin: 0;
+            color: #102f53;
+            font-size: .88rem;
+            font-weight: 800;
+        }
+  </style>
 </head>
 <body>
     <header class="site-header">
@@ -117,6 +155,17 @@
                                     <p class="detail-value">{{ $report->admin_review }}</p>
                                 </div>
                             @endif
+                            <div class="reviewed-by">
+                                <div class="reviewer-avatar">
+                                    <i class="bi bi-person-fill"></i>
+                                </div>
+                                <div>
+                                    <p class="reviewer-label">Reviewed By</p>
+                                    <p class="reviewer-name">
+                                        {{ $report->reviewer?->name ?? 'Unknown Administrator' }}
+                                    </p>
+                                </div>
+                            </div>                        
                         </div>
                         <div class="report-actions">
                             <a href="{{ url('/book/' . $report->book_id) }}" class="btn btn-outline-secondary" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>View listing</a>

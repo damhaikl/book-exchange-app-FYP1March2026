@@ -23,4 +23,9 @@ class Report extends Model
     {
         return $this->belongsTo(Book::class);
     }
+
+    public function reviewer()
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
 }
