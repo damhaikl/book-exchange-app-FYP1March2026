@@ -62,6 +62,35 @@
 .request-bot-item-icon { color:#1d4ed8; font-size:16px; }
 .request-bot-empty { padding:20px 16px; color:#64748b; text-align:center; font-size:13px; }
 @media (max-width: 576px) { .request-bot { right:16px; bottom:16px; } }
+.dashboard-shell { max-width:1120px!important; }
+.dashboard-hero { position:relative; display:flex; align-items:center; justify-content:space-between; gap:24px; overflow:hidden; margin-bottom:22px; padding:30px 34px; border-radius:16px; color:#fff; background:radial-gradient(ellipse at 85% 15%,#2b5d8b 0,transparent 36%),linear-gradient(130deg,#0b2542,#173f6b); box-shadow:0 16px 36px rgba(16,47,83,.16); }
+.dashboard-hero::after { position:absolute; right:-72px; top:-180px; width:350px; height:350px; border:1px solid #ffffff20; border-radius:50%; box-shadow:0 0 0 42px #ffffff09,0 0 0 84px #ffffff05; content:""; pointer-events:none; }
+.dashboard-hero-copy { position:relative; z-index:1; }
+.dashboard-hero-kicker { margin:0 0 8px; color:#b8d5f5; font-size:11px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; }
+.dashboard-hero h1 { margin:0; color:#fff; font-size:clamp(1.7rem,3.6vw,2.6rem); font-weight:800; letter-spacing:-.045em; line-height:1.1; }
+.dashboard-hero p:last-child { max-width:580px; margin:10px 0 0; color:#d3e1f0; font-size:14px; line-height:1.65; }
+.dashboard-hero-mark { position:relative; z-index:1; display:grid; flex:0 0 66px; place-items:center; width:66px; height:66px; border:1px solid #ffffff35; border-radius:20px; color:#fff; background:#ffffff16; font-size:30px; }
+.dashboard-panel { padding:26px!important; border:1px solid #dce5ef!important; border-radius:16px!important; background:#fff!important; box-shadow:0 12px 34px rgba(16,47,83,.07)!important; }
+.dash-card { border-color:#dce5ef; border-radius:12px; color:#193b5f; box-shadow:0 3px 10px rgba(16,47,83,.025); }
+.dash-card:hover { background:#f4f8fc; border-color:#a9c5e3; box-shadow:0 7px 18px rgba(16,47,83,.07); }
+.card-icon { background:#dceafb!important; color:#245586!important; }
+.card-label { color:#193b5f; font-weight:700; }
+.card-sub { color:#6c8095; }
+.section-label { color:#245586; font-size:10px; font-weight:800; letter-spacing:.11em; }
+.role-badge { color:#173f6b!important; background:#e7f0fa!important; border:1px solid #d5e4f3; }
+.dash-divider { border-top-color:#e3ebf3; }
+.card-grid-2 { gap:10px; }
+.request-bot-toggle { background:#102f53; }
+.request-bot-toggle:hover { background:#0b2542; }
+.request-bot-panel-header { background:#102f53; }
+@media(max-width:640px) { .dashboard-hero { padding:24px 22px; } .dashboard-hero-mark { flex-basis:48px; width:48px; height:48px; border-radius:15px; font-size:23px; } .dashboard-panel { padding:19px!important; } .card-grid-2 { grid-template-columns:1fr; } }
+.dark .dashboard-panel { border-color:#274360!important; background:#102f53!important; }
+.dark .dash-card { color:#e2edf8; background:#173b60; border-color:#2b4c6d; }
+.dark .dash-card:hover { background:#1d466e; border-color:#527ba3; }
+.dark .card-label { color:#f1f6fb; }
+.dark .card-sub { color:#b5c9dd; }
+.dark .section-label { color:#a9c9ed; }
+.dark .dash-divider { border-top-color:#2b4c6d; }
 </style>
 
 <x-app-layout>
@@ -71,9 +100,17 @@
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 shadow-sm sm:rounded-lg p-6">
+    <div class="py-10">
+        <div class="dashboard-shell mx-auto px-4 sm:px-6 lg:px-8">
+            <section class="dashboard-hero">
+                <div class="dashboard-hero-copy">
+                    <p class="dashboard-hero-kicker">UniKL BookHub</p>
+                    <h1>Welcome back, {{ Auth::user()->name }}</h1>
+                    <p>Find your next read, manage your book exchanges, and keep up with your BookHub activity.</p>
+                </div>
+                <div class="dashboard-hero-mark" aria-hidden="true">📚</div>
+            </section>
+            <div class="dashboard-panel">
 
                 @if(Auth::user()->role == 'super_admin')
 
