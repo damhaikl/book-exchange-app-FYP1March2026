@@ -8,11 +8,10 @@ class BookRequest extends Model
 {
     protected $fillable = [
         'book_id',
+        'offered_book_id',
         'requester_id',
         'owner_id',
         'status',
-
-        // 🧠 SMART MEETING
         'proposed_location',
         'proposed_date',
         'proposed_time',
@@ -25,10 +24,16 @@ class BookRequest extends Model
         return $this->belongsTo(Book::class);
     }
 
+    public function offeredBook()
+    {
+        return $this->belongsTo(Book::class, 'offered_book_id');
+    }
+
     public function requester()
     {
         return $this->belongsTo(User::class, 'requester_id');
     }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');

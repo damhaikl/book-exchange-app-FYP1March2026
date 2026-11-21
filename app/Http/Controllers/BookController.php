@@ -17,8 +17,10 @@ use App\Notifications\BookRequestStatusNotification;
 class BookController extends Controller
 {
     // 📚 Show all books
+    
     public function index(Request $request)
     {
+        // Existing Browse Books search and filter
         $query = Book::query();
 
         if ($request->filled('search')) {
@@ -37,10 +39,77 @@ class BookController extends Controller
             $query->where('condition', $request->condition);
         }
 
+        // Filter by listing type: Sell or Exchange
+        if (in_array($request->listing_type, ['sell', 'exchange'], true)) {
+            $query->where('listing_type', $request->listing_type);
+        }
+
         $books = $query->latest()->get();
 
-        return view('browse', compact('books'));
+        // Exchange matches
+        $exchangeMatches = collect();
+
+        if (auth()->check()) {
+
+            // Get current student's available Exchange listings
+            $myExchangeListings = Book::with('exchangePreferences')
+                ->where('user_id', auth()->id())
+                ->where('listing_type', 'exchange')
+                ->where('status', 'available')
+                ->get();
+
+            // Get other students' available Exchange listings
+            $otherExchangeListings = Book::with('exchangePreferences', 'user')
+                ->where('user_id', '!=', auth()->id())
+                ->where('listing_type', 'exchange')
+                ->where('status', 'available')
+                ->get();
+
+            // Check whether a listing's wanted book matches an offered book
+            $matchesWantedBook = function ($preferences, $book) {
+
+                return $preferences->contains(function ($preference) use ($book) {
+
+                    $wantedCode = strtolower(trim($preference->wanted_subject_id));
+                    $wantedName = strtolower(trim($preference->wanted_book_name));
+
+                    $offeredCode = strtolower(trim($book->subject_id));
+                    $offeredName = strtolower(trim($book->title));
+
+                    return $wantedCode === $offeredCode
+                        && $wantedName === $offeredName;
+                });
+            };
+
+            // Check both directions for a reciprocal match
+            foreach ($myExchangeListings as $myBook) {
+
+                foreach ($otherExchangeListings as $otherBook) {
+
+                    $myWantsOtherBook = $matchesWantedBook(
+                        $myBook->exchangePreferences,
+                        $otherBook
+                    );
+
+                    $otherWantsMyBook = $matchesWantedBook(
+                        $otherBook->exchangePreferences,
+                        $myBook
+                    );
+
+                    if ($myWantsOtherBook && $otherWantsMyBook) {
+
+                        $exchangeMatches->push([
+                            'my_book' => $myBook,
+                            'matched_book' => $otherBook,
+                        ]);
+                    }
+                }
+            }
+        }
+
+        return view('browse', compact('books', 'exchangeMatches'));
     }
+
 
     // 📖 Show book details
     public function show($id)
@@ -127,44 +196,73 @@ class BookController extends Controller
     }
 
     // 💾 Store book
+
     public function store(Request $request)
-{
-    $request->validate([
-        'booktitle' => 'required',
-        'bookdescription' => 'required',
-        'condition' => 'required',
-        'subject_id' => 'required',
-        'subject_category' => ['required', 'string', Rule::in(Book::SUBJECT_CATEGORIES)],
-        'price' => 'required|numeric|min:0',
-        'image' => 'required|image|mimes:jpg,png,jpeg|max:2048',
+    {
+        $validated = $request->validate([
+            'listing_type' => ['required', Rule::in(['sell', 'exchange'])],
 
-        // 🧠 SMART MEETING VALIDATION
-        'meeting_location' => 'required|string|max:255',
-        'meeting_date' => 'required|date',
-        'meeting_time' => 'required|date_format:H:i',
-        'meeting_end_time' => 'required|date_format:H:i|after:meeting_time',
-    ]);
+            // Common book information
+            'booktitle' => 'required|string|max:255',
+            'bookdescription' => 'required|string',
+            'condition' => 'required|string',
+            'subject_id' => 'required|string|max:255',
+            'subject_category' => [
+                'required',
+                'string',
+                Rule::in(Book::SUBJECT_CATEGORIES)
+            ],
+            'image' => 'required|image|mimes:jpg,png,jpeg|max:2048',
 
-    Book::create([
-        'title' => $request->booktitle,
-        'description' => $request->bookdescription,
-        'condition' => $request->condition,
-        'subject_id' => $request->subject_id,
-        'subject_category' => $request->subject_category,
-        'image' => $request->file('image')->store('books', 'public'),
-        'user_id' => auth()->id(),
-        'status' => 'available',
-        'price' => $request->price,
+            // Sell information
+            'price' => 'required_if:listing_type,sell|nullable|numeric|min:0',
 
-        // 📍🧠 SMART MEETING DATA (NEW PART)
-        'meeting_location' => $request->meeting_location,
-        'meeting_date' => $request->meeting_date,
-        'meeting_time' => $request->meeting_time,
-        'meeting_end_time' => $request->meeting_end_time,
-    ]);
+            // Exchange preferences
+            'exchange_preferences' => 'required_if:listing_type,exchange|array|min:1|max:3',
+            'exchange_preferences.*.wanted_subject_id' => 'required|string|max:255',
+            'exchange_preferences.*.wanted_book_name' => 'required|string|max:255',
 
-    return redirect('/book/create')->with('success', 'Book added with meeting schedule!');
-}
+            // Meeting preferences
+            'meeting_location' => 'required|string|max:255',
+            'meeting_date' => 'required|date',
+            'meeting_time' => 'required|date_format:H:i',
+            'meeting_end_time' => 'required|date_format:H:i|after:meeting_time',
+        ]);
+
+        $book = Book::create([
+            'title' => $validated['booktitle'],
+            'description' => $validated['bookdescription'],
+            'condition' => $validated['condition'],
+            'subject_id' => $validated['subject_id'],
+            'subject_category' => $validated['subject_category'],
+            'image' => $request->file('image')->store('books', 'public'),
+            'user_id' => auth()->id(),
+            'status' => 'available',
+            'listing_type' => $validated['listing_type'],
+            'price' => $validated['listing_type'] === 'sell'
+                ? $validated['price']
+                : null,
+
+            'meeting_location' => $validated['meeting_location'],
+            'meeting_date' => $validated['meeting_date'],
+            'meeting_time' => $validated['meeting_time'],
+            'meeting_end_time' => $validated['meeting_end_time'],
+        ]);
+
+        // Save wanted books for Exchange listings
+        if ($validated['listing_type'] === 'exchange') {
+            foreach ($validated['exchange_preferences'] as $preference) {
+                $book->exchangePreferences()->create([
+                    'wanted_subject_id' => $preference['wanted_subject_id'],
+                    'wanted_book_name' => $preference['wanted_book_name'],
+                ]);
+            }
+        }
+
+        return redirect('/book/create')
+            ->with('success', 'Your book listing has been published successfully!');
+    }
+
 
     // 📚 My listings
     public function myListings()

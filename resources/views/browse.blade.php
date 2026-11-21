@@ -35,6 +35,16 @@
         .badge-reserved { background:#fff2d7; color:#8a5a12; }
         .badge-sold { background:#fde8e9; color:#aa3038; }
         .badge-neutral { background:#eaf1f9; color:var(--navy-mid); }
+        /* Listing type labels */
+        .badge-sell {
+            background: #eEE5FF;
+            color: #7041a6;
+        }
+
+        .badge-exchange {
+            background: #dceafb;
+            color: #245586;
+        }
         .btn { border-radius:9px; font-weight:700; }
         .btn-primary { color:#fff; background:var(--navy); border-color:var(--navy); }
         .btn-primary:hover,.btn-primary:focus { color:#fff; background:var(--navy-dark); border-color:var(--navy-dark); }
@@ -58,6 +68,47 @@
         .results-heading h2 { margin:0; color:var(--navy); font-size:1.15rem; font-weight:800; }
         .book-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:14px; }
         .book-grid > * { min-width:0; }
+        .exchange-match-section {
+            background: #fff;
+            border: 1px solid #c9dced;
+            border-radius: 16px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .exchange-match-heading {
+            color: var(--navy);
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: .35rem;
+        }
+
+        .exchange-match-description {
+            color: var(--muted);
+            font-size: .85rem;
+            margin-bottom: 1rem;
+        }
+
+        .match-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: .3rem .55rem;
+            border-radius: 8px;
+            background: #e4f4eb;
+            color: #23744a;
+            font-size: .7rem;
+            font-weight: 800;
+        }
+
+        .match-own-book {
+            background: #f1f6fc;
+            border-radius: 9px;
+            padding: .6rem;
+            margin-top: .5rem;
+            font-size: .76rem;
+            color: var(--navy);
+        }
         .card-status-row { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; margin-bottom:.45rem; }
         .card-status-row .badge-soft { padding:.28rem .45rem; font-size:.66rem; }
         .book-price { margin-top:auto; padding-top:.4rem; color:var(--navy); font-size:.88rem; font-weight:800; }
@@ -150,48 +201,265 @@
         </aside>
 
         <section class="catalogue-results" aria-labelledby="all-books-heading">
-            <div class="results-heading">
-                <h2 id="all-books-heading">All books</h2>
-                <span class="badge-soft badge-neutral"><i class="bi bi-collection"></i>{{ $books->count() }} {{ \Illuminate\Support\Str::plural('book', $books->count()) }}</span>
-            </div>
-            <div class="book-grid">
-        @forelse($books as $book)
-            <div>
-                <article class="book-card">
-                    <img src="{{ asset('storage/' . $book->image) }}" class="book-cover" alt="Cover of {{ $book->title }}">
-                    <div class="book-card-body">
-                        <div class="card-status-row">
-                            @php($statusClass = ['available' => 'badge-available', 'reserved' => 'badge-reserved', 'sold' => 'badge-sold'][$book->status] ?? 'badge-neutral')
-                            <span class="badge-soft {{ $statusClass }}">{{ ucfirst($book->status) }}</span>
+
+            {{-- EXCHANGE MATCHES --}}
+            @auth
+                @if($exchangeMatches->isNotEmpty())
+                    <div class="exchange-match-section">
+
+                        <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                            <h2 class="exchange-match-heading mb-0">
+                                <i class="bi bi-arrow-left-right me-2"></i>
+                                Your Exchange Matches
+                            </h2>
+
+                            <span class="badge-soft badge-neutral">
+                                {{ $exchangeMatches->count() }}
+                                {{ \Illuminate\Support\Str::plural('match', $exchangeMatches->count()) }}
+                            </span>
                         </div>
-                        <h3 class="book-title">{{ $book->title }}</h3>
-                        <div class="book-meta"><i class="bi bi-bookmark me-1"></i>{{ $book->condition }} <span class="mx-1">·</span> Subject {{ $book->subject_id }}</div>
-                        <div class="book-meta"><i class="bi bi-tag me-1"></i>{{ $book->subject_category ?? 'Category not set' }}</div>
-                        @if($book->meeting_location)
-                            <div class="book-meta"><i class="bi bi-geo-alt me-1"></i>{{ $book->meeting_location }}</div>
-                        @endif
-                        <div class="book-price">{{ $book->price ? 'RM ' . number_format($book->price, 2) : 'Free / Not set' }}</div>
-                        <div class="book-actions">
-                            <a href="{{ url('/book/' . $book->id) }}" class="btn btn-primary btn-sm flex-grow-1"><i class="bi bi-eye me-1"></i>View details</a>
-                            @if(auth()->check() && $book->user_id != auth()->id())
-                                <form method="POST" action="{{ route('book.save', $book->id) }}">
-                                    @csrf
-                                    <button type="submit" class="btn btn-outline-secondary btn-sm" title="Save for later" aria-label="Save {{ $book->title }} for later"><i class="bi bi-heart"></i></button>
-                                </form>
-                            @endif
+
+                        <p class="exchange-match-description">
+                            Exchange listings that match your wanted books and preferences.
+                        </p>
+
+                        <div class="book-grid">
+                            @foreach($exchangeMatches as $match)
+                                @php
+                                    $myBook = $match['my_book'];
+                                    $matchedBook = $match['matched_book'];
+                                @endphp
+
+                                <div>
+                                    <article class="book-card">
+
+                                        <img
+                                            src="{{ asset('storage/' . $matchedBook->image) }}"
+                                            class="book-cover"
+                                            alt="Cover of {{ $matchedBook->title }}"
+                                        >
+
+                                        <div class="book-card-body">
+
+                                            <div class="card-status-row">
+                                                <span class="match-label">
+                                                    <i class="bi bi-check-circle-fill"></i>
+                                                    Exchange Match
+                                                </span>
+                                            </div>
+
+                                            <h3 class="book-title">
+                                                {{ $matchedBook->title }}
+                                            </h3>
+
+                                            <div class="book-meta">
+                                                <i class="bi bi-bookmark me-1"></i>
+                                                Subject {{ $matchedBook->subject_id }}
+                                            </div>
+
+                                            <div class="book-meta">
+                                                <i class="bi bi-person me-1"></i>
+                                                Owner: {{ $matchedBook->user->name ?? 'Student' }}
+                                            </div>
+
+                                            <div class="match-own-book">
+                                                <strong>Your offered book:</strong>
+                                                <br>
+                                                {{ $myBook->title }}
+                                                ({{ $myBook->subject_id }})
+                                            </div>
+
+                                            <div class="book-actions">
+                                                <a
+                                                    href="{{ url('/book/' . $matchedBook->id) }}"
+                                                    class="btn btn-primary btn-sm flex-grow-1"
+                                                >
+                                                    <i class="bi bi-eye me-1"></i>
+                                                    View match
+                                                </a>
+                                            </div>
+
+                                        </div>
+                                    </article>
+                                </div>
+                            @endforeach
                         </div>
+
                     </div>
-                </article>
+                @endif
+            @endauth
+
+            {{-- BOOK LISTING FILTER --}}
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+
+                <a
+                    href="{{ route('homepage', request()->except('listing_type')) }}"
+                    class="btn {{ !request('listing_type') ? 'btn-primary' : 'btn-outline-primary' }} btn-sm"
+                >
+                    <i class="bi bi-grid me-1"></i>
+                    All Books
+                </a>
+
+                <a
+                    href="{{ route('homepage', array_merge(request()->query(), ['listing_type' => 'sell'])) }}"
+                    class="btn {{ request('listing_type') === 'sell' ? 'btn-primary' : 'btn-outline-primary' }} btn-sm"
+                >
+                    <i class="bi bi-tag me-1"></i>
+                    Sell Books
+                </a>
+
+                <a
+                    href="{{ route('homepage', array_merge(request()->query(), ['listing_type' => 'exchange'])) }}"
+                    class="btn {{ request('listing_type') === 'exchange' ? 'btn-primary' : 'btn-outline-primary' }} btn-sm"
+                >
+                    <i class="bi bi-arrow-left-right me-1"></i>
+                    Exchange Books
+                </a>
+
             </div>
-        @empty
-            <div class="empty-state">
-                <div class="fs-2 text-primary mb-2"><i class="bi bi-search"></i></div>
-                <h3 class="h6 fw-semibold text-dark">No books found</h3>
-                <p class="mb-3">Try another title, subject ID, category, or condition.</p>
-                <a href="{{ route('homepage') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-counterclockwise me-1"></i>Clear filters</a>
+
+            {{-- ALL BOOKS --}}
+            <div class="results-heading">
+                <h2 id="all-books-heading">
+                    {{ request('listing_type') === 'sell'
+                        ? 'Sell Books'
+                        : (request('listing_type') === 'exchange' ? 'Exchange Books' : 'All Books') }}
+                </h2>
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-collection"></i>
+                    {{ $books->count() }}
+                    {{ \Illuminate\Support\Str::plural('book', $books->count()) }}
+                </span>
             </div>
-        @endforelse
+
+            <div class="book-grid">
+                @forelse($books as $book)
+                    <div>
+                        <article class="book-card">
+
+                            <img
+                                src="{{ asset('storage/' . $book->image) }}"
+                                class="book-cover"
+                                alt="Cover of {{ $book->title }}"
+                            >
+
+                            <div class="book-card-body">
+
+                                <div class="card-status-row">
+
+                                    <div class="d-flex flex-wrap gap-1">
+
+                                        {{-- Book availability --}}
+                                        @php
+                                            $statusClass = [
+                                                'available' => 'badge-available',
+                                                'reserved' => 'badge-reserved',
+                                                'sold' => 'badge-sold'
+                                            ][$book->status] ?? 'badge-neutral';
+                                        @endphp
+
+                                        <span class="badge-soft {{ $statusClass }}">
+                                            {{ ucfirst($book->status) }}
+                                        </span>
+
+                                        {{-- Listing type --}}
+                                        @if($book->listing_type === 'exchange')
+                                            <span class="badge-soft badge-exchange">
+                                                <i class="bi bi-arrow-left-right"></i>
+                                                EXCHANGE
+                                            </span>
+                                        @else
+                                            <span class="badge-soft badge-sell">
+                                                <i class="bi bi-tag"></i>
+                                                SELL
+                                            </span>
+                                        @endif
+
+                                    </div>
+
+                                </div>
+
+                                <h3 class="book-title">
+                                    {{ $book->title }}
+                                </h3>
+
+                                <div class="book-meta">
+                                    <i class="bi bi-bookmark me-1"></i>
+                                    {{ $book->condition }}
+                                    <span class="mx-1">·</span>
+                                    Subject {{ $book->subject_id }}
+                                </div>
+
+                                <div class="book-meta">
+                                    <i class="bi bi-tag me-1"></i>
+                                    {{ $book->subject_category ?? 'Category not set' }}
+                                </div>
+
+                                @if($book->meeting_location)
+                                    <div class="book-meta">
+                                        <i class="bi bi-geo-alt me-1"></i>
+                                        {{ $book->meeting_location }}
+                                    </div>
+                                @endif
+
+                                <div class="book-price">
+                                    {{ $book->price ? 'RM ' . number_format($book->price, 2) : 'Free / Not set' }}
+                                </div>
+
+                                <div class="book-actions">
+                                    <a
+                                        href="{{ url('/book/' . $book->id) }}"
+                                        class="btn btn-primary btn-sm flex-grow-1"
+                                    >
+                                        <i class="bi bi-eye me-1"></i>
+                                        View details
+                                    </a>
+
+                                    @if(auth()->check() && $book->user_id != auth()->id())
+                                        <form method="POST" action="{{ route('book.save', $book->id) }}">
+                                            @csrf
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-outline-secondary btn-sm"
+                                                title="Save for later"
+                                                aria-label="Save {{ $book->title }} for later"
+                                            >
+                                                <i class="bi bi-heart"></i>
+                                            </button>
+                                        </form>
+                                    @endif
+                                </div>
+
+                            </div>
+                        </article>
+                    </div>
+                @empty
+                    <div class="empty-state">
+                        <div class="fs-2 text-primary mb-2">
+                            <i class="bi bi-search"></i>
+                        </div>
+
+                        <h3 class="h6 fw-semibold text-dark">
+                            No books found
+                        </h3>
+
+                        <p class="mb-3">
+                            Try another title, subject ID, category, or condition.
+                        </p>
+
+                        <a
+                            href="{{ route('homepage') }}"
+                            class="btn btn-outline-secondary btn-sm"
+                        >
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>
+                            Clear filters
+                        </a>
+                    </div>
+                @endforelse
             </div>
+
         </section>
     </div>
 </main>

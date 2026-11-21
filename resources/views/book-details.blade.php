@@ -57,12 +57,21 @@
         .modal-footer { gap:.5rem;padding:0 1.4rem 1.35rem;border-top:0; }
         .modal-footer .btn { border-radius:9px; }
         @media(max-width:767.98px) { .book-cover { min-height:220px;max-height:340px; } .details-panel { padding:1rem; } }
+        .badge-sell {
+            background: #eee5ff;
+            color: #7041a6;
+        }
+
+        .badge-exchange {
+            background: #dceafb;
+            color: #245586;
+        }
     </style>
 </head>
 <body>
 <header class="details-header">
     <div class="container details-main d-flex justify-content-between align-items-center py-3">
-        <a href="{{ route('homepage') }}" class="text-decoration-none text-dark fw-bold"><i class="bi bi-book-half text-primary me-2"></i>UniKLBook Hub</a>
+        <a href="{{ route('homepage') }}" class="text-decoration-none text-white fw-bold"><i class="bi bi-book-half text-primary me-2"></i>UniKLBook Hub</a>
         <div class="d-flex gap-2">
             @auth
                 <a href="{{ route('book.saved') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-heart me-sm-1"></i><span class="d-none d-sm-inline">Saved books</span></a>
@@ -88,17 +97,95 @@
                 <img src="{{ asset('storage/' . $book->image) }}" class="book-cover" alt="Cover of {{ $book->title }}">
             </div>
             <div class="col-12 col-md-7">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                    @php($statusClass = ['available' => 'badge-available', 'reserved' => 'badge-reserved', 'sold' => 'badge-sold'][$book->status] ?? 'badge-neutral')
-                    <span class="badge-soft {{ $statusClass }}"><i class="bi bi-circle-fill" style="font-size:7px"></i>{{ ucfirst($book->status) }}</span>
-                    <span class="badge-soft badge-neutral"><i class="bi bi-bookmark"></i>{{ $book->condition }}</span>
-                    <span class="badge-soft badge-neutral"><i class="bi bi-journal-text"></i>Subject {{ $book->subject_id }}</span>
-                    <span class="badge-soft badge-neutral"><i class="bi bi-tag"></i>{{ $book->subject_category ?? 'Category not set' }}</span>
-                </div>
+                
+            <div class="d-flex flex-wrap gap-2 mb-3">
+
+                @php
+                    $statusClass = [
+                        'available' => 'badge-available',
+                        'reserved' => 'badge-reserved',
+                        'sold' => 'badge-sold'
+                    ][$book->status] ?? 'badge-neutral';
+                @endphp
+
+                {{-- Availability --}}
+                <span class="badge-soft {{ $statusClass }}">
+                    <i class="bi bi-circle-fill" style="font-size:7px"></i>
+                    {{ ucfirst($book->status) }}
+                </span>
+
+                {{-- Listing type --}}
+                @if($book->listing_type === 'exchange')
+                    <span class="badge-soft badge-exchange">
+                        <i class="bi bi-arrow-left-right"></i>
+                        EXCHANGE
+                    </span>
+                @else
+                    <span class="badge-soft badge-sell">
+                        <i class="bi bi-tag"></i>
+                        SELL
+                    </span>
+                @endif
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-bookmark"></i>
+                    {{ $book->condition }}
+                </span>
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-journal-text"></i>
+                    Subject {{ $book->subject_id }}
+                </span>
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-tag"></i>
+                    {{ $book->subject_category ?? 'Category not set' }}
+                </span>
+
+            </div>
+
                 <div class="page-kicker mb-2">Book details</div>
                 <h1 class="book-title mb-3">{{ $book->title }}</h1>
-                <p class="book-description">{{ $book->description }}</p>
-                <p class="price-tag mb-4"><i class="bi bi-tag me-1"></i>{{ $book->price ? 'RM ' . number_format($book->price, 2) : 'Free / Not set' }}</p>
+                
+                @if($book->listing_type === 'exchange')
+                    <div class="mt-3 mb-4">
+                        <h2 class="h6 fw-bold mb-2">
+                            <i class="bi bi-arrow-left-right text-primary me-2"></i>
+                            Books Wanted in Exchange
+                        </h2>
+
+                        @if($book->exchangePreferences->count() > 0)
+                            <div class="d-flex flex-column gap-2">
+                                @foreach($book->exchangePreferences as $preference)
+                                    <div class="p-3 rounded-3" style="background:#f1f6fc;">
+                                        <div class="fw-semibold">
+                                            {{ $preference->wanted_book_name }}
+                                        </div>
+                                        <small class="text-secondary">
+                                            Subject {{ $preference->wanted_subject_id }}
+                                        </small>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-secondary small mb-0">
+                                No exchange preferences provided.
+                            </p>
+                        @endif
+                    </div>
+                @endif
+
+                @if($book->listing_type === 'sell')
+                    <p class="price-tag mb-4">
+                        <i class="bi bi-tag me-1"></i>
+                        {{ $book->price !== null ? 'RM ' . number_format($book->price, 2) : 'Price not set' }}
+                    </p>
+                @else
+                    <p class="price-tag mb-4">
+                        <i class="bi bi-arrow-left-right me-1"></i>
+                        Book Exchange
+                    </p>
+                @endif
 
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     @if($book->user_id != auth()->id())
@@ -143,7 +230,12 @@
         <div class="col-12 col-lg-7">
             <section class="info-card h-100">
                 <div class="page-kicker mb-3">Meeting information</div>
-                <h2 class="h6 fw-semibold mb-3"><i class="bi bi-geo-alt text-primary me-2"></i>Seller’s proposed schedule</h2>
+                
+                <h2 class="h6 fw-semibold mb-3">
+                    <i class="bi bi-geo-alt text-primary me-2"></i>
+                    Owner's Preferred Meeting Schedule
+                </h2>
+
                 <div class="row g-3">
                     <div class="col-sm-6"><div class="info-label">Location</div><p class="info-value">{{ $book->meeting_location ?? 'Not set yet' }}</p></div>
                     <div class="col-sm-6"><div class="info-label">Date</div><p class="info-value">{{ $book->meeting_date ? \Carbon\Carbon::parse($book->meeting_date)->format('M j, Y') : 'Not set yet' }}</p></div>
