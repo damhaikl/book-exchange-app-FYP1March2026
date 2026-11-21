@@ -71,7 +71,7 @@ use Illuminate\Support\Str;
                 <span class="brand-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span>
                 <span>UniKL BookHub</span>
             </a>
-            <a href="{{ route('dashboard') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Back to dashboard</span></a>
+            <a href="{{ route('dashboard') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Back to Dashboard</span></a>
         </div>
         <div class="page-intro">
             <div class="intro-row">

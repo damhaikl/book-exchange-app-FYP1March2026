@@ -150,11 +150,51 @@
 
     <section class="catalogue-panel mb-4">
         <div class="page-kicker">Book discovery</div>
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3">
-            <div>
-                <h1 class="page-title">Browse books</h1>
-                <p class="page-subtitle">Search the catalogue and find your next book.</p>
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-4">
+
+                {{-- Browse Books Title --}}
+                <div>
+                    <h1 class="page-title">Browse books</h1>
+                    <p class="page-subtitle mb-0">Search the catalogue and find your next book.</p>
+                </div>
+
+                {{-- Book Statistics --}}
+                @php
+                    $totalBooks = \App\Models\Book::count();
+                    $sellBooks = \App\Models\Book::where('listing_type', 'sell')->count();
+                    $exchangeBooks = \App\Models\Book::where('listing_type', 'exchange')->count();
+                @endphp
+
+                <div class="d-flex gap-2 gap-md-3">
+
+                    {{-- Total Books --}}
+                    <div class="p-3 rounded-3" style="background:#eaf1f9; min-width:180px;">
+                        <h3 class="fw-bold mb-1" style="color:var(--navy);">
+                            {{ $totalBooks }}
+                        </h3>
+                        <p class="small mb-0" style="color:var(--muted);">Total books</p>
+                    </div>
+
+                    {{-- For Sale --}}
+                    <div class="p-3 rounded-3" style="background:#eee5ff; min-width:180px;">
+                        <h3 class="fw-bold mb-1" style="color:#7041a6;">
+                            {{ $sellBooks }}
+                        </h3>
+                        <p class="small mb-0" style="color:#7041a6;">For sale</p>
+                    </div>
+
+                    {{-- For Exchange --}}
+                    <div class="p-3 rounded-3" style="background:#dceafb; min-width:180px;">
+                        <h3 class="fw-bold mb-1" style="color:#245586;">
+                            {{ $exchangeBooks }}
+                        </h3>
+                        <p class="small mb-0" style="color:#245586;">For exchange</p>
+                    </div>
+                </div>
             </div>
+        </div>
+    </div>
+</div>
         </div>
     </section>
 
@@ -320,18 +360,71 @@
 
             {{-- ALL BOOKS --}}
             <div class="results-heading">
-                <h2 id="all-books-heading">
-                    {{ request('listing_type') === 'sell'
-                        ? 'Sell Books'
-                        : (request('listing_type') === 'exchange' ? 'Exchange Books' : 'All Books') }}
-                </h2>
 
-                <span class="badge-soft badge-neutral">
-                    <i class="bi bi-collection"></i>
-                    {{ $books->count() }}
-                    {{ \Illuminate\Support\Str::plural('book', $books->count()) }}
-                </span>
+                {{-- Heading and Book Count --}}
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h2 id="all-books-heading" class="mb-0">
+                        {{ request('listing_type') === 'sell'
+                            ? 'Sell Books'
+                            : (request('listing_type') === 'exchange' ? 'Exchange Books' : 'All Books') }}
+                    </h2>
+
+                    <span class="badge-soft badge-neutral">
+                        <i class="bi bi-collection"></i>
+                        {{ $books->count() }}
+                        {{ \Illuminate\Support\Str::plural('book', $books->count()) }}
+                    </span>
+                </div>
+
+                {{-- Sorting --}}
+                <form method="GET" action="{{ route('homepage') }}"
+                    class="d-flex align-items-center gap-2">
+
+                    {{-- Preserve existing filters --}}
+                    @foreach(request()->except('sort', 'page') as $key => $value)
+                        @if(!is_array($value))
+                            <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                        @endif
+                    @endforeach
+
+                    <label for="sort" class="small fw-semibold text-secondary text-nowrap">
+                        <i class="bi bi-sort-down me-1"></i>Sort by:
+                    </label>
+
+                    <select name="sort" id="sort"
+                            class="form-select form-select-sm"
+                            style="width:180px;"
+                            onchange="this.form.submit()">
+
+                        <option value="newest" {{ request('sort', 'newest') === 'newest' ? 'selected' : '' }}>
+                            Newest First
+                        </option>
+
+                        <option value="oldest" {{ request('sort') === 'oldest' ? 'selected' : '' }}>
+                            Oldest First
+                        </option>
+
+                        <option value="title_asc" {{ request('sort') === 'title_asc' ? 'selected' : '' }}>
+                            Book Title: A–Z
+                        </option>
+
+                        <option value="title_desc" {{ request('sort') === 'title_desc' ? 'selected' : '' }}>
+                            Book Title: Z–A
+                        </option>
+
+                        <option value="price_asc" {{ request('sort') === 'price_asc' ? 'selected' : '' }}>
+                            Price: Low to High
+                        </option>
+
+                        <option value="price_desc" {{ request('sort') === 'price_desc' ? 'selected' : '' }}>
+                            Price: High to Low
+                        </option>
+
+                    </select>
+                </form>
+
             </div>
+
 
             <div class="book-grid">
                 @forelse($books as $book)

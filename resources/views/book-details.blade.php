@@ -21,6 +21,16 @@
         .book-description { color:#52677d; line-height:1.75; white-space:pre-line; }
         .price-tag { color:var(--navy); font-size:1.45rem; font-weight:800; }
         .badge-soft { display:inline-flex; align-items:center; gap:.35rem; padding:.38rem .68rem; border-radius:8px; font-size:.73rem; font-weight:700; }
+        .badge-your-listing {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .55rem .85rem;
+            border-radius: 9px;
+            font-size: .875rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
         .badge-available { background:#e4f4eb; color:#23744a; }
         .badge-reserved { background:#fff2d7; color:#8a5a12; }
         .badge-sold { background:#fde8e9; color:#aa3038; }
@@ -162,7 +172,7 @@
                                             {{ $preference->wanted_book_name }}
                                         </div>
                                         <small class="text-secondary">
-                                            Subject {{ $preference->wanted_subject_id }}
+                                            {{ $preference->wanted_subject_id }}
                                         </small>
                                     </div>
                                 @endforeach
@@ -196,7 +206,7 @@
                     @endif
 
                     @if($book->user_id == auth()->id())
-                        <span class="badge-soft badge-neutral"><i class="bi bi-person-check"></i>Your listing</span>
+                        <span class="badge-your-listing badge-neutral"><i class="bi bi-person-check"></i>Your listing</span>
                     @elseif($book->status == 'available')
                         @if($existingRequest)
                             @if($existingRequest->status === 'negotiation')

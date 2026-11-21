@@ -44,7 +44,36 @@ class BookController extends Controller
             $query->where('listing_type', $request->listing_type);
         }
 
-        $books = $query->latest()->get();
+        // Sorting options
+        $sort = $request->input('sort', 'newest');
+
+        switch ($sort) {
+            case 'oldest':
+                $query->orderBy('created_at', 'asc');
+                break;
+
+            case 'title_asc':
+                $query->orderBy('title', 'asc');
+                break;
+
+            case 'title_desc':
+                $query->orderBy('title', 'desc');
+                break;
+
+            case 'price_asc':
+                $query->orderBy('price', 'asc');
+                break;
+
+            case 'price_desc':
+                $query->orderBy('price', 'desc');
+                break;
+
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+
+        $books = $query->get();
 
         // Exchange matches
         $exchangeMatches = collect();
