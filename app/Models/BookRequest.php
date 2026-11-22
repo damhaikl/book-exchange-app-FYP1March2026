@@ -16,7 +16,14 @@ class BookRequest extends Model
         'proposed_date',
         'proposed_time',
         'proposed_end_time',
-        'schedule_type'
+        'schedule_type',
+        'requester_confirmed_handover',
+        'owner_confirmed_handover',
+    ];
+
+    protected $casts = [
+        'requester_confirmed_handover' => 'boolean',
+        'owner_confirmed_handover' => 'boolean',
     ];
 
     public function book()
@@ -37,5 +44,10 @@ class BookRequest extends Model
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function exchangeOffer()
+    {
+        return $this->hasOne(ExchangeOffer::class);
     }
 }

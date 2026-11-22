@@ -111,17 +111,20 @@
             <div class="d-flex flex-wrap gap-2 mb-3">
 
                 @php
+                   $displayStatus = $book->status;
+
                     $statusClass = [
                         'available' => 'badge-available',
                         'reserved' => 'badge-reserved',
-                        'sold' => 'badge-sold'
-                    ][$book->status] ?? 'badge-neutral';
+                        'sold' => 'badge-sold',
+                        'exchanged' => 'badge-sold'
+                    ][$displayStatus] ?? 'badge-neutral';
                 @endphp
 
                 {{-- Availability --}}
                 <span class="badge-soft {{ $statusClass }}">
                     <i class="bi bi-circle-fill" style="font-size:7px"></i>
-                    {{ ucfirst($book->status) }}
+                    {{ ucfirst($displayStatus) }}
                 </span>
 
                 {{-- Listing type --}}
@@ -204,29 +207,97 @@
                             <button type="submit" class="btn btn-outline-danger"><i class="bi bi-heart me-1"></i>Save for later</button>
                         </form>
                     @endif
-
+                    
                     @if($book->user_id == auth()->id())
-                        <span class="badge-your-listing badge-neutral"><i class="bi bi-person-check"></i>Your listing</span>
-                    @elseif($book->status == 'available')
-                        @if($existingRequest)
-                            @if($existingRequest->status === 'negotiation')
-                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#existingProposalModal"><i class="bi bi-arrow-left-right me-1"></i>Manage schedule proposal</button>
-                            @else
-                                <button type="button" class="btn btn-outline-secondary" disabled><i class="bi bi-check2 me-1"></i>Request already sent</button>
-                            @endif
-                        @else
-                            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request sent', 'Your request has been sent to the seller.')">
-                                @csrf
-                                <button type="submit" class="btn btn-primary" onclick="return confirm('Request this book?')"><i class="bi bi-handshake me-1"></i>Request book</button>
-                            </form>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#proposeModal"><i class="bi bi-calendar2-plus me-1"></i>Propose a time</button>
-                        @endif
-                    @else
-                        <span class="badge-soft badge-sold"><i class="bi bi-slash-circle"></i>Not available</span>
-                    @endif
 
-                    @if(auth()->id() == $book->user_id)
-                        <a href="{{ route('book.schedule.edit', $book->id) }}" class="btn btn-outline-primary"><i class="bi bi-calendar2-week me-1"></i>Edit availability</a>
+                        {{-- Owner's listing --}}
+                        <span class="badge-your-listing badge-neutral">
+                            <i class="bi bi-person-check"></i>
+                            Your listing
+                        </span>
+
+                    @elseif($book->status == 'available')
+
+                        {{-- Exchange listing --}}
+                        @if($book->listing_type === 'exchange')
+
+                            @if($existingRequest && $existingRequest->book->listing_type === 'exchange')
+                                <button type="button" class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-check2 me-1"></i>
+                                    Exchange Request Already Sent
+                                </button>
+                            @else
+                                <a href="{{ route('exchange.request.create', $book->id) }}"
+                                class="btn btn-primary">
+                                    <i class="bi bi-arrow-left-right me-1"></i>
+                                    Request Exchange
+                                </a>
+                            @endif
+
+                        {{-- Sell listing --}}
+                        @else
+
+                            {{-- Existing Sell request functionality --}}
+                            @if($existingRequest)
+
+                                @if($existingRequest->status === 'negotiation')
+                                    <button type="button" class="btn btn-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#existingProposalModal">
+                                        <i class="bi bi-arrow-left-right me-1"></i>
+                                        Manage schedule proposal
+                                    </button>
+                                @else
+                                    <button type="button" class="btn btn-outline-secondary" disabled>
+                                        <i class="bi bi-check2 me-1"></i>
+                                        Request already sent
+                                    </button>
+                                @endif
+
+                            @else
+
+                                <form method="POST"
+                                    action="{{ route('book.request', $book->id) }}"
+                                    onsubmit="handleSubmit(event, 'Request sent', 'Your request has been sent to the seller.')">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary"
+                                            onclick="return confirm('Request this book?')">
+                                        <i class="bi bi-handshake me-1"></i>
+                                        Request Book
+                                    </button>
+                                </form>
+
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#proposeModal">
+                                    <i class="bi bi-calendar2-plus me-1"></i>
+                                    Propose a time
+                                </button>
+
+                            @endif
+
+                        @endif
+
+                    @else
+
+                        {{-- Book unavailable --}}
+                        <span class="badge-soft badge-sold">
+                            <i class="bi bi-slash-circle"></i>
+                            @if($book->status === 'reserved')
+                                This book is currently reserved.
+                            @elseif($book->status === 'sold')
+                                This book has been sold.
+                            @elseif($book->status === 'exchanged')
+                                This book has been exchanged.
+                            @else
+                                This book is currently unavailable.
+                            @endif
+                        </span>
+
+                    @endif
+                    @if(auth()->id() == $book->user_id && $book->status === 'available')
+                        <a href="{{ route('book.schedule.edit', $book->id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-calendar2-week me-1"></i>Edit availability
+                        </a>
                     @endif
                     @if($book->user_id != auth()->id())
                         <button type="button" class="btn btn-outline-secondary" onclick="openReportPopup()"><i class="bi bi-flag me-1"></i>Report book</button>

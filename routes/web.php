@@ -85,6 +85,50 @@
         ->middleware('auth')
         ->name('book.request');
 
+    // Exchange request page
+    Route::get('/book/{id}/exchange-request', [BookController::class, 'showExchangeRequest'])
+        ->middleware('auth')
+        ->name('exchange.request.create');
+
+    Route::post('/book/{id}/exchange-request', [BookController::class, 'submitExchangeRequest'])
+    ->middleware('auth')
+    ->name('exchange.request.store');
+
+
+    // ==========================================
+    // EXCHANGE REQUEST ACTIONS
+    // ==========================================
+
+    // Student B: Accept Exchange
+    Route::post('/exchange-request/{id}/accept', [BookController::class, 'acceptExchange'])
+        ->middleware('auth')
+        ->name('exchange.accept');
+
+    // Student B or Student A: Propose another schedule
+    Route::post('/exchange-request/{id}/counter-schedule', [BookController::class, 'counterExchangeSchedule'])
+        ->middleware('auth')
+        ->name('exchange.counter-schedule');
+
+    // Student A: Accept Student B's proposed schedule
+    Route::post('/exchange-request/{id}/accept-schedule', [BookController::class, 'acceptExchangeSchedule'])
+        ->middleware('auth')
+        ->name('exchange.accept-schedule');
+
+    // Student B: Reject Exchange
+    Route::post('/exchange-request/{id}/reject', [BookController::class, 'rejectExchange'])
+        ->middleware('auth')
+        ->name('exchange.reject');
+
+    // Student A: Cancel Exchange
+    Route::post('/exchange-request/{id}/cancel', [BookController::class, 'cancelExchange'])
+        ->middleware('auth')
+        ->name('exchange.cancel');
+
+    // Both students: Confirm physical handover
+    Route::post('/exchange-request/{id}/confirm-handover', [BookController::class, 'confirmExchangeHandover'])
+        ->middleware('auth')
+        ->name('exchange.confirm-handover');
+
     Route::post('/ai-chat/propose-schedule/{id}', [BookController::class, 'proposeScheduleFromChat'])
         ->middleware('auth')
         ->name('ai-chat.propose-schedule');

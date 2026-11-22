@@ -448,10 +448,10 @@
                                             $statusClass = [
                                                 'available' => 'badge-available',
                                                 'reserved' => 'badge-reserved',
-                                                'sold' => 'badge-sold'
+                                                'sold' => 'badge-sold',
+                                                'exchanged' => 'badge-sold'
                                             ][$book->status] ?? 'badge-neutral';
                                         @endphp
-
                                         <span class="badge-soft {{ $statusClass }}">
                                             {{ ucfirst($book->status) }}
                                         </span>

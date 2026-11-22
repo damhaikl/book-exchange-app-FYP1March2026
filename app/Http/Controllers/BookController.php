@@ -7,12 +7,15 @@ use App\Models\Book;
 use App\Models\BookRequest;
 use App\Models\SavedBook;
 use App\Models\Review;
+use App\Models\ExchangeOffer;
 use App\Mail\BookStatusMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Models\BookSchedule;
 use Illuminate\Validation\Rule;
 use App\Notifications\BookRequestStatusNotification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class BookController extends Controller
 {
@@ -143,7 +146,8 @@ class BookController extends Controller
     // 📖 Show book details
     public function show($id)
     {
-        $book = Book::findOrFail($id);
+        $book = Book::with(['exchangePreferences', 'user'])
+            ->findOrFail($id);
 
         $existingRequest = BookRequest::where('book_id', $id)
             ->where('requester_id', auth()->id())
@@ -166,6 +170,331 @@ class BookController extends Controller
             'sellerRating',
             'sellerReviews'
         ));
+    }
+
+    public function showExchangeRequest($id)
+    {
+        // Get the Exchange listing and its wanted book preferences
+        $book = Book::with(['exchangePreferences', 'user'])
+            ->findOrFail($id);
+
+        // Only Exchange listings can receive Exchange requests
+        if ($book->listing_type !== 'exchange') {
+            abort(404);
+        }
+
+        // Prevent students from requesting their own listing
+        if ($book->user_id == auth()->id()) {
+            return redirect()->route('homepage')
+                ->with('error', 'You cannot request your own book.');
+        }
+
+        // Only available Exchange listings can receive requests
+        if ($book->status !== 'available') {
+            return redirect()->back()
+                ->with('error', 'This book is no longer available.');
+        }
+
+        // Get the owner's wanted book preferences
+        $preferences = $book->exchangePreferences;
+
+        // Get the current student's available book listings
+        // These can be Sell or Exchange listings
+        $matchingBooks = Book::where('user_id', auth()->id())
+            ->where('status', 'available')
+            ->get()
+            ->filter(function ($ownedBook) use ($preferences) {
+
+                return $preferences->contains(function ($preference) use ($ownedBook) {
+
+                    return strtolower(trim($ownedBook->subject_id))
+                            === strtolower(trim($preference->wanted_subject_id))
+                        && strtolower(trim($ownedBook->title))
+                            === strtolower(trim($preference->wanted_book_name));
+
+                });
+
+            })
+            ->values();
+
+        return view('exchange-request', compact(
+            'book',
+            'preferences',
+            'matchingBooks'
+        ));
+    }
+   
+    public function submitExchangeRequest(Request $request, $id)
+    {
+        // Get the Exchange listing
+        $book = Book::with('exchangePreferences')->findOrFail($id);
+
+        // Only Exchange listings can receive Exchange requests
+        if ($book->listing_type !== 'exchange') {
+            abort(404);
+        }
+
+        // Prevent requesting own listing
+        if ($book->user_id == auth()->id()) {
+            return redirect()->route('homepage')
+                ->with('error', 'You cannot request your own book.');
+        }
+
+        // Check listing availability
+        if ($book->status !== 'available') {
+            return redirect()->back()
+                ->with('error', 'This book is no longer available.');
+        }
+
+        // Validate submitted information
+        $validated = $request->validate([
+
+            'preference_id' => [
+                'required',
+                'integer'
+            ],
+
+            'offer_type' => [
+                'required',
+                'in:existing,manual'
+            ],
+
+            'offered_book_id' => [
+                'required_if:offer_type,existing',
+                'nullable',
+                'integer'
+            ],
+
+            'manual_condition' => [
+                'required_if:offer_type,manual',
+                'nullable',
+                'in:New,Like New,Good,Fair'
+            ],
+
+            'manual_image' => [
+                'required_if:offer_type,manual',
+                'nullable',
+                'image',
+                'max:5120'
+            ],
+
+            // Schedule selection
+            'schedule_choice' => [
+                'required',
+                'in:owner,custom'
+            ],
+
+            // Only required when proposing a custom schedule
+            'proposed_location' => [
+                'required_if:schedule_choice,custom',
+                'nullable',
+                'string',
+                'max:255'
+            ],
+
+            'proposed_date' => [
+                'required_if:schedule_choice,custom',
+                'nullable',
+                'date',
+                'after_or_equal:today'
+            ],
+
+            'proposed_time' => [
+                'required_if:schedule_choice,custom',
+                'nullable',
+                'date_format:H:i'
+            ],
+
+            'proposed_end_time' => [
+                'required_if:schedule_choice,custom',
+                'nullable',
+                'date_format:H:i',
+                'after:proposed_time'
+            ],
+
+        ]);
+
+        // Verify that the selected preference belongs to this Exchange listing
+        $preference = $book->exchangePreferences()
+            ->where('id', $validated['preference_id'])
+            ->first();
+
+        if (!$preference) {
+            return back()->withErrors([
+                'preference_id' => 'Invalid book preference selected.'
+            ])->withInput();
+        }
+
+        // Prevent duplicate active Exchange requests
+        $existingRequest = BookRequest::where('book_id', $book->id)
+            ->where('requester_id', auth()->id())
+            ->whereIn('status', ['pending', 'approved', 'negotiation'])
+            ->exists();
+
+        if ($existingRequest) {
+            return redirect()->route('book.show', $book->id)
+                ->with('error', 'You already have an active Exchange request for this book.');
+        }
+
+        // Determine which schedule to use
+        if ($validated['schedule_choice'] === 'owner') {
+
+            // Use the Exchange listing owner's preferred schedule
+            $proposedLocation = $book->meeting_location;
+            $proposedDate = $book->meeting_date;
+            $proposedTime = $book->meeting_time;
+            $proposedEndTime = $book->meeting_end_time;
+
+            // Make sure the owner has provided a complete schedule
+            if (
+                empty($proposedLocation) ||
+                empty($proposedDate) ||
+                empty($proposedTime) ||
+                empty($proposedEndTime)
+            ) {
+                return back()->withErrors([
+                    'schedule_choice' => 'The book owner has not provided a complete meeting schedule. Please propose your own schedule.'
+                ])->withInput();
+            }
+
+            $scheduleType = 'owner';
+
+        } else {
+
+            // Use the requester's proposed schedule
+            $proposedLocation = $validated['proposed_location'];
+            $proposedDate = $validated['proposed_date'];
+            $proposedTime = $validated['proposed_time'];
+            $proposedEndTime = $validated['proposed_end_time'];
+
+            $scheduleType = 'requester';
+        }
+
+        // Prepare offered book details
+        $offeredTitle = $preference->wanted_book_name;
+        $offeredSubject = $preference->wanted_subject_id;
+        $offeredImage = null;
+
+        if ($validated['offer_type'] === 'existing') {
+
+            // Get the selected existing listing owned by the current student
+            $ownedBook = Book::where('id', $validated['offered_book_id'])
+                ->where('user_id', auth()->id())
+                ->where('status', 'available')
+                ->first();
+
+            if (!$ownedBook) {
+                return back()->withErrors([
+                    'offered_book_id' => 'The selected book listing is unavailable.'
+                ])->withInput();
+            }
+
+            // Verify that the selected listing matches the wanted book
+            $matchesTitle = strtolower(trim($ownedBook->title))
+                === strtolower(trim($preference->wanted_book_name));
+
+            $matchesSubject = strtolower(trim($ownedBook->subject_id))
+                === strtolower(trim($preference->wanted_subject_id));
+
+            if (!$matchesTitle || !$matchesSubject) {
+                return back()->withErrors([
+                    'offered_book_id' => 'The selected book does not match the requested preference.'
+                ])->withInput();
+            }
+
+            // Copy book details from the original listing
+            $offeredTitle = $ownedBook->title;
+            $offeredSubject = $ownedBook->subject_id;
+            $offeredCondition = $ownedBook->condition;
+
+            // Copy the image into a separate folder for the Exchange offer
+            if (
+                $ownedBook->image &&
+                Storage::disk('public')->exists($ownedBook->image)
+            ) {
+                $extension = pathinfo($ownedBook->image, PATHINFO_EXTENSION);
+
+                $newImagePath = 'exchange-offers/' .
+                    uniqid('exchange_', true) . '.' . $extension;
+
+                Storage::disk('public')->copy(
+                    $ownedBook->image,
+                    $newImagePath
+                );
+
+                $offeredImage = $newImagePath;
+            }
+
+        } else {
+
+            // Manual offer: book name and subject code come from the preference
+            $offeredCondition = $validated['manual_condition'];
+
+            $offeredImage = $request->file('manual_image')
+                ->store('exchange-offers', 'public');
+        }
+
+        // Save the Exchange request and offer together
+        DB::transaction(function () use (
+            $book,
+            $offeredTitle,
+            $offeredSubject,
+            $offeredCondition,
+            $offeredImage,
+            $proposedLocation,
+            $proposedDate,
+            $proposedTime,
+            $proposedEndTime,
+            $scheduleType
+        ) {
+
+            // Create the main Exchange request
+            $bookRequest = BookRequest::create([
+
+                'book_id' => $book->id,
+
+                // Keep the original listing separate from the Exchange offer
+                'offered_book_id' => null,
+
+                'requester_id' => auth()->id(),
+
+                'owner_id' => $book->user_id,
+
+                'status' => 'pending',
+
+                'proposed_location' => $proposedLocation,
+
+                'proposed_date' => $proposedDate,
+
+                'proposed_time' => $proposedTime,
+
+                'proposed_end_time' => $proposedEndTime,
+
+                'schedule_type' => $scheduleType,
+
+            ]);
+
+            // Save the offered book snapshot
+            ExchangeOffer::create([
+
+                'book_request_id' => $bookRequest->id,
+
+                'offered_book_id' => null,
+
+                'title' => $offeredTitle,
+
+                'subject_id' => $offeredSubject,
+
+                'condition' => $offeredCondition,
+
+                'image' => $offeredImage,
+
+            ]);
+
+        });
+
+        return redirect()->route('homepage')
+            ->with('success', 'Your Exchange request has been submitted successfully.');
     }
 
     // ✏️ Edit
@@ -601,20 +930,31 @@ class BookController extends Controller
         return $redirect->with('success', 'Your proposal was removed. The request will use the seller’s original schedule.');
     }
 
-    // 📥 Inbox
+    
+    // Received Requests
     public function inbox()
     {
         $requests = BookRequest::where('owner_id', auth()->id())
-            ->with('book', 'requester')
+            ->with([
+                'book',
+                'requester',
+                'exchangeOffer'
+            ])
             ->latest()
             ->get();
 
         return view('inbox', compact('requests'));
     }
+
+    // Sent Requests
     public function sentRequests()
     {
         $requests = BookRequest::where('requester_id', auth()->id())
-            ->with('book', 'owner')
+            ->with([
+                'book',
+                'owner',
+                'exchangeOffer'
+            ])
             ->latest()
             ->get();
 
@@ -723,6 +1063,321 @@ class BookController extends Controller
     }
 
     // 📌 SAVED BOOKS
+    
+    // ==========================================
+    // EXCHANGE REQUEST WORKFLOW
+    // ==========================================
+
+    // Student B: Accept Exchange using the current proposed schedule
+    public function acceptExchange($id)
+    {
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if ($exchangeRequest->owner_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        if (!$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange') {
+            abort(404);
+        }
+
+        if (!in_array($exchangeRequest->status, ['pending', 'negotiation'])) {
+            return back()->with('error', 'This Exchange request cannot be accepted.');
+        }
+
+        if ($exchangeRequest->book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available for exchange.');
+        }
+
+        // If negotiating, the owner can accept only the requester's latest proposal.
+        if (
+            $exchangeRequest->status === 'negotiation' &&
+            $exchangeRequest->schedule_type === 'owner'
+        ) {
+            return back()->with('error', 'You cannot accept your own schedule proposal.');
+        }
+
+        if (
+            empty($exchangeRequest->proposed_location) ||
+            empty($exchangeRequest->proposed_date) ||
+            empty($exchangeRequest->proposed_time) ||
+            empty($exchangeRequest->proposed_end_time)
+        ) {
+            return back()->with('error', 'A complete meeting schedule is required.');
+        }
+
+        DB::transaction(function () use ($exchangeRequest) {
+            $exchangeRequest->book->update([
+                'status' => 'reserved',
+            ]);
+
+            $exchangeRequest->update([
+                'status' => 'approved',
+                'requester_confirmed_handover' => false,
+                'owner_confirmed_handover' => false,
+            ]);
+        });
+
+        return back()->with('success', 'Exchange accepted. The meeting schedule is confirmed.');
+    }
+
+
+    // Student B or Student A: Propose another meeting schedule
+    public function counterExchangeSchedule(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'proposed_location' => 'required|string|max:255',
+            'proposed_date' => 'required|date|after_or_equal:today',
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
+        ]);
+
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if (!$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange') {
+            abort(404);
+        }
+
+        $isOwner = $exchangeRequest->owner_id == auth()->id();
+        $isRequester = $exchangeRequest->requester_id == auth()->id();
+
+        if (!$isOwner && !$isRequester) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        $canPropose = false;
+
+        if ($isOwner && $exchangeRequest->status === 'pending') {
+            $canPropose = true;
+        }
+
+        if (
+            $isOwner &&
+            $exchangeRequest->status === 'negotiation' &&
+            $exchangeRequest->schedule_type === 'requester'
+        ) {
+            $canPropose = true;
+        }
+
+        if (
+            $isRequester &&
+            $exchangeRequest->status === 'negotiation' &&
+            $exchangeRequest->schedule_type === 'owner'
+        ) {
+            $canPropose = true;
+        }
+
+        if (!$canPropose) {
+            return back()->with('error', 'You cannot propose another schedule at this stage.');
+        }
+
+        if ($exchangeRequest->book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available for exchange.');
+        }
+
+        $exchangeRequest->update(array_merge($validated, [
+            'status' => 'negotiation',
+            'schedule_type' => $isOwner ? 'owner' : 'requester',
+        ]));
+
+        return back()->with('success', 'Your new meeting schedule has been proposed.');
+    }
+
+
+    // Student A: Accept Student B's latest schedule proposal
+    public function acceptExchangeSchedule($id)
+    {
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if ($exchangeRequest->requester_id != auth()->id()) {
+            return back()->with('error', 'Only the requester can accept this proposal.');
+        }
+
+        if (
+            !$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange'
+        ) {
+            abort(404);
+        }
+
+        if (
+            $exchangeRequest->status !== 'negotiation' ||
+            $exchangeRequest->schedule_type !== 'owner'
+        ) {
+            return back()->with('error', 'There is no schedule proposal waiting for your acceptance.');
+        }
+
+        if ($exchangeRequest->book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available for exchange.');
+        }
+
+        DB::transaction(function () use ($exchangeRequest) {
+            $exchangeRequest->book->update([
+                'status' => 'reserved',
+            ]);
+
+            $exchangeRequest->update([
+                'status' => 'approved',
+                'requester_confirmed_handover' => false,
+                'owner_confirmed_handover' => false,
+            ]);
+        });
+
+        return back()->with('success', 'Schedule accepted. Your Exchange is confirmed.');
+    }
+
+
+    // Student B: Reject Exchange request
+    public function rejectExchange($id)
+    {
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if ($exchangeRequest->owner_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        if (
+            !$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange'
+        ) {
+            abort(404);
+        }
+
+        if (!in_array($exchangeRequest->status, ['pending', 'negotiation'])) {
+            return back()->with('error', 'This Exchange request cannot be rejected.');
+        }
+
+        $exchangeRequest->update([
+            'status' => 'rejected',
+        ]);
+
+        return back()->with('success', 'Exchange request rejected.');
+    }
+
+
+    // Student A: Cancel Exchange request
+    public function cancelExchange($id)
+    {
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if ($exchangeRequest->requester_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        if (
+            !$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange'
+        ) {
+            abort(404);
+        }
+
+        if (!in_array($exchangeRequest->status, ['pending', 'negotiation', 'approved'])) {
+            return back()->with('error', 'This Exchange request cannot be cancelled.');
+        }
+
+        DB::transaction(function () use ($exchangeRequest) {
+
+            $lockedRequest = BookRequest::where('id', $exchangeRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (!in_array($lockedRequest->status, ['pending', 'negotiation', 'approved'])) {
+                return;
+            }
+
+            if (
+                $lockedRequest->requester_confirmed_handover ||
+                $lockedRequest->owner_confirmed_handover
+            ) {
+                return;
+            }
+
+            if ($lockedRequest->status === 'approved') {
+                $lockedRequest->book()->update([
+                    'status' => 'available',
+                ]);
+            }
+
+            $lockedRequest->update([
+                'status' => 'cancelled',
+            ]);
+        });
+
+        $exchangeRequest->refresh();
+
+        if ($exchangeRequest->status !== 'cancelled') {
+            return back()->with('error', 'This Exchange cannot be cancelled.');
+        }
+
+        return back()->with('success', 'Exchange request cancelled successfully.');
+    }
+
+    // Both students: Confirm physical book handover
+    public function confirmExchangeHandover($id)
+    {
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if (
+            !$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange'
+        ) {
+            abort(404);
+        }
+
+        $isRequester = $exchangeRequest->requester_id == auth()->id();
+        $isOwner = $exchangeRequest->owner_id == auth()->id();
+
+        if (!$isRequester && !$isOwner) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        if ($exchangeRequest->status !== 'approved') {
+            return back()->with('error', 'The Exchange must be approved before confirming handover.');
+        }
+
+        DB::transaction(function () use ($exchangeRequest, $isRequester, $isOwner) {
+
+            $lockedRequest = BookRequest::where('id', $exchangeRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedRequest->status !== 'approved') {
+                return;
+            }
+
+            if ($isRequester) {
+                $lockedRequest->requester_confirmed_handover = true;
+            }
+
+            if ($isOwner) {
+                $lockedRequest->owner_confirmed_handover = true;
+            }
+
+            if (
+                $lockedRequest->requester_confirmed_handover &&
+                $lockedRequest->owner_confirmed_handover
+            ) {
+                $lockedRequest->status = 'completed';
+
+                $lockedRequest->book()->update([
+                    'status' => 'exchanged',
+                ]);
+            }
+
+            $lockedRequest->save();
+        });
+
+        $exchangeRequest->refresh();
+
+        if ($exchangeRequest->status === 'completed') {
+            return back()->with('success', 'Exchange completed! Both students confirmed the handover.');
+        }
+
+        return back()->with('success', 'Your handover confirmation has been recorded. Waiting for the other student.');
+    }
+
     public function saveBook($id)
     {
         $book = Book::findOrFail($id);
