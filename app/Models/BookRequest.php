@@ -19,6 +19,15 @@ class BookRequest extends Model
         'schedule_type',
         'requester_confirmed_handover',
         'owner_confirmed_handover',
+        'buyer_proposed_location',
+        'buyer_proposed_date',
+        'buyer_proposed_time',
+        'buyer_proposed_end_time',
+
+        'seller_proposed_location',
+        'seller_proposed_date',
+        'seller_proposed_time',
+        'seller_proposed_end_time',
     ];
 
     protected $casts = [

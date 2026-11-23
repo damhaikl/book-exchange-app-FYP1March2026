@@ -109,6 +109,16 @@
         ->middleware('auth')
         ->name('exchange.counter-schedule');
 
+    // Student A: Update their Exchange proposed schedule
+    Route::put('/exchange-request/{id}/proposed-schedule', [BookController::class, 'updateExchangeProposedSchedule'])
+        ->middleware('auth')
+        ->name('exchange.proposed-schedule.update');
+
+    // Student A: Delete their Exchange proposed schedule
+    Route::delete('/exchange-request/{id}/proposed-schedule', [BookController::class, 'deleteExchangeProposedSchedule'])
+        ->middleware('auth')
+        ->name('exchange.proposed-schedule.delete');
+
     // Student A: Accept Student B's proposed schedule
     Route::post('/exchange-request/{id}/accept-schedule', [BookController::class, 'acceptExchangeSchedule'])
         ->middleware('auth')
@@ -141,7 +151,22 @@
         ->middleware('auth')
         ->name('request.approve');
 
-    Route::post('/request/{id}/reject', [BookController::class, 'rejectRequest'])
+    // Student B: Propose another meeting schedule for a Sell request
+    Route::post('/request/{id}/counter-schedule', [BookController::class, 'counterSellSchedule'])
+        ->middleware('auth')
+        ->name('request.counter-schedule');
+
+    // Student A: Accept Student B's proposed Sell schedule
+    Route::post('/request/{id}/accept-schedule', [BookController::class, 'acceptSellSchedule'])
+        ->middleware('auth')
+        ->name('request.accept-schedule');
+
+    // Student A: Propose another schedule for a Sell request
+    Route::post('/request/{id}/counter-schedule-buyer', [BookController::class, 'counterSellScheduleByBuyer'])
+        ->middleware('auth')
+        ->name('request.counter-schedule-buyer');
+    
+        Route::post('/request/{id}/reject', [BookController::class, 'rejectRequest'])
         ->middleware('auth')
         ->name('request.reject');
 

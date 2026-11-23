@@ -870,10 +870,10 @@ class BookController extends Controller
 
             'status' => 'negotiation',
 
-            'proposed_location' => $request->proposed_location,
-            'proposed_date' => $request->proposed_date,
-            'proposed_time' => $request->proposed_time,
-            'proposed_end_time' => $request->proposed_end_time,
+            'buyer_proposed_location' => $request->proposed_location,
+            'buyer_proposed_date' => $request->proposed_date,
+            'buyer_proposed_time' => $request->proposed_time,
+            'buyer_proposed_end_time' => $request->proposed_end_time,
 
             'schedule_type' => 'buyer'
         ]);
@@ -896,7 +896,12 @@ class BookController extends Controller
             ->where('status', 'negotiation')
             ->firstOrFail();
 
-        $proposal->update($validated);
+        $proposal->update([
+            'buyer_proposed_location' => $validated['proposed_location'],
+            'buyer_proposed_date' => $validated['proposed_date'],
+            'buyer_proposed_time' => $validated['proposed_time'],
+            'buyer_proposed_end_time' => $validated['proposed_end_time'],
+        ]);
 
         $redirect = $request->input('return_to') === 'sent-requests'
             ? redirect()->route('sent.requests')
@@ -916,10 +921,10 @@ class BookController extends Controller
         // The book's meeting fields still contain the seller's original schedule.
         $proposal->update([
             'status' => 'pending',
-            'proposed_location' => null,
-            'proposed_date' => null,
-            'proposed_time' => null,
-            'proposed_end_time' => null,
+            'buyer_proposed_location' => null,
+            'buyer_proposed_date' => null,
+            'buyer_proposed_time' => null,
+            'buyer_proposed_end_time' => null,
             'schedule_type' => 'seller',
         ]);
 
@@ -990,52 +995,253 @@ class BookController extends Controller
     }
 
     // ✅ APPROVE REQUEST
+    
     public function approveRequest($id)
-{
-    $request = BookRequest::findOrFail($id);
+    {
+        $bookRequest = BookRequest::with('book')->findOrFail($id);
 
-    if ($request->owner_id != auth()->id()) {
-        return back()->with('error', 'Unauthorized.');
+        // Only the book owner (Student B) can approve.
+        if ($bookRequest->owner_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        $book = $bookRequest->book;
+
+        // This method is strictly for Sell requests.
+        // Exchange requests must use acceptExchangeSchedule().
+        if (!$book || $book->listing_type !== 'sell') {
+            abort(404);
+        }
+
+        // Student B can approve either:
+        // 1. A normal pending request.
+        // 2. Student A's latest proposed schedule.
+        $isPending = $bookRequest->status === 'pending';
+
+        $isBuyerProposal =
+            $bookRequest->status === 'negotiation' &&
+            $bookRequest->schedule_type === 'buyer';
+
+        if (!$isPending && !$isBuyerProposal) {
+            return back()->with('error', 'This request cannot be approved at this stage.');
+        }
+
+        if ($book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available.');
+        }
+
+        // Determine the final agreed schedule.
+        if ($isBuyerProposal) {
+            $finalLocation = $bookRequest->buyer_proposed_location;
+            $finalDate = $bookRequest->buyer_proposed_date;
+            $finalTime = $bookRequest->buyer_proposed_time;
+            $finalEndTime = $bookRequest->buyer_proposed_end_time;
+        } else {
+            // Keep the original listing schedule.
+            $finalLocation = $book->meeting_location;
+            $finalDate = $book->meeting_date;
+            $finalTime = $book->meeting_time;
+            $finalEndTime = $book->meeting_end_time;
+        }
+
+        // Update the book and request together.
+        DB::transaction(function () use (
+            $book,
+            $bookRequest,
+            $finalLocation,
+            $finalDate,
+            $finalTime,
+            $finalEndTime
+        ) {
+            $book->update([
+                'meeting_location' => $finalLocation,
+                'meeting_date' => $finalDate,
+                'meeting_time' => $finalTime,
+                'meeting_end_time' => $finalEndTime,
+                'status' => 'reserved',
+            ]);
+
+            $bookRequest->update([
+                'status' => 'approved',
+                'is_taken' => 1,
+            ]);
+        });
+
+        // Refresh the approved request before sending notifications.
+        $bookRequest->refresh();
+
+        $requester = User::find($bookRequest->requester_id);
+
+        if ($requester) {
+            $requester->notify(
+                new BookRequestStatusNotification($bookRequest)
+            );
+
+            Mail::to($requester->email)
+                ->queue(new BookStatusMail($bookRequest, 'approved'));
+        }
+
+        return back()->with('success', 'Request approved successfully!');
     }
 
-    $book = $request->book;
 
-    // 🧠 CASE 1: Buyer proposed schedule (NEGOTIATION)
-    if ($request->status === 'negotiation') {
+    public function counterSellSchedule(Request $request, $id)
+    {
+        $bookRequest = BookRequest::with('book')->findOrFail($id);
 
-        $book->update([
-            'meeting_location' => $request->proposed_location,
-            'meeting_date' => $request->proposed_date,
-            'meeting_time' => $request->proposed_time,
-            'meeting_end_time' => $request->proposed_end_time,
-            'status' => 'reserved'
+        // Only the book owner can propose another schedule.
+        if ($bookRequest->owner_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        $book = $bookRequest->book;
+
+        // This method is only for Sell requests.
+        if (!$book || $book->listing_type === 'exchange') {
+            abort(404);
+        }
+
+        // The request must still be active.
+        if (!in_array($bookRequest->status, ['pending', 'negotiation'])) {
+            return back()->with('error', 'This request cannot receive another schedule.');
+        }
+
+        // If the buyer has already proposed a schedule,
+        // the seller can counter that proposal.
+        if (
+            $bookRequest->status === 'negotiation' &&
+            $bookRequest->schedule_type !== 'buyer'
+        ) {
+            return back()->with('error', 'You cannot counter your own latest proposal.');
+        }
+
+        if ($book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available.');
+        }
+
+        $validated = $request->validate([
+            'proposed_location' => 'required|string|max:255',
+            'proposed_date' => 'required|date|after_or_equal:today',
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
         ]);
-    }
 
-    // 🧠 CASE 2: Normal request (seller schedule stays)
-    else {
-
-        $book->update([
-            'status' => 'reserved'
+        // Keep the same request, but save the seller's latest proposal.
+        $bookRequest->update([
+            'seller_proposed_location' => $validated['proposed_location'],
+            'seller_proposed_date' => $validated['proposed_date'],
+            'seller_proposed_time' => $validated['proposed_time'],
+            'seller_proposed_end_time' => $validated['proposed_end_time'],
+            'status' => 'negotiation',
+            'schedule_type' => 'seller',
         ]);
+
+        return back()->with('success', 'Your proposed meeting schedule has been sent to the student.');
     }
 
-    $request->update([
-        'status' => 'approved',
-        'is_taken' => 1
-    ]);
+    public function acceptSellSchedule($id)
+    {
+        $bookRequest = BookRequest::with(['book', 'owner'])->findOrFail($id);
 
-    // 📧 SEND EMAIL TO REQUESTER
-    $requester = User::find($request->requester_id);
+        // Only the requester (Student A) can accept the schedule.
+        if ($bookRequest->requester_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized action.');
+        }
 
-    if ($requester) {
-        $requester->notify(new BookRequestStatusNotification($request));
-        Mail::to($requester->email)
-            ->queue(new BookStatusMail($request, 'approved'));
+        $book = $bookRequest->book;
+
+        // This method is only for Sell requests.
+        if (!$book || $book->listing_type === 'exchange') {
+            abort(404);
+        }
+
+        // Student A can only accept Student B's latest proposal.
+        if (
+            $bookRequest->status !== 'negotiation' ||
+            $bookRequest->schedule_type !== 'seller'
+        ) {
+            return back()->with('error', 'There is no seller schedule waiting for your response.');
+        }
+
+        if ($book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available.');
+        }
+
+        // Save the accepted schedule to the book.
+        $book->update([
+            'meeting_location' => $bookRequest->seller_proposed_location,
+            'meeting_date' => $bookRequest->seller_proposed_date,
+            'meeting_time' => $bookRequest->seller_proposed_time,
+            'meeting_end_time' => $bookRequest->seller_proposed_end_time,
+            'status' => 'reserved',
+        ]);
+
+        // Approve the existing request.
+        $bookRequest->update([
+            'status' => 'approved',
+            'is_taken' => 1,
+        ]);
+
+        // Notify Student B.
+        $owner = User::find($bookRequest->owner_id);
+
+        if ($owner) {
+            $owner->notify(new BookRequestStatusNotification($bookRequest));
+
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($bookRequest, 'approved'));
+        }
+
+        return back()->with('success', 'You have accepted the seller’s proposed meeting schedule.');
     }
 
-    return back()->with('success', 'Request approved successfully!');
-}
+    public function counterSellScheduleByBuyer(Request $request, $id)
+    {
+        $bookRequest = BookRequest::with('book')->findOrFail($id);
+
+        // Only the requester (Student A) can propose another schedule.
+        if ($bookRequest->requester_id != auth()->id()) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        $book = $bookRequest->book;
+
+        // This method is only for Sell requests.
+        if (!$book || $book->listing_type === 'exchange') {
+            abort(404);
+        }
+
+        // Student A can only counter Student B's latest proposal.
+        if (
+            $bookRequest->status !== 'negotiation' ||
+            $bookRequest->schedule_type !== 'seller'
+        ) {
+            return back()->with('error', 'There is no seller proposal to respond to.');
+        }
+
+        if ($book->status !== 'available') {
+            return back()->with('error', 'This book is no longer available.');
+        }
+
+        $validated = $request->validate([
+            'proposed_location' => 'required|string|max:255',
+            'proposed_date' => 'required|date|after_or_equal:today',
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
+        ]);
+
+        // Keep the same request and save Student A's latest proposal.
+        $bookRequest->update([
+            'buyer_proposed_location' => $validated['proposed_location'],
+            'buyer_proposed_date' => $validated['proposed_date'],
+            'buyer_proposed_time' => $validated['proposed_time'],
+            'buyer_proposed_end_time' => $validated['proposed_end_time'],
+            'status' => 'negotiation',
+            'schedule_type' => 'buyer',
+        ]);
+
+        return back()->with('success', 'Your new proposed meeting schedule has been sent to the seller.');
+    }
 
     // ❌ REJECT
     public function rejectRequest($id)
@@ -1185,6 +1391,72 @@ class BookController extends Controller
         return back()->with('success', 'Your new meeting schedule has been proposed.');
     }
 
+
+    // Student A: Update their own Exchange proposed schedule
+    public function updateExchangeProposedSchedule(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'proposed_location' => 'required|string|max:255',
+            'proposed_date' => 'required|date|after_or_equal:today',
+            'proposed_time' => 'required|date_format:H:i',
+            'proposed_end_time' => 'required|date_format:H:i|after:proposed_time',
+        ]);
+
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if (
+            !$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange'
+        ) {
+            abort(404);
+        }
+
+        // Only Student A can manage their own proposal.
+        if (
+            $exchangeRequest->requester_id != auth()->id() ||
+            !in_array($exchangeRequest->status, ['pending', 'negotiation']) ||
+            $exchangeRequest->schedule_type !== 'requester'
+        ) {
+            return back()->with('error', 'You cannot edit this proposed schedule.');
+        }
+
+        $exchangeRequest->update($validated);
+
+        return back()->with('success', 'Your Exchange proposed schedule has been updated.');
+    }
+
+    // Student A: Delete their own Exchange proposed schedule
+    public function deleteExchangeProposedSchedule($id)
+    {
+        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+
+        if (
+            !$exchangeRequest->book ||
+            $exchangeRequest->book->listing_type !== 'exchange'
+        ) {
+            abort(404);
+        }
+
+        // Only Student A can delete their own proposal.
+        if (
+            $exchangeRequest->requester_id != auth()->id() ||
+            !in_array($exchangeRequest->status, ['pending', 'negotiation']) ||
+            $exchangeRequest->schedule_type !== 'requester'
+        ) {
+            return back()->with('error', 'You cannot delete this proposed schedule.');
+        }
+
+        $exchangeRequest->update([
+            'proposed_location' => null,
+            'proposed_date' => null,
+            'proposed_time' => null,
+            'proposed_end_time' => null,
+            'status' => 'pending',
+            'schedule_type' => 'owner',
+        ]);
+
+        return back()->with('success', 'Your proposed schedule has been deleted. Requester preferred schedule is restored.');
+    }
 
     // Student A: Accept Student B's latest schedule proposal
     public function acceptExchangeSchedule($id)

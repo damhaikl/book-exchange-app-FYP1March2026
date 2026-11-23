@@ -755,6 +755,118 @@
                             </div>
                         @endif
 
+                        {{-- SELL: STUDENT A RESPONDS TO SELLER'S PROPOSED SCHEDULE --}}
+                        @if(
+                            !$isExchange &&
+                            $req->status === 'negotiation' &&
+                            $req->schedule_type === 'seller'
+                        )
+
+                            <div class="status-actions">
+
+                                <span class="status-label">Respond to seller's proposed schedule</span>
+
+                                {{-- Accept Student B's proposed schedule --}}
+                                <form method="POST"
+                                    action="{{ route('request.accept-schedule', $req->id) }}">
+                                    @csrf
+
+                                    <button type="submit" class="btn complete-button">
+                                        <i class="bi bi-check-circle me-1"></i>
+                                        Accept Proposed Schedule
+                                    </button>
+                                </form>
+
+                                {{-- Propose another schedule --}}
+                                <button type="button"
+                                        class="btn review-button"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#sellCounterSchedule-{{ $req->id }}">
+                                    <i class="bi bi-calendar-plus me-1"></i>
+                                    Propose Another Schedule
+                                </button>
+
+                                {{-- Cancel request --}}
+                                <form method="POST"
+                                    action="{{ route('request.cancel', $req->id) }}">
+                                    @csrf
+
+                                    <button type="submit" class="btn cancel-button">
+                                        <i class="bi bi-x-circle me-1"></i>
+                                        Cancel Request
+                                    </button>
+                                </form>
+
+                            </div>
+
+                            {{-- Student A's new schedule form --}}
+                            <div class="collapse mb-3"
+                                id="sellCounterSchedule-{{ $req->id }}">
+
+                                <section class="schedule-box proposed">
+
+                                    <h3 class="schedule-title">
+                                        <i class="bi bi-calendar-plus"></i>
+                                        Propose Another Meeting Schedule
+                                    </h3>
+
+                                    <form method="POST"
+                                        action="{{ route('request.counter-schedule-buyer', $req->id) }}">
+
+                                        @csrf
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Meeting location</label>
+                                            <input type="text"
+                                                name="proposed_location"
+                                                class="form-control"
+                                                required
+                                                maxlength="255"
+                                                placeholder="Enter meeting location">
+                                        </div>
+
+                                        <div class="row">
+
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Meeting date</label>
+                                                <input type="date"
+                                                    name="proposed_date"
+                                                    class="form-control"
+                                                    min="{{ date('Y-m-d') }}"
+                                                    required>
+                                            </div>
+
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">Start time</label>
+                                                <input type="time"
+                                                    name="proposed_time"
+                                                    class="form-control"
+                                                    required>
+                                            </div>
+
+                                            <div class="col-md-4 mb-3">
+                                                <label class="form-label">End time</label>
+                                                <input type="time"
+                                                    name="proposed_end_time"
+                                                    class="form-control"
+                                                    required>
+                                            </div>
+
+                                        </div>
+
+                                        <button type="submit" class="btn complete-button">
+                                            <i class="bi bi-send me-1"></i>
+                                            Submit New Schedule
+                                        </button>
+
+                                    </form>
+
+                                </section>
+
+                            </div>
+
+                        @endif
+
                         {{-- EXISTING SELL ACTIONS --}}
                         @if(!$isExchange && (
                             $req->status == 'pending' ||
@@ -817,118 +929,41 @@
 
                             @if($isExchange)
 
-                                <section class="schedule-box proposed">
-                                    <h3 class="schedule-title">
-                                        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
+                                {{-- STUDENT B'S LATEST PROPOSED SCHEDULE --}}
+                                @if($req->schedule_type === 'owner')
 
-                                        @if($req->status === 'approved')
-                                            Final Agreed Schedule
-                                        @elseif($req->schedule_type === 'owner')
-                                            Student B's Proposed Schedule
-                                        @else
-                                            Your Proposed Schedule
-                                        @endif
-                                    </h3>
-
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                        <span>
-                                            <strong>Location</strong><br>
-                                            {{ $req->proposed_location ?? 'Not set' }}
-                                        </span>
-                                    </p>
-
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-calendar3" aria-hidden="true"></i>
-                                        <span>
-                                            <strong>Date</strong><br>
-                                            {{ $req->proposed_date ?? 'Not set' }}
-                                        </span>
-                                    </p>
-
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-clock" aria-hidden="true"></i>
-                                        <span>
-                                            <strong>Time</strong><br>
-
-                                            {{ $req->proposed_time
-                                                ? \Carbon\Carbon::parse($req->proposed_time)->format('g:i A')
-                                                : 'Not set' }}
-
-                                            @if($req->proposed_end_time)
-                                                – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
-                                            @endif
-                                        </span>
-                                    </p>
-                                </section>
-
-                            @else
-
-                                {{-- EXISTING SELL SCHEDULE --}}
-
-                                <section class="schedule-box">
-                                    <h3 class="schedule-title">
-                                        <i class="bi bi-calendar2-check" aria-hidden="true"></i>
-                                        Seller’s meeting schedule
-                                    </h3>
-
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-geo-alt" aria-hidden="true"></i>
-                                        <span>
-                                            <strong>Location</strong><br>
-                                            {{ $req->book->meeting_location ?? 'Not set' }}
-                                        </span>
-                                    </p>
-
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-calendar3" aria-hidden="true"></i>
-                                        <span>
-                                            <strong>Date</strong><br>
-                                            {{ $req->book->meeting_date ?? 'Not set' }}
-                                        </span>
-                                    </p>
-
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-clock" aria-hidden="true"></i>
-                                        <span>
-                                            <strong>Time</strong><br>
-
-                                            {{ $req->book->meeting_time
-                                                ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A')
-                                                : 'Not set' }}
-
-                                            @if($req->book->meeting_end_time)
-                                                – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
-                                            @endif
-                                        </span>
-                                    </p>
-                                </section>
-
-                                @if($req->status === 'negotiation')
                                     <section class="schedule-box proposed">
+
                                         <h3 class="schedule-title">
-                                            <i class="bi bi-arrow-left-right" aria-hidden="true"></i>
-                                            Your proposed schedule
+                                            <i class="bi bi-calendar2-check"></i>
+
+                                            @if($req->status === 'approved')
+                                                Final Agreed Schedule
+                                            @else
+                                                Owner's Proposed Schedule
+                                            @endif
                                         </h3>
 
                                         <p class="schedule-detail">
-                                            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                                            <i class="bi bi-geo-alt"></i>
                                             <span>
                                                 <strong>Location</strong><br>
-                                                {{ $req->proposed_location }}
+                                                {{ $req->proposed_location ?? 'Not set' }}
                                             </span>
                                         </p>
 
                                         <p class="schedule-detail">
-                                            <i class="bi bi-calendar3" aria-hidden="true"></i>
+                                            <i class="bi bi-calendar3"></i>
                                             <span>
                                                 <strong>Date</strong><br>
-                                                {{ $req->proposed_date }}
+                                                {{ $req->proposed_date
+                                                    ? \Carbon\Carbon::parse($req->proposed_date)->format('d M Y')
+                                                    : 'Not set' }}
                                             </span>
                                         </p>
 
                                         <p class="schedule-detail">
-                                            <i class="bi bi-clock" aria-hidden="true"></i>
+                                            <i class="bi bi-clock"></i>
                                             <span>
                                                 <strong>Time</strong><br>
 
@@ -942,16 +977,208 @@
                                             </span>
                                         </p>
 
-                                        <div class="proposal-manage">
-                                            <button type="button"
-                                                    class="manage-button"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#proposalModal-{{ $req->id }}">
-                                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
-                                                Manage proposed schedule
-                                            </button>
-                                        </div>
                                     </section>
+
+                                {{-- STUDENT A'S OWN PROPOSED SCHEDULE --}}
+                                @elseif($req->schedule_type === 'requester')
+
+                                    {{-- STUDENT B'S ORIGINAL SCHEDULE --}}
+                                    <section class="schedule-box">
+
+                                        <h3 class="schedule-title">
+                                            <i class="bi bi-calendar2-check"></i>
+                                            Owner's Original Schedule
+                                        </h3>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>
+                                                <strong>Location</strong><br>
+                                                {{ $req->book->meeting_location ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>
+                                                <strong>Date</strong><br>
+                                                {{ $req->book->meeting_date
+                                                    ? \Carbon\Carbon::parse($req->book->meeting_date)->format('d M Y')
+                                                    : 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-clock"></i>
+                                            <span>
+                                                <strong>Time</strong><br>
+
+                                                {{ $req->book->meeting_time
+                                                    ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A')
+                                                    : 'Not set' }}
+
+                                                @if($req->book->meeting_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
+                                                @endif
+                                            </span>
+                                        </p>
+
+                                    </section>
+
+                                    {{-- STUDENT A'S LATEST PROPOSAL --}}
+                                    <section class="schedule-box proposed">
+
+                                        <h3 class="schedule-title">
+                                            <i class="bi bi-arrow-left-right"></i>
+
+                                            @if($req->status === 'approved')
+                                                Final Agreed Schedule
+                                            @else
+                                                Your Proposed Schedule
+                                            @endif
+                                        </h3>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>
+                                                <strong>Location</strong><br>
+                                                {{ $req->proposed_location ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>
+                                                <strong>Date</strong><br>
+                                                {{ $req->proposed_date
+                                                    ? \Carbon\Carbon::parse($req->proposed_date)->format('d M Y')
+                                                    : 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-clock"></i>
+                                            <span>
+                                                <strong>Time</strong><br>
+
+                                                {{ $req->proposed_time
+                                                    ? \Carbon\Carbon::parse($req->proposed_time)->format('g:i A')
+                                                    : 'Not set' }}
+
+                                                @if($req->proposed_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
+                                                @endif
+                                            </span>
+                                        </p>
+
+                                        @if(in_array($req->status, ['pending', 'negotiation']))
+                                            <div class="proposal-manage">
+                                                <button type="button"
+                                                        class="manage-button"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#exchangeProposalModal-{{ $req->id }}">
+                                                    <i class="bi bi-pencil-square"></i>
+                                                    Manage Proposed Schedule
+                                                </button>
+                                            </div>
+                                        @endif
+
+                                    </section>
+
+                                @endif
+
+                            @else
+
+                                
+                                {{-- SELL: ORIGINAL SELLER SCHEDULE - ALWAYS DISPLAY --}}
+                                <section class="schedule-box">
+
+                                    <h3 class="schedule-title">
+                                        <i class="bi bi-calendar2-check"></i>
+                                        Seller's Original Schedule
+                                    </h3>
+
+                                    <p class="schedule-detail">
+                                        <i class="bi bi-geo-alt"></i>
+                                        <span>
+                                            <strong>Location</strong><br>
+                                            {{ $req->book->meeting_location ?? 'Not set' }}
+                                        </span>
+                                    </p>
+
+                                    <p class="schedule-detail">
+                                        <i class="bi bi-calendar3"></i>
+                                        <span>
+                                            <strong>Date</strong><br>
+                                            {{ $req->book->meeting_date
+                                                ? \Carbon\Carbon::parse($req->book->meeting_date)->format('d M Y')
+                                                : 'Not set' }}
+                                        </span>
+                                    </p>
+
+                                    <p class="schedule-detail">
+                                        <i class="bi bi-clock"></i>
+                                        <span>
+                                            <strong>Time</strong><br>
+                                            {{ $req->book->meeting_time
+                                                ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A')
+                                                : 'Not set' }}
+
+                                            @if($req->book->meeting_end_time)
+                                                – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
+                                            @endif
+                                        </span>
+                                    </p>
+
+                                </section>
+
+                                {{-- SELL: SHOW SELLER'S NEW PROPOSAL AFTER STUDENT B PROPOSES --}}
+                                @if(
+                                    $req->status === 'negotiation' &&
+                                    $req->schedule_type === 'seller'
+                                )
+
+                                    <section class="schedule-box proposed">
+
+                                        <h3 class="schedule-title">
+                                            <i class="bi bi-calendar-plus"></i>
+                                            Seller's Proposed Schedule
+                                        </h3>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>
+                                                <strong>Location</strong><br>
+                                                {{ $req->seller_proposed_location ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>
+                                                <strong>Date</strong><br>
+                                                {{ $req->seller_proposed_date
+                                                    ? \Carbon\Carbon::parse($req->seller_proposed_date)->format('d M Y')
+                                                    : 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-clock"></i>
+                                            <span>
+                                                <strong>Time</strong><br>
+                                                {{ $req->seller_proposed_time
+                                                    ? \Carbon\Carbon::parse($req->seller_proposed_time)->format('g:i A')
+                                                    : 'Not set' }}
+
+                                                @if($req->seller_proposed_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->seller_proposed_end_time)->format('g:i A') }}
+                                                @endif
+                                            </span>
+                                        </p>
+
+                                    </section>
+
                                 @endif
 
                             @endif
@@ -980,24 +1207,28 @@
 
     </main>
 
-    {{-- SELL SCHEDULE PROPOSAL MODALS: OUTSIDE MAIN --}}
+    {{-- EXCHANGE SCHEDULE PROPOSAL MODALS: OUTSIDE MAIN --}}
     @foreach($requests as $req)
-
-        @if($req->book && $req->book->listing_type !== 'exchange' && $req->status === 'negotiation')
-
+        @if(
+            $req->book &&
+            $req->book->listing_type === 'exchange' &&
+            in_array($req->status, ['pending', 'negotiation']) &&
+            $req->schedule_type === 'requester' &&
+            $req->requester_id == auth()->id()
+        )
             <div class="modal fade"
-                 id="proposalModal-{{ $req->id }}"
-                 tabindex="-1"
-                 aria-labelledby="proposalModalTitle-{{ $req->id }}"
-                 aria-hidden="true">
+                id="exchangeProposalModal-{{ $req->id }}"
+                tabindex="-1"
+                aria-labelledby="exchangeProposalModalTitle-{{ $req->id }}"
+                aria-hidden="true">
 
-                <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
 
                         <div class="modal-header">
                             <h5 class="modal-title"
-                                id="proposalModalTitle-{{ $req->id }}">
-                                Schedule proposal already sent
+                                id="exchangeProposalModalTitle-{{ $req->id }}">
+                                Manage Exchange Proposed Schedule
                             </h5>
 
                             <button type="button"
@@ -1005,55 +1236,236 @@
                                     data-bs-dismiss="modal"
                                     aria-label="Close"></button>
                         </div>
-
                         <div class="modal-body">
-                            <p>
-                                You already proposed a new meeting schedule.
-                                Would you like to change it?
-                            </p>
+                            <p>What would you like to do with your proposed meeting schedule?</p>
 
-                            <p class="mb-0">
-                                Deleting the proposal keeps your book request active
-                                and returns it to the seller’s original meeting schedule.
-                            </p>
+                            <div class="collapse" id="editExchangeProposal-{{ $req->id }}">
+                                <hr>
+
+                                <form method="POST"
+                                    action="{{ route('exchange.proposed-schedule.update', $req->id) }}">
+                                    @csrf
+                                    @method('PUT')
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Meeting location</label>
+                                        <input type="text"
+                                            name="proposed_location"
+                                            class="form-control"
+                                            maxlength="255"
+                                            required
+                                            value="{{ $req->proposed_location }}">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Meeting date</label>
+                                        <input type="date"
+                                            name="proposed_date"
+                                            class="form-control"
+                                            min="{{ date('Y-m-d') }}"
+                                            required
+                                            value="{{ $req->proposed_date ? \Carbon\Carbon::parse($req->proposed_date)->format('Y-m-d') : '' }}">
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Start time</label>
+                                            <input type="time"
+                                                name="proposed_time"
+                                                class="form-control"
+                                                required
+                                                value="{{ $req->proposed_time ? substr($req->proposed_time, 0, 5) : '' }}">
+                                        </div>
+
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">End time</label>
+                                            <input type="time"
+                                                name="proposed_end_time"
+                                                class="form-control"
+                                                required
+                                                value="{{ $req->proposed_end_time ? substr($req->proposed_end_time, 0, 5) : '' }}">
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn modal-edit-button">
+                                        Save Changes
+                                    </button>
+                                </form>
+                            </div>
                         </div>
+                        <div class="modal-footer d-flex align-items-center justify-content-end flex-wrap gap-2">
 
-                        <div class="modal-footer">
+                            <button type="button"
+                                    class="btn modal-edit-button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#editExchangeProposal-{{ $req->id }}">
+                                <i class="bi bi-pencil-square me-1"></i>
+                                Edit Proposal
+                            </button>
 
                             <button type="button"
                                     class="btn btn-outline-secondary"
                                     data-bs-dismiss="modal">
-                                Keep proposal
+                                Keep Proposal
                             </button>
 
                             <form method="POST"
-                                  action="{{ route('book.proposeSchedule.delete', $req->book_id) }}">
+                                action="{{ route('exchange.proposed-schedule.delete', $req->id) }}"
+                                class="m-0">
                                 @csrf
                                 @method('DELETE')
+
+                                <button type="submit" class="btn btn-outline-danger">
+                                    Delete Proposal
+                                </button>
+                            </form>
+
+                        </div>  
+                    </div>
+                </div>
+            </div>
+        @endif
+    @endforeach
+
+    
+{{-- SELL SCHEDULE PROPOSAL MODALS: OUTSIDE MAIN --}}
+@foreach($requests as $req)
+    @if(
+        $req->book &&
+        $req->book->listing_type !== 'exchange' &&
+        $req->status === 'negotiation' &&
+        $req->schedule_type === 'buyer'
+    )
+        <div class="modal fade"
+             id="proposalModal-{{ $req->id }}"
+             tabindex="-1"
+             aria-labelledby="proposalModalTitle-{{ $req->id }}"
+             aria-hidden="true">
+
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title"
+                            id="proposalModalTitle-{{ $req->id }}">
+                            Manage Sell Proposed Schedule
+                        </h5>
+
+                        <button type="button"
+                                class="btn-close"
+                                data-bs-dismiss="modal"
+                                aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p>
+                            What would you like to do with your proposed meeting schedule?
+                        </p>
+
+                        {{-- HIDDEN EDIT FORM --}}
+                        <div class="collapse"
+                             id="editSellProposal-{{ $req->id }}">
+
+                            <hr>
+
+                            <form method="POST"
+                                  action="{{ route('book.proposeSchedule', $req->book_id) }}">
+                                @csrf
+                                @method('PUT')
 
                                 <input type="hidden"
                                        name="return_to"
                                        value="sent-requests">
 
+                                <div class="mb-3">
+                                    <label class="form-label">Meeting location</label>
+                                    <input type="text"
+                                           name="proposed_location"
+                                           class="form-control"
+                                           maxlength="255"
+                                           required
+                                           value="{{ $req->buyer_proposed_location }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Meeting date</label>
+                                    <input type="date"
+                                           name="proposed_date"
+                                           class="form-control"
+                                           min="{{ date('Y-m-d') }}"
+                                           required
+                                           value="{{ $req->buyer_proposed_date ? \Carbon\Carbon::parse($req->buyer_proposed_date)->format('Y-m-d') : '' }}">
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Start time</label>
+                                        <input type="time"
+                                               name="proposed_time"
+                                               class="form-control"
+                                               required
+                                               value="{{ $req->buyer_proposed_time ? substr($req->buyer_proposed_time, 0, 5) : '' }}">
+                                    </div>
+
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">End time</label>
+                                        <input type="time"
+                                               name="proposed_end_time"
+                                               class="form-control"
+                                               required
+                                               value="{{ $req->buyer_proposed_end_time ? substr($req->buyer_proposed_end_time, 0, 5) : '' }}">
+                                    </div>
+                                </div>
+
                                 <button type="submit"
-                                        class="btn btn-outline-danger">
-                                    Delete proposal
+                                        class="btn modal-edit-button">
+                                    Save Changes
                                 </button>
                             </form>
-
-                            <a href="{{ route('book.proposeScheduleForm', $req->book_id) }}?return_to=sent-requests"
-                               class="btn modal-edit-button">
-                                Edit proposal
-                            </a>
-
                         </div>
+                    </div>
+
+                    <div class="modal-footer d-flex align-items-center justify-content-end flex-wrap gap-2">
+
+                        {{-- EDIT PROPOSAL --}}
+                        <button type="button"
+                                class="btn modal-edit-button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#editSellProposal-{{ $req->id }}">
+                            <i class="bi bi-pencil-square me-1"></i>
+                            Edit Proposal
+                        </button>
+
+                        {{-- KEEP PROPOSAL --}}
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                data-bs-dismiss="modal">
+                            Keep Proposal
+                        </button>
+
+                        {{-- DELETE PROPOSAL --}}
+                        <form method="POST"
+                              action="{{ route('book.proposeSchedule.delete', $req->book_id) }}"
+                              class="m-0">
+                            @csrf
+                            @method('DELETE')
+
+                            <input type="hidden"
+                                   name="return_to"
+                                   value="sent-requests">
+
+                            <button type="submit"
+                                    class="btn btn-outline-danger">
+                                Delete Proposal
+                            </button>
+                        </form>
+
                     </div>
                 </div>
             </div>
-
-        @endif
-
-    @endforeach
+        </div>
+    @endif
+@endforeach
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
