@@ -20,6 +20,9 @@
         .brand-mark { display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#ffffff1d;color:#fff; }
         .back-link { display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #ffffff70;border-radius:9px;color:#fff;font-size:.86rem;font-weight:700;text-decoration:none;transition:background .2s,color .2s; }
         .back-link:hover { color:var(--navy);background:#fff; }
+        .header-actions { display:flex;align-items:center;gap:9px; }
+        .header-link { display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #ffffff70;border-radius:9px;color:#fff;font-size:.84rem;font-weight:700;text-decoration:none;transition:background .2s,color .2s; }
+        .header-link:hover { color:var(--navy);background:#fff; }
         .page-intro { position:relative;z-index:1;max-width:1000px;margin:auto;padding:28px 28px 48px; }
         .eyebrow { margin:0 0 8px;color:#b8d5f5;font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase; }
         .intro-row { display:flex;align-items:flex-end;justify-content:space-between;gap:18px; }
@@ -45,7 +48,7 @@
         .empty-icon { display:grid;place-items:center;width:60px;height:60px;margin:0 auto 17px;border-radius:18px;color:var(--navy-mid);background:var(--sky);font-size:1.55rem; }
         .empty-state h2 { margin:0 0 8px;color:var(--navy);font-size:1.2rem;font-weight:800; }
         .empty-state p { max-width:460px;margin:0 auto;color:var(--muted);line-height:1.6; }
-        @media(max-width:600px) { .header-inner { padding:14px 18px; } .page-intro { padding:25px 20px 42px; } .intro-row { align-items:flex-start;flex-direction:column; } .page-main { padding:0 14px 36px; } .review-card { grid-template-columns:44px minmax(0,1fr);gap:12px;padding:16px; } .review-icon { width:44px;height:44px;border-radius:13px;font-size:1.1rem; } .review-author { font-size:1rem; } .back-link span { display:none; } }
+        @media(max-width:600px) { .header-inner { padding:14px 18px; } .page-intro { padding:25px 20px 42px; } .intro-row { align-items:flex-start;flex-direction:column; } .page-main { padding:0 14px 36px; } .review-card { grid-template-columns:44px minmax(0,1fr);gap:12px;padding:16px; } .review-icon { width:44px;height:44px;border-radius:13px;font-size:1.1rem; } .review-author { font-size:1rem; } .back-link span,.header-link span { display:none; } }
     </style>
 </head>
 <body>
@@ -55,7 +58,10 @@
                 <span class="brand-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span>
                 <span>UniKL BookHub</span>
             </a>
-            <a href="{{ route('dashboard') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Back to dashboard</span></a>
+            <div class="header-actions">
+                <a href="{{ route('homepage') }}" class="header-link"><i class="bi bi-search" aria-hidden="true"></i><span>Browse books</span></a>
+                <a href="{{ route('dashboard') }}" class="header-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Dashboard</span></a>
+            </div>
         </div>
         <div class="page-intro">
             <div class="intro-row">
@@ -70,6 +76,16 @@
     </header>
 
     <main class="page-main">
+        @if(session('success'))
+            <div class="alert alert-success mb-3" role="status">
+                <i class="bi bi-check-circle me-2" aria-hidden="true"></i>{{ session('success') }}
+            </div>
+        @endif
+        @if(session('error'))
+            <div class="alert alert-danger mb-3" role="alert">
+                <i class="bi bi-exclamation-circle me-2" aria-hidden="true"></i>{{ session('error') }}
+            </div>
+        @endif
         @if($reviews->isEmpty())
             <section class="empty-state">
                 <div class="empty-icon"><i class="bi bi-chat-square-heart" aria-hidden="true"></i></div>

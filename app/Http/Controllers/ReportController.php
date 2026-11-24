@@ -104,24 +104,54 @@ class ReportController extends Controller
 
         $report = Report::findOrFail($id);
 
-        $oldStatus = $report->status;
+        $previousStatus = $report->status;
+        $newStatus = $request->status;
 
-        $report->status = $request->status;
-
-         // ✅ SAVE ADMIN REVIEW
+        // Update report details
+        $report->status = $newStatus;
         $report->admin_review = $request->admin_review;
-        
-        $report->save();
 
-        // 📧 NOTIFY USER WHO MADE REPORT
-        $user = $report->user;
-
-        if ($user && $oldStatus !== $request->status) {
-            Mail::to($user->email)
-                ->queue(new ReportStatusMail($report, $request->status));
+        // Record reviewing administrator
+        if (in_array($newStatus, ['resolved', 'rejected'])) {
+            $report->reviewed_by = auth()->id();
+        } else {
+            $report->reviewed_by = null;
         }
 
-        return back()->with('success', 'Status updated');
+        $report->save();
+
+         // Load relationships for email template
+        $report->load(['user', 'book']);
+
+        if (
+            $previousStatus !== $newStatus &&
+            in_array($newStatus, ['resolved', 'rejected'])
+        ) {
+            // Get all admins except the reviewing admin
+            $admins = User::whereIn('role', ['admin', 'super_admin'])
+                ->where('id', '!=', auth()->id())
+                ->get();
+
+            $reviewerName = auth()->user()->name;
+
+            // Send Gmail to other admins
+            foreach ($admins as $admin) {
+                Mail::to($admin->email)->queue(
+                    new ReportStatusMail($report, $newStatus, 'admin', $reviewerName)
+                );
+            }
+
+            // Send Gmail to the reporting student
+            $student = User::find($report->user_id);
+
+            if ($student) {
+                Mail::to($student->email)->queue(
+                    new ReportStatusMail($report, $newStatus, 'student', $reviewerName)
+                );
+            }
+        }
+
+        return back()->with('success', 'Status updated successfully.');
     }
 
     public function myReports()

@@ -145,7 +145,7 @@
             <section class="empty-state">
                 <div class="empty-icon"><i class="bi bi-clipboard-check" aria-hidden="true"></i></div>
                 <h2>No pending reports found</h2>
-                <p>There are no reports matching this search in the pending review queue.</p>
+                <p>There are currently no reports waiting for review.</p>
             </section>
         @endforelse
     </main>
