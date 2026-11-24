@@ -15,9 +15,11 @@ class ReviewController extends Controller
         $bookRequest = BookRequest::with(['book', 'requester', 'owner'])
             ->findOrFail($requestId);
 
-        // Sell reviews only. Keep Exchange unchanged.
-        if (!$bookRequest->book ||
-            $bookRequest->book->listing_type !== 'sell') {
+        // Allow reviews for both Sell and Exchange transactions.
+        if (
+            !$bookRequest->book ||
+            !in_array($bookRequest->book->listing_type, ['sell', 'exchange'], true)
+        ) {
             abort(404);
         }
 
@@ -62,8 +64,10 @@ class ReviewController extends Controller
         $bookRequest = BookRequest::with('book')->findOrFail($requestId);
 
         // Sell reviews only. Keep Exchange unchanged.
-        if (!$bookRequest->book ||
-            $bookRequest->book->listing_type !== 'sell') {
+        if (
+            !$bookRequest->book ||
+            !in_array($bookRequest->book->listing_type, ['sell', 'exchange'], true)
+        ) {
             abort(404);
         }
 

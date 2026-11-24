@@ -300,6 +300,12 @@
             border-top:1px solid #e8edf3;
         }
 
+        .sell-handover-actions {
+            margin-top: 15px;
+            padding-top: 0;
+            border-top: none;
+        }
+
         .request-actions form { margin:0; }
 
         .request-actions .btn {
@@ -933,17 +939,42 @@
                             @endif
 
                         @endif
-
                     
                     {{-- =====================================
                         SELL SCHEDULE DISPLAY
                     ====================================== --}}
                     @else
 
+                    {{-- Student B: Review Student A after completed Sell --}}
+                    @if($req->status === 'completed')
+
+                        @php
+                            $hasReviewed = \App\Models\Review::where('book_request_id', $req->id)
+                                ->where('user_id', auth()->id())
+                                ->exists();
+                        @endphp
+
+                        <div class="mb-3">
+                            @if(!$hasReviewed)
+                                <a href="{{ route('review.create', $req->id) }}"
+                                    class="btn review-button">
+                                    <i class="bi bi-star me-1" aria-hidden="true"></i>
+                                    Write a Review
+                                </a>
+                            @else
+                                <span class="reviewed-label">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                    Already reviewed
+                                </span>
+                            @endif
+                        </div>
+
+                    @endif
+
                         <div class="schedule-grid">
 
                             {{-- APPROVED: Show only the final agreed schedule --}}
-                            @if($req->status === 'approved')
+                            @if(in_array($req->status, ['approved', 'completed']))
 
                                 <section class="schedule-box final">
 
@@ -1192,6 +1223,40 @@
 
                         </div>
 
+                                                {{-- SELL HANDOVER PROGRESS --}}
+                        @if(in_array($req->status, ['approved', 'completed']))
+
+                            <div class="handover-progress">
+
+                                <strong>
+                                    <i class="bi bi-box-seam"></i>
+                                    Physical book handover confirmation
+                                </strong>
+
+                                <p>
+                                    @if($req->owner_confirmed_handover)
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        You have confirmed handing over the book.
+                                    @else
+                                        <i class="bi bi-hourglass-split"></i>
+                                        You have not confirmed handing over the book.
+                                    @endif
+                                </p>
+
+                                <p>
+                                    @if($req->requester_confirmed_handover)
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        {{ $req->requester->name }} has confirmed receiving your book.
+                                    @else
+                                        <i class="bi bi-hourglass-split"></i>
+                                        Waiting for {{ $req->requester->name }} to confirm receiving your book.
+                                    @endif
+                                </p>
+
+                            </div>
+
+                        @endif
+
                     @endif
 
 
@@ -1245,6 +1310,32 @@
                         </div>
 
                     @endif
+
+                    {{-- Student B: Review Student A after completed Exchange --}}
+                    @if($isExchange && $req->status === 'completed')
+
+                        @php
+                            $hasReviewed = \App\Models\Review::where('book_request_id', $req->id)
+                                ->where('user_id', auth()->id())
+                                ->exists();
+                        @endphp
+
+                        <div class="mt-3">
+                            @if(!$hasReviewed)
+                                <a href="{{ route('review.create', $req->id) }}"
+                                    class="btn review-button">
+                                    <i class="bi bi-star me-1" aria-hidden="true"></i>
+                                    Write a Review
+                                </a>
+                            @else
+                                <span class="reviewed-label">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                    Already reviewed
+                                </span>
+                            @endif
+                        </div>
+
+                    @endif    
 
                     {{-- =====================================
                         SELL ACTIONS
@@ -1370,36 +1461,10 @@
 
                         @endif
 
-                        {{-- Student B: Review Student A after completed Sell --}}
-                        @if($req->status === 'completed')
-
-                            @php
-                                $hasReviewed = \App\Models\Review::where('book_request_id', $req->id)
-                                    ->where('user_id', auth()->id())
-                                    ->exists();
-                            @endphp
-
-                            <div class="status-actions">
-                                @if(!$hasReviewed)
-                                    <a href="{{ route('review.create', $req->id) }}"
-                                    class="btn review-button">
-                                        <i class="bi bi-star me-1" aria-hidden="true"></i>
-                                        Write a Review
-                                    </a>
-                                @else
-                                    <span class="reviewed-label">
-                                        <i class="bi bi-check-circle" aria-hidden="true"></i>
-                                        Already reviewed
-                                    </span>
-                                @endif
-                            </div>
-
-                        @endif
-
                         {{-- Student B: Confirm physical handover for Sell --}}
                         @if($req->status === 'approved' && !$req->owner_confirmed_handover)
 
-                            <div class="request-actions">
+                            <div class="request-actions sell-handover-actions">
 
                                 {{-- Confirm Handover --}}
                                 <form method="POST"
@@ -1670,42 +1735,48 @@
 
                         @endif
 
-
                         {{-- Student B: Confirm physical handover --}}
-                        @if($req->status === 'approved' && !$req->owner_confirmed_handover)
+                        @if($req->status === 'approved')
 
                             <div class="request-actions">
 
-                                <form method="POST"
-                                      action="{{ route('exchange.confirm-handover', $req->id) }}"
-                                      onsubmit="return confirm('Confirm that you have physically received the offered book?');">
+                                @if(!$req->owner_confirmed_handover)
 
-                                    @csrf
+                                    <form method="POST"
+                                        action="{{ route('exchange.confirm-handover', $req->id) }}"
+                                        onsubmit="return confirm('Confirm that you have physically received the offered book?');">
+                                        @csrf
 
-                                    <button type="submit" class="btn approve-button">
-                                        <i class="bi bi-check-circle me-1"></i>
-                                        Confirm Handover
-                                    </button>
+                                        <button type="submit" class="btn approve-button">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Confirm Handover
+                                        </button>
+                                    </form>
 
-                                </form>
+                                @else
 
-                            </div>
+                                    <div class="cancel-notice">
+                                        <i class="bi bi-check-circle-fill me-1"></i>
+                                        You have confirmed the handover. Waiting for the other student.
+                                    </div>
 
-                        @elseif($req->status === 'approved' && $req->owner_confirmed_handover)
+                                @endif
 
-                            <div class="cancel-notice">
-                                <i class="bi bi-check-circle-fill me-1"></i>
-                                You have confirmed the handover. Waiting for the other student.
-                            </div>
+                                @if(!$req->requester_confirmed_handover && !$req->owner_confirmed_handover)
 
-                        @endif
+                                    <form method="POST"
+                                        action="{{ route('exchange.cancel', $req->id) }}"
+                                        onsubmit="return confirm('Are you sure you want to cancel this Exchange?');">
+                                        @csrf
 
+                                        <button type="submit" class="btn reject-button">
+                                            <i class="bi bi-x-lg me-1"></i>
+                                            Cancel Exchange
+                                        </button>
+                                    </form>
 
-                        @if($req->status === 'completed')
+                                @endif
 
-                            <div class="cancel-notice" style="border-color:#c5e6d2;color:#23744a;background:#f0f9f3;">
-                                <i class="bi bi-check-circle-fill me-1"></i>
-                                This Exchange has been completed. Both students confirmed the handover.
                             </div>
 
                         @endif

@@ -1530,13 +1530,17 @@ class BookController extends Controller
         return back()->with('success', 'Exchange request rejected.');
     }
 
-
-    // Student A: Cancel Exchange request
+    
+    // Both Student: Cancel Exchange
     public function cancelExchange($id)
     {
         $exchangeRequest = BookRequest::with('book')->findOrFail($id);
 
-        if ($exchangeRequest->requester_id != auth()->id()) {
+        $isRequester = $exchangeRequest->requester_id == auth()->id();
+        $isOwner = $exchangeRequest->owner_id == auth()->id();
+
+        // Allow only Student A or Student B
+        if (!$isRequester && !$isOwner) {
             return back()->with('error', 'Unauthorized action.');
         }
 
@@ -1561,6 +1565,7 @@ class BookController extends Controller
                 return;
             }
 
+            // Cancellation is not allowed once either student confirms handover
             if (
                 $lockedRequest->requester_confirmed_handover ||
                 $lockedRequest->owner_confirmed_handover
@@ -1568,6 +1573,7 @@ class BookController extends Controller
                 return;
             }
 
+            // Release the exchange listing if it was already approved
             if ($lockedRequest->status === 'approved') {
                 $lockedRequest->book()->update([
                     'status' => 'available',
