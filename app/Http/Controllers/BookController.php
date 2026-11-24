@@ -460,7 +460,9 @@ class BookController extends Controller
 
                 'owner_id' => $book->user_id,
 
-                'status' => 'pending',
+                'status' => $scheduleType === 'requester'
+                    ? 'negotiation'
+                    : 'pending',
 
                 'proposed_location' => $proposedLocation,
 
@@ -870,10 +872,10 @@ class BookController extends Controller
 
             'status' => 'negotiation',
 
-            'buyer_proposed_location' => $request->proposed_location,
-            'buyer_proposed_date' => $request->proposed_date,
-            'buyer_proposed_time' => $request->proposed_time,
-            'buyer_proposed_end_time' => $request->proposed_end_time,
+            'proposed_location' => $request->proposed_location,
+            'proposed_date' => $request->proposed_date,
+            'proposed_time' => $request->proposed_time,
+            'proposed_end_time' => $request->proposed_end_time,
 
             'schedule_type' => 'buyer'
         ]);
@@ -897,10 +899,10 @@ class BookController extends Controller
             ->firstOrFail();
 
         $proposal->update([
-            'buyer_proposed_location' => $validated['proposed_location'],
-            'buyer_proposed_date' => $validated['proposed_date'],
-            'buyer_proposed_time' => $validated['proposed_time'],
-            'buyer_proposed_end_time' => $validated['proposed_end_time'],
+            'proposed_location' => $validated['proposed_location'],
+            'proposed_date' => $validated['proposed_date'],
+            'proposed_time' => $validated['proposed_time'],
+            'proposed_end_time' => $validated['proposed_end_time'],
         ]);
 
         $redirect = $request->input('return_to') === 'sent-requests'
@@ -921,10 +923,10 @@ class BookController extends Controller
         // The book's meeting fields still contain the seller's original schedule.
         $proposal->update([
             'status' => 'pending',
-            'buyer_proposed_location' => null,
-            'buyer_proposed_date' => null,
-            'buyer_proposed_time' => null,
-            'buyer_proposed_end_time' => null,
+            'proposed_location' => null,
+            'proposed_date' => null,
+            'proposed_time' => null,
+            'proposed_end_time' => null,
             'schedule_type' => 'seller',
         ]);
 
@@ -1032,10 +1034,10 @@ class BookController extends Controller
 
         // Determine the final agreed schedule.
         if ($isBuyerProposal) {
-            $finalLocation = $bookRequest->buyer_proposed_location;
-            $finalDate = $bookRequest->buyer_proposed_date;
-            $finalTime = $bookRequest->buyer_proposed_time;
-            $finalEndTime = $bookRequest->buyer_proposed_end_time;
+            $finalLocation = $bookRequest->proposed_location;
+            $finalDate = $bookRequest->proposed_date;
+            $finalTime = $bookRequest->proposed_time;
+            $finalEndTime = $bookRequest->proposed_end_time;
         } else {
             // Keep the original listing schedule.
             $finalLocation = $book->meeting_location;
@@ -1128,10 +1130,10 @@ class BookController extends Controller
 
         // Keep the same request, but save the seller's latest proposal.
         $bookRequest->update([
-            'seller_proposed_location' => $validated['proposed_location'],
-            'seller_proposed_date' => $validated['proposed_date'],
-            'seller_proposed_time' => $validated['proposed_time'],
-            'seller_proposed_end_time' => $validated['proposed_end_time'],
+            'proposed_location' => $validated['proposed_location'],
+            'proposed_date' => $validated['proposed_date'],
+            'proposed_time' => $validated['proposed_time'],
+            'proposed_end_time' => $validated['proposed_end_time'],
             'status' => 'negotiation',
             'schedule_type' => 'seller',
         ]);
@@ -1169,10 +1171,10 @@ class BookController extends Controller
 
         // Save the accepted schedule to the book.
         $book->update([
-            'meeting_location' => $bookRequest->seller_proposed_location,
-            'meeting_date' => $bookRequest->seller_proposed_date,
-            'meeting_time' => $bookRequest->seller_proposed_time,
-            'meeting_end_time' => $bookRequest->seller_proposed_end_time,
+            'meeting_location' => $bookRequest->proposed_location,
+            'meeting_date' => $bookRequest->proposed_date,
+            'meeting_time' => $bookRequest->proposed_time,
+            'meeting_end_time' => $bookRequest->proposed_end_time,
             'status' => 'reserved',
         ]);
 
@@ -1232,10 +1234,10 @@ class BookController extends Controller
 
         // Keep the same request and save Student A's latest proposal.
         $bookRequest->update([
-            'buyer_proposed_location' => $validated['proposed_location'],
-            'buyer_proposed_date' => $validated['proposed_date'],
-            'buyer_proposed_time' => $validated['proposed_time'],
-            'buyer_proposed_end_time' => $validated['proposed_end_time'],
+            'proposed_location' => $validated['proposed_location'],
+            'proposed_date' => $validated['proposed_date'],
+            'proposed_time' => $validated['proposed_time'],
+            'proposed_end_time' => $validated['proposed_end_time'],
             'status' => 'negotiation',
             'schedule_type' => 'buyer',
         ]);
@@ -1650,6 +1652,71 @@ class BookController extends Controller
         return back()->with('success', 'Your handover confirmation has been recorded. Waiting for the other student.');
     }
 
+    // Both students: Confirm physical handover for Sell
+    public function confirmSellHandover($id)
+    {
+        $sellRequest = BookRequest::with('book')->findOrFail($id);
+
+        // This method is strictly for Sell requests.
+        if (
+            !$sellRequest->book ||
+            $sellRequest->book->listing_type !== 'sell'
+        ) {
+            abort(404);
+        }
+
+        $isRequester = $sellRequest->requester_id == auth()->id();
+        $isOwner = $sellRequest->owner_id == auth()->id();
+
+        if (!$isRequester && !$isOwner) {
+            return back()->with('error', 'Unauthorized action.');
+        }
+
+        if ($sellRequest->status !== 'approved') {
+            return back()->with('error', 'The Sell request must be approved before confirming handover.');
+        }
+
+        DB::transaction(function () use ($sellRequest, $isRequester, $isOwner) {
+
+            $lockedRequest = BookRequest::where('id', $sellRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedRequest->status !== 'approved') {
+                return;
+            }
+
+            if ($isRequester) {
+                $lockedRequest->requester_confirmed_handover = true;
+            }
+
+            if ($isOwner) {
+                $lockedRequest->owner_confirmed_handover = true;
+            }
+
+            if (
+                $lockedRequest->requester_confirmed_handover &&
+                $lockedRequest->owner_confirmed_handover
+            ) {
+                $lockedRequest->status = 'completed';
+
+                $lockedRequest->book()->update([
+                    'status' => 'sold',
+                ]);
+            }
+
+            $lockedRequest->save();
+        });
+
+        $sellRequest->refresh();
+
+        if ($sellRequest->status === 'completed') {
+            return back()->with('success', 'Sale completed! Both students confirmed the handover.');
+        }
+
+        return back()->with('success', 'Your handover confirmation has been recorded. Waiting for the other student.');
+    }
+
     public function saveBook($id)
     {
         $book = Book::findOrFail($id);
@@ -1724,39 +1791,91 @@ class BookController extends Controller
     }
     public function cancelRequest($id)
     {
-        $request = BookRequest::findOrFail($id);
+        $bookRequest = BookRequest::with('book')->findOrFail($id);
 
-        // 🔒 Only requester can cancel
-        if ($request->requester_id != auth()->id()) {
+        // Sell requests only. Exchange has its own cancellation method.
+        if (
+            !$bookRequest->book ||
+            $bookRequest->book->listing_type !== 'sell'
+        ) {
+            abort(404);
+        }
+
+        $isRequester = $bookRequest->requester_id == auth()->id();
+        $isOwner = $bookRequest->owner_id == auth()->id();
+
+        if (!$isRequester && !$isOwner) {
             return back()->with('error', 'Unauthorized action.');
         }
 
-        // 💾 store old status BEFORE changing it
-        $wasApproved = $request->status === 'approved';
-
-        // ❌ cancel request
-        $request->update([
-            'status' => 'cancelled'
-        ]);
-
-        $requester = User::find($request->requester_id);
-        if ($requester) {
-            $requester->notify(new BookRequestStatusNotification($request));
+        // Student B can only cancel after approval.
+        // Student A can cancel pending, negotiation or approved requests.
+        if (
+            ($isOwner && $bookRequest->status !== 'approved') ||
+            ($isRequester && !in_array($bookRequest->status, [
+                'pending',
+                'negotiation',
+                'approved'
+            ]))
+        ) {
+            return back()->with('error', 'This request cannot be cancelled.');
         }
 
-        // 🔁 if it was already approved, revert book back to available
-        if ($wasApproved) {
-            $request->book->update([
-                'status' => 'available'
+        DB::transaction(function () use ($bookRequest) {
+
+            $lockedRequest = BookRequest::where('id', $bookRequest->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($lockedRequest->status !== $bookRequest->status) {
+                return;
+            }
+
+            // Cancellation is not allowed after either student confirms.
+            if (
+                $lockedRequest->requester_confirmed_handover ||
+                $lockedRequest->owner_confirmed_handover
+            ) {
+                return;
+            }
+
+            if ($lockedRequest->status === 'approved') {
+                $lockedRequest->book()->update([
+                    'status' => 'available',
+                ]);
+            }
+
+            $lockedRequest->update([
+                'status' => 'cancelled',
             ]);
+        });
+
+        $bookRequest->refresh();
+
+        if ($bookRequest->status !== 'cancelled') {
+            return back()->with(
+                'error',
+                'This request can no longer be cancelled.'
+            );
         }
 
-        // 📧 SEND EMAIL TO OWNER
-        $owner = User::find($request->owner_id);
+        // Notify the requester about the cancellation.
+        $requester = User::find($bookRequest->requester_id);
 
-        if ($owner) {
-            Mail::to($owner->email)
-                ->queue(new BookStatusMail($request, 'cancelled'));
+        if ($requester) {
+            $requester->notify(
+                new BookRequestStatusNotification($bookRequest)
+            );
+        }
+
+        // Email the other student about the cancellation.
+        $otherStudent = $isRequester
+            ? User::find($bookRequest->owner_id)
+            : $requester;
+
+        if ($otherStudent) {
+            Mail::to($otherStudent->email)
+                ->queue(new BookStatusMail($bookRequest, 'cancelled'));
         }
 
         return back()->with('success', 'Request cancelled successfully.');

@@ -139,6 +139,11 @@
         ->middleware('auth')
         ->name('exchange.confirm-handover');
 
+    // Both students: Confirm physical handover for Sell
+    Route::post('/request/{id}/confirm-handover', [BookController::class, 'confirmSellHandover'])
+        ->middleware('auth')
+        ->name('request.confirm-handover');
+
     Route::post('/ai-chat/propose-schedule/{id}', [BookController::class, 'proposeScheduleFromChat'])
         ->middleware('auth')
         ->name('ai-chat.propose-schedule');
