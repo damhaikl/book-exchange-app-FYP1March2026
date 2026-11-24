@@ -47,6 +47,107 @@
             @endif
         </div>
 
+        {{-- ================================= --}}
+        {{-- ACADEMIC INFORMATION             --}}
+        {{-- ================================= --}}
+
+        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                {{ __('Academic Information') }}
+            </h2>
+        </div>
+
+        {{-- Student ID (Read Only) --}}
+        <div>
+            <x-input-label for="studentid" :value="__('Student ID')" />
+            <x-text-input
+                id="studentid"
+                type="text"
+                class="mt-1 block w-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                :value="$user->studentid"
+                readonly
+            />
+        </div>
+
+        {{-- Education Level (Read Only) --}}
+        <div>
+            <x-input-label for="education_level" :value="__('Education Level')" />
+            <x-text-input
+                id="education_level"
+                type="text"
+                class="mt-1 block w-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 cursor-not-allowed"
+                :value="$user->education_level"
+                readonly
+            />
+        </div>
+
+        {{-- Programme (Editable) --}}
+        <div>
+            <x-input-label for="programme" :value="__('Programme')" />
+
+            <select
+                id="programme"
+                name="programme"
+                class="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm"
+                required
+            >
+                <option value="">Select programme</option>
+            </select>
+
+            <x-input-error class="mt-2" :messages="$errors->get('programme')" />
+        </div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const education = @json($user->education_level);
+                const programme = document.getElementById("programme");
+                const previousProgramme = @json(old('programme', $user->programme));
+
+                const data = {
+                    Foundation: [
+                        "Foundation in Computer Technology",
+                        "Foundation in Science and Technology for Korean University"
+                    ],
+                    Diploma: [
+                        "Diploma in Networking Technology",
+                        "Diploma in Information Technology",
+                        "Diploma in Animation",
+                        "Diploma in Multimedia"
+                    ],
+                    Bachelor: [
+                        "Bachelor of Game Development Technology with Honours",
+                        "Bachelor in Information Technology (Honours) (Internet of Things)",
+                        "Bachelor of Multimedia Technology (Hons.) in Interactive Multimedia Design",
+                        "Bachelor of Computer Engineering Technology (Networking Systems) with Honours",
+                        "Bachelor of Software Engineering with Honours",
+                        "Bachelor of Cybersecurity Technology with Honours",
+                        "Bachelor of Multimedia Technology (Hons.) in Computer Animation",
+                        "Bachelor of Artificial Intelligence Technology with Honours"
+                    ]
+                };
+
+                if (data[education]) {
+                    data[education].forEach(function (item) {
+                        const option = document.createElement("option");
+                        option.value = item;
+                        option.textContent = item;
+
+                        if (item === previousProgramme) {
+                            option.selected = true;
+                        }
+
+                        programme.appendChild(option);
+                    });
+                } else {
+                    programme.disabled = true;
+                }
+            });
+        </script>
+
+        {{-- ================================= --}}
+        {{-- END ACADEMIC INFORMATION         --}}
+        {{-- ================================= --}}
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 

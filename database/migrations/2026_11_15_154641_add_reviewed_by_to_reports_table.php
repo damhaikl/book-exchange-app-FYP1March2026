@@ -1,58 +1,27 @@
 
 <?php
 
-namespace App\Notifications;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Notifications\Notification;
-
-class ReportReviewedNotification extends Notification
+return new class extends Migration
 {
-    use Queueable;
-
-    protected $reportId;
-    protected $status;
-    protected $reviewerName;
-    protected $adminReview;
-    protected $audience;
-
-    public function __construct(
-        $reportId,
-        $status,
-        $reviewerName,
-        $adminReview,
-        $audience
-    ) {
-        $this->reportId = $reportId;
-        $this->status = $status;
-        $this->reviewerName = $reviewerName;
-        $this->adminReview = $adminReview;
-        $this->audience = $audience;
-    }
-
-    public function via(object $notifiable): array
+    public function up(): void
     {
-        return ['database'];
+        Schema::table('reports', function (Blueprint $table) {
+            $table->foreignId('reviewed_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+        });
     }
 
-    public function toArray(object $notifiable): array
+    public function down(): void
     {
-        $statusText = ucfirst($this->status);
-
-        if ($this->audience === 'admin') {
-            $message = "Admin {$this->reviewerName} reviewed Report #{$this->reportId}. Status: {$statusText}.";
-        } else {
-            $message = "Your Report #{$this->reportId} has been reviewed. Status: {$statusText}.";
-        }
-
-        return [
-            'type' => 'report_reviewed',
-            'report_id' => $this->reportId,
-            'status' => $this->status,
-            'reviewer_name' => $this->reviewerName,
-            'admin_review' => $this->adminReview,
-            'audience' => $this->audience,
-            'message' => $message,
-        ];
+        Schema::table('reports', function (Blueprint $table) {
+            $table->dropForeign(['reviewed_by']);
+            $table->dropColumn('reviewed_by');
+        });
     }
-}
+};

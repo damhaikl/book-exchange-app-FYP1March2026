@@ -21,6 +21,16 @@
         .book-description { color:#52677d; line-height:1.75; white-space:pre-line; }
         .price-tag { color:var(--navy); font-size:1.45rem; font-weight:800; }
         .badge-soft { display:inline-flex; align-items:center; gap:.35rem; padding:.38rem .68rem; border-radius:8px; font-size:.73rem; font-weight:700; }
+        .badge-your-listing {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .55rem .85rem;
+            border-radius: 9px;
+            font-size: .875rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
         .badge-available { background:#e4f4eb; color:#23744a; }
         .badge-reserved { background:#fff2d7; color:#8a5a12; }
         .badge-sold { background:#fde8e9; color:#aa3038; }
@@ -57,12 +67,21 @@
         .modal-footer { gap:.5rem;padding:0 1.4rem 1.35rem;border-top:0; }
         .modal-footer .btn { border-radius:9px; }
         @media(max-width:767.98px) { .book-cover { min-height:220px;max-height:340px; } .details-panel { padding:1rem; } }
+        .badge-sell {
+            background: #eee5ff;
+            color: #7041a6;
+        }
+
+        .badge-exchange {
+            background: #dceafb;
+            color: #245586;
+        }
     </style>
 </head>
 <body>
 <header class="details-header">
     <div class="container details-main d-flex justify-content-between align-items-center py-3">
-        <a href="{{ route('homepage') }}" class="text-decoration-none text-dark fw-bold"><i class="bi bi-book-half text-primary me-2"></i>UniKLBook Hub</a>
+        <a href="{{ route('homepage') }}" class="text-decoration-none text-white fw-bold"><i class="bi bi-book-half text-primary me-2"></i>UniKLBook Hub</a>
         <div class="d-flex gap-2">
             @auth
                 <a href="{{ route('book.saved') }}" class="btn btn-outline-danger btn-sm"><i class="bi bi-heart me-sm-1"></i><span class="d-none d-sm-inline">Saved books</span></a>
@@ -88,17 +107,98 @@
                 <img src="{{ asset('storage/' . $book->image) }}" class="book-cover" alt="Cover of {{ $book->title }}">
             </div>
             <div class="col-12 col-md-7">
-                <div class="d-flex flex-wrap gap-2 mb-3">
-                    @php($statusClass = ['available' => 'badge-available', 'reserved' => 'badge-reserved', 'sold' => 'badge-sold'][$book->status] ?? 'badge-neutral')
-                    <span class="badge-soft {{ $statusClass }}"><i class="bi bi-circle-fill" style="font-size:7px"></i>{{ ucfirst($book->status) }}</span>
-                    <span class="badge-soft badge-neutral"><i class="bi bi-bookmark"></i>{{ $book->condition }}</span>
-                    <span class="badge-soft badge-neutral"><i class="bi bi-journal-text"></i>Subject {{ $book->subject_id }}</span>
-                    <span class="badge-soft badge-neutral"><i class="bi bi-tag"></i>{{ $book->subject_category ?? 'Category not set' }}</span>
-                </div>
+                
+            <div class="d-flex flex-wrap gap-2 mb-3">
+
+                @php
+                   $displayStatus = $book->status;
+
+                    $statusClass = [
+                        'available' => 'badge-available',
+                        'reserved' => 'badge-reserved',
+                        'sold' => 'badge-sold',
+                        'exchanged' => 'badge-sold'
+                    ][$displayStatus] ?? 'badge-neutral';
+                @endphp
+
+                {{-- Availability --}}
+                <span class="badge-soft {{ $statusClass }}">
+                    <i class="bi bi-circle-fill" style="font-size:7px"></i>
+                    {{ ucfirst($displayStatus) }}
+                </span>
+
+                {{-- Listing type --}}
+                @if($book->listing_type === 'exchange')
+                    <span class="badge-soft badge-exchange">
+                        <i class="bi bi-arrow-left-right"></i>
+                        EXCHANGE
+                    </span>
+                @else
+                    <span class="badge-soft badge-sell">
+                        <i class="bi bi-tag"></i>
+                        SELL
+                    </span>
+                @endif
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-bookmark"></i>
+                    {{ $book->condition }}
+                </span>
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-journal-text"></i>
+                    Subject {{ $book->subject_id }}
+                </span>
+
+                <span class="badge-soft badge-neutral">
+                    <i class="bi bi-tag"></i>
+                    {{ $book->subject_category ?? 'Category not set' }}
+                </span>
+
+            </div>
+
                 <div class="page-kicker mb-2">Book details</div>
                 <h1 class="book-title mb-3">{{ $book->title }}</h1>
-                <p class="book-description">{{ $book->description }}</p>
-                <p class="price-tag mb-4"><i class="bi bi-tag me-1"></i>{{ $book->price ? 'RM ' . number_format($book->price, 2) : 'Free / Not set' }}</p>
+                
+                @if($book->listing_type === 'exchange')
+                    <div class="mt-3 mb-4">
+                        <h2 class="h6 fw-bold mb-2">
+                            <i class="bi bi-arrow-left-right text-primary me-2"></i>
+                            Books Wanted in Exchange
+                        </h2>
+
+                        @if($book->exchangePreferences->count() > 0)
+                            <div class="d-flex flex-column gap-2">
+                                @foreach($book->exchangePreferences as $preference)
+                                    <div class="p-3 rounded-3" style="background:#f1f6fc;">
+                                        <div class="fw-semibold">
+                                            {{ $preference->wanted_book_name }}
+                                        </div>
+                                        <small class="text-secondary">
+                                            {{ $preference->wanted_subject_id }}
+                                        </small>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-secondary small mb-0">
+                                No exchange preferences provided.
+                            </p>
+                        @endif
+                    </div>
+                @endif
+
+                @if($book->listing_type === 'sell')
+                    <p class="price-tag mb-4">
+                        <i class="bi bi-tag me-1"></i>
+                        {{ $book->price !== null ? 'RM ' . number_format($book->price, 2) : 'Price not set' }}
+                    </p>
+                @else
+                    <p class="price-tag mb-4">
+                        <i class="bi bi-arrow-left-right me-1"></i>
+                        Book Exchange
+                    </p>
+                @endif
 
                 <div class="d-flex flex-wrap gap-2 align-items-center">
                     @if($book->user_id != auth()->id())
@@ -107,29 +207,97 @@
                             <button type="submit" class="btn btn-outline-danger"><i class="bi bi-heart me-1"></i>Save for later</button>
                         </form>
                     @endif
-
+                    
                     @if($book->user_id == auth()->id())
-                        <span class="badge-soft badge-neutral"><i class="bi bi-person-check"></i>Your listing</span>
-                    @elseif($book->status == 'available')
-                        @if($existingRequest)
-                            @if($existingRequest->status === 'negotiation')
-                                <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#existingProposalModal"><i class="bi bi-arrow-left-right me-1"></i>Manage schedule proposal</button>
-                            @else
-                                <button type="button" class="btn btn-outline-secondary" disabled><i class="bi bi-check2 me-1"></i>Request already sent</button>
-                            @endif
-                        @else
-                            <form method="POST" action="{{ route('book.request', $book->id) }}" onsubmit="handleSubmit(event, 'Request sent', 'Your request has been sent to the seller.')">
-                                @csrf
-                                <button type="submit" class="btn btn-primary" onclick="return confirm('Request this book?')"><i class="bi bi-handshake me-1"></i>Request book</button>
-                            </form>
-                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#proposeModal"><i class="bi bi-calendar2-plus me-1"></i>Propose a time</button>
-                        @endif
-                    @else
-                        <span class="badge-soft badge-sold"><i class="bi bi-slash-circle"></i>Not available</span>
-                    @endif
 
-                    @if(auth()->id() == $book->user_id)
-                        <a href="{{ route('book.schedule.edit', $book->id) }}" class="btn btn-outline-primary"><i class="bi bi-calendar2-week me-1"></i>Edit availability</a>
+                        {{-- Owner's listing --}}
+                        <span class="badge-your-listing badge-neutral">
+                            <i class="bi bi-person-check"></i>
+                            Your listing
+                        </span>
+
+                    @elseif($book->status == 'available')
+
+                        {{-- Exchange listing --}}
+                        @if($book->listing_type === 'exchange')
+
+                            @if($existingRequest && $existingRequest->book->listing_type === 'exchange')
+                                <button type="button" class="btn btn-outline-secondary" disabled>
+                                    <i class="bi bi-check2 me-1"></i>
+                                    Exchange Request Already Sent
+                                </button>
+                            @else
+                                <a href="{{ route('exchange.request.create', $book->id) }}"
+                                class="btn btn-primary">
+                                    <i class="bi bi-arrow-left-right me-1"></i>
+                                    Request Exchange
+                                </a>
+                            @endif
+
+                        {{-- Sell listing --}}
+                        @else
+
+                            {{-- Existing Sell request functionality --}}
+                            @if($existingRequest)
+
+                                @if($existingRequest->status === 'negotiation')
+                                    <button type="button" class="btn btn-warning"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#existingProposalModal">
+                                        <i class="bi bi-arrow-left-right me-1"></i>
+                                        Manage schedule proposal
+                                    </button>
+                                @else
+                                    <button type="button" class="btn btn-outline-secondary" disabled>
+                                        <i class="bi bi-check2 me-1"></i>
+                                        Request already sent
+                                    </button>
+                                @endif
+
+                            @else
+
+                                <form method="POST"
+                                    action="{{ route('book.request', $book->id) }}"
+                                    onsubmit="handleSubmit(event, 'Request sent', 'Your request has been sent to the seller.')">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary"
+                                            onclick="return confirm('Request this book?')">
+                                        <i class="bi bi-handshake me-1"></i>
+                                        Request Book
+                                    </button>
+                                </form>
+
+                                <button type="button" class="btn btn-outline-primary"
+                                        data-bs-toggle="modal" data-bs-target="#proposeModal">
+                                    <i class="bi bi-calendar2-plus me-1"></i>
+                                    Propose a time
+                                </button>
+
+                            @endif
+
+                        @endif
+
+                    @else
+
+                        {{-- Book unavailable --}}
+                        <span class="badge-soft badge-sold">
+                            <i class="bi bi-slash-circle"></i>
+                            @if($book->status === 'reserved')
+                                This book is currently reserved.
+                            @elseif($book->status === 'sold')
+                                This book has been sold.
+                            @elseif($book->status === 'exchanged')
+                                This book has been exchanged.
+                            @else
+                                This book is currently unavailable.
+                            @endif
+                        </span>
+
+                    @endif
+                    @if(auth()->id() == $book->user_id && $book->status === 'available')
+                        <a href="{{ route('book.schedule.edit', $book->id) }}" class="btn btn-outline-primary">
+                            <i class="bi bi-calendar2-week me-1"></i>Edit availability
+                        </a>
                     @endif
                     @if($book->user_id != auth()->id())
                         <button type="button" class="btn btn-outline-secondary" onclick="openReportPopup()"><i class="bi bi-flag me-1"></i>Report book</button>
@@ -143,7 +311,12 @@
         <div class="col-12 col-lg-7">
             <section class="info-card h-100">
                 <div class="page-kicker mb-3">Meeting information</div>
-                <h2 class="h6 fw-semibold mb-3"><i class="bi bi-geo-alt text-primary me-2"></i>Seller’s proposed schedule</h2>
+                
+                <h2 class="h6 fw-semibold mb-3">
+                    <i class="bi bi-geo-alt text-primary me-2"></i>
+                    Owner's Preferred Meeting Schedule
+                </h2>
+
                 <div class="row g-3">
                     <div class="col-sm-6"><div class="info-label">Location</div><p class="info-value">{{ $book->meeting_location ?? 'Not set yet' }}</p></div>
                     <div class="col-sm-6"><div class="info-label">Date</div><p class="info-value">{{ $book->meeting_date ? \Carbon\Carbon::parse($book->meeting_date)->format('M j, Y') : 'Not set yet' }}</p></div>

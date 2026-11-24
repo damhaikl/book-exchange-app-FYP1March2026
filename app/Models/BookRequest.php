@@ -8,16 +8,31 @@ class BookRequest extends Model
 {
     protected $fillable = [
         'book_id',
+        'offered_book_id',
         'requester_id',
         'owner_id',
         'status',
-
-        // 🧠 SMART MEETING
         'proposed_location',
         'proposed_date',
         'proposed_time',
         'proposed_end_time',
-        'schedule_type'
+        'schedule_type',
+        'requester_confirmed_handover',
+        'owner_confirmed_handover',
+        'buyer_proposed_location',
+        'buyer_proposed_date',
+        'buyer_proposed_time',
+        'buyer_proposed_end_time',
+
+        'seller_proposed_location',
+        'seller_proposed_date',
+        'seller_proposed_time',
+        'seller_proposed_end_time',
+    ];
+
+    protected $casts = [
+        'requester_confirmed_handover' => 'boolean',
+        'owner_confirmed_handover' => 'boolean',
     ];
 
     public function book()
@@ -25,12 +40,23 @@ class BookRequest extends Model
         return $this->belongsTo(Book::class);
     }
 
+    public function offeredBook()
+    {
+        return $this->belongsTo(Book::class, 'offered_book_id');
+    }
+
     public function requester()
     {
         return $this->belongsTo(User::class, 'requester_id');
     }
+
     public function owner()
     {
         return $this->belongsTo(User::class, 'owner_id');
+    }
+
+    public function exchangeOffer()
+    {
+        return $this->hasOne(ExchangeOffer::class);
     }
 }

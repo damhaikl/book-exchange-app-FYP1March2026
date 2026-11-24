@@ -65,8 +65,7 @@
                 <span>UniKL BookHub</span>
             </a>
             <div class="header-actions">
-                <a href="{{ route('homepage') }}" class="header-link"><i class="bi bi-search" aria-hidden="true"></i><span>Browse books</span></a>
-                <a href="{{ route('dashboard') }}" class="header-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Dashboard</span></a>
+                <a href="{{ route('dashboard') }}" class="header-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Back to Dashboard</span></a>
             </div>
         </div>
         <div class="page-intro">

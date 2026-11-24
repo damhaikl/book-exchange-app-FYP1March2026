@@ -23,6 +23,7 @@ class Book extends Model
         'image',
         'user_id',
         'status',
+        'listing_type',
         'price',
         'meeting_location',
         'meeting_date',
@@ -30,14 +31,31 @@ class Book extends Model
         'meeting_end_time'
     ];
 
-    // 👤 Seller (owner of book)
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    
+
     public function schedule()
     {
         return $this->hasOne(BookSchedule::class);
+    }
+
+    // Exchange preferences for this listing
+    public function exchangePreferences()
+    {
+        return $this->hasMany(BookExchangePreference::class);
+    }
+
+    // Requests where this book is requested
+    public function requests()
+    {
+        return $this->hasMany(BookRequest::class);
+    }
+
+    // Requests where this book is offered
+    public function offeredRequests()
+    {
+        return $this->hasMany(BookRequest::class, 'offered_book_id');
     }
 }

@@ -97,26 +97,33 @@
                 <div class="row g-3">
                     <div class="col-12">
                         <label for="proposed_location" class="form-label">Proposed location</label>
-                        <input id="proposed_location" type="text" name="proposed_location" class="form-control" value="{{ old('proposed_location', $proposal?->proposed_location) }}" placeholder="e.g. UniKL MIIT Library Entrance" required>
+                        <input id="proposed_location" type="text" name="proposed_location" class="form-control"
+                            value="{{ old('proposed_location', $proposal?->buyer_proposed_location) }}"
+                            placeholder="e.g. UniKL MIIT Library Entrance" required>
                         @error('proposed_location')<small class="field-error">{{ $message }}</small>@enderror
                     </div>
+
                     <div class="col-12 col-md-4">
                         <label for="proposed_date" class="form-label">Proposed date</label>
-                        <input id="proposed_date" type="date" name="proposed_date" class="form-control" value="{{ old('proposed_date', $proposal?->proposed_date) }}" required>
+                        <input id="proposed_date" type="date" name="proposed_date" class="form-control"
+                            value="{{ old('proposed_date', $proposal?->buyer_proposed_date) }}" required>
                         @error('proposed_date')<small class="field-error">{{ $message }}</small>@enderror
                     </div>
+
                     <div class="col-12 col-md-4">
                         <label for="proposed_time" class="form-label">Start time</label>
-                        <input id="proposed_time" type="time" name="proposed_time" class="form-control" value="{{ substr((string) old('proposed_time', $proposal?->proposed_time), 0, 5) }}" required>
+                        <input id="proposed_time" type="time" name="proposed_time" class="form-control"
+                            value="{{ substr((string) old('proposed_time', $proposal?->buyer_proposed_time), 0, 5) }}" required>
                         @error('proposed_time')<small class="field-error">{{ $message }}</small>@enderror
                     </div>
+
                     <div class="col-12 col-md-4">
                         <label for="proposed_end_time" class="form-label">End time</label>
-                        <input id="proposed_end_time" type="time" name="proposed_end_time" class="form-control" value="{{ substr((string) old('proposed_end_time', $proposal?->proposed_end_time), 0, 5) }}" required>
+                        <input id="proposed_end_time" type="time" name="proposed_end_time" class="form-control"
+                            value="{{ substr((string) old('proposed_end_time', $proposal?->buyer_proposed_end_time), 0, 5) }}" required>
                         @error('proposed_end_time')<small class="field-error">{{ $message }}</small>@enderror
                     </div>
                 </div>
-
                 <button type="submit" class="btn submit-button w-100">{{ $proposal ? 'Save updated proposal' : 'Send schedule proposal' }} <i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></button>
             </form>
         </section>
