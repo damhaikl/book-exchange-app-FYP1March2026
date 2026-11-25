@@ -321,6 +321,15 @@
             background:#f1f7fd;
         }
 
+        .schedule-box.final {
+            border-color:#c5e6d2;
+            background:#f0f9f3;
+        }
+
+        .schedule-box.final .schedule-title {
+            color:#23744a;
+        }
+
         .schedule-title {
             display:flex;
             align-items:center;
@@ -498,6 +507,44 @@
             .status-actions { align-items:stretch; }
             .status-actions .btn { flex:1 1 100%; }
         }
+
+        .handover-progress {
+            margin-top:15px;
+            padding:14px;
+            border:1px solid #dce5ef;
+            border-radius:12px;
+            background:#f7f9fc;
+        }
+
+        .handover-progress p {
+            margin:7px 0 0;
+            color:#52677d;
+            font-size:.85rem;
+        }
+
+        .handover-progress i {
+            margin-right:6px;
+        }
+
+        .request-actions {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 9px;
+            margin-top: 15px;
+        }
+
+        .request-actions form {
+            margin: 0;
+        }
+
+        .sell-approved-actions {
+            margin-top: 12px;
+        }
+
+        .exchange-status-actions {
+            margin-top: 20px;
+        }
     </style>
 </head>
 
@@ -550,17 +597,19 @@
 
         @forelse($requests as $req)
             @php
-                $hasReview = \App\Models\Review::where('book_id', $req->book_id)
+                $hasReview = \App\Models\Review::where('book_request_id', $req->id)
                     ->where('user_id', auth()->id())
                     ->exists();
 
                 $isExchange = $req->book && $req->book->listing_type === 'exchange';
 
                 $displayStatus = $isExchange
-                    ? $req->status
-                    : (($req->status == 'completed' || $req->is_taken)
-                        ? 'completed'
-                        : $req->status);
+                    ? (
+                        $req->status === 'pending' && $req->schedule_type === 'requester'
+                            ? 'negotiation'
+                            : $req->status
+                    )
+                    : $req->status;
             @endphp
 
             <div class="request-list mb-3">
@@ -597,6 +646,63 @@
                     </header>
 
                     <div class="request-card-body">
+
+                        {{-- SELL BOOK DETAILS --}}
+                        @if(!$isExchange)
+
+                            <section class="schedule-box mb-3">
+
+                                <div class="d-flex align-items-start gap-3">
+
+                                    {{-- BOOK COVER --}}
+                                    @if($req->book->image)
+                                        <img
+                                            src="{{ asset('storage/' . $req->book->image) }}"
+                                            alt="{{ $req->book->title }}"
+                                            style="width:100px;height:135px;object-fit:cover;border-radius:9px;"
+                                        >
+                                    @else
+                                        <div style="width:100px;height:135px;border-radius:9px;background:#e9eef4;display:grid;place-items:center;color:#7188a0;">
+                                            <i class="bi bi-book" style="font-size:2rem;"></i>
+                                        </div>
+                                    @endif
+
+                                    {{-- BOOK INFORMATION --}}
+                                    <div>
+
+                                        <h3 class="schedule-title mb-3">
+                                            <i class="bi bi-book"></i>
+                                            Book Details
+                                        </h3>
+
+                                        <p class="schedule-detail">
+                                            <span>
+                                                <strong>Subject Code:</strong>
+                                                {{ $req->book->subject_id ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <span>
+                                                <strong>Condition:</strong>
+                                                {{ $req->book->condition ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <span>
+                                                <strong>Price:</strong>
+                                                RM {{ number_format((float) $req->book->price, 2) }}
+                                            </span>
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+                        @endif
 
                         {{-- EXCHANGE OFFERED BOOK --}}
                         @if($isExchange && $req->exchangeOffer)
@@ -636,125 +742,6 @@
                             </section>
                         @endif
 
-                        {{-- EXCHANGE ACTIONS --}}
-                        @if($isExchange)
-                            <div class="status-actions">
-                                <span class="status-label">Exchange actions</span>
-
-                                @if($req->status === 'pending')
-                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn cancel-button">
-                                            <i class="bi bi-x-circle me-1"></i>
-                                            Cancel Exchange
-                                        </button>
-                                    </form>
-
-                                @elseif($req->status === 'negotiation' && $req->schedule_type === 'owner')
-
-                                    <form method="POST" action="{{ route('exchange.accept-schedule', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn complete-button">
-                                            <i class="bi bi-check-circle me-1"></i>
-                                            Accept Proposed Schedule
-                                        </button>
-                                    </form>
-
-                                    <button type="button"
-                                            class="btn cancel-button"
-                                            data-bs-toggle="collapse"
-                                            data-bs-target="#counterSchedule-{{ $req->id }}">
-                                        <i class="bi bi-calendar-plus me-1"></i>
-                                        Propose Another Schedule
-                                    </button>
-
-                                    <div class="collapse mt-3" id="counterSchedule-{{ $req->id }}">
-                                        <form method="POST" action="{{ route('exchange.counter-schedule', $req->id) }}">
-                                            @csrf
-
-                                            <div class="mb-2">
-                                                <label class="form-label">Meeting location</label>
-                                                <input type="text" name="proposed_location" class="form-control" required>
-                                            </div>
-
-                                            <div class="mb-2">
-                                                <label class="form-label">Meeting date</label>
-                                                <input type="date"
-                                                       name="proposed_date"
-                                                       class="form-control"
-                                                       min="{{ date('Y-m-d') }}"
-                                                       required>
-                                            </div>
-
-                                            <div class="mb-2">
-                                                <label class="form-label">Start time</label>
-                                                <input type="time" name="proposed_time" class="form-control" required>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label class="form-label">End time</label>
-                                                <input type="time" name="proposed_end_time" class="form-control" required>
-                                            </div>
-
-                                            <button type="submit" class="btn complete-button">
-                                                Submit New Schedule
-                                            </button>
-                                        </form>
-                                    </div>
-
-                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn cancel-button">
-                                            <i class="bi bi-x-circle me-1"></i>
-                                            Cancel Exchange
-                                        </button>
-                                    </form>
-
-                                @elseif($req->status === 'negotiation' && $req->schedule_type === 'requester')
-
-                                    <p class="text-muted mb-2">
-                                        Waiting for the other student to respond to your proposed schedule.
-                                    </p>
-
-                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn cancel-button">
-                                            Cancel Exchange
-                                        </button>
-                                    </form>
-
-                                @elseif($req->status === 'approved')
-
-                                    @if(!$req->requester_confirmed_handover)
-                                        <form method="POST" action="{{ route('exchange.confirm-handover', $req->id) }}">
-                                            @csrf
-
-                                            <button type="submit" class="btn complete-button">
-                                                <i class="bi bi-check-circle me-1"></i>
-                                                Confirm Handover
-                                            </button>
-                                        </form>
-                                    @else
-                                        <span class="reviewed-label">
-                                            <i class="bi bi-check-circle"></i>
-                                            You have confirmed the handover. Waiting for the other student.
-                                        </span>
-                                    @endif
-
-                                @elseif($req->status === 'completed')
-
-                                    <span class="reviewed-label">
-                                        <i class="bi bi-check-circle"></i>
-                                        Exchange completed successfully.
-                                    </span>
-                                @endif
-                            </div>
-                        @endif
-
                         {{-- SELL: STUDENT A RESPONDS TO SELLER'S PROPOSED SCHEDULE --}}
                         @if(
                             !$isExchange &&
@@ -762,9 +749,10 @@
                             $req->schedule_type === 'seller'
                         )
 
-                            <div class="status-actions">
-
-                                <span class="status-label">Respond to seller's proposed schedule</span>
+                            <div class="status-actions {{ $req->status === 'approved' ? 'sell-approved-actions' : '' }}">
+                                {{-- -Action 
+                                <span class="status-label">Review Proposed Schedule</span>
+                                --}}
 
                                 {{-- Accept Student B's proposed schedule --}}
                                 <form method="POST"
@@ -856,7 +844,7 @@
 
                                         <button type="submit" class="btn complete-button">
                                             <i class="bi bi-send me-1"></i>
-                                            Submit New Schedule
+                                            Proposed New Schedule
                                         </button>
 
                                     </form>
@@ -867,64 +855,8 @@
 
                         @endif
 
-                        {{-- EXISTING SELL ACTIONS --}}
-                        @if(!$isExchange && (
-                            $req->status == 'pending' ||
-                            ($req->status == 'approved' && !$req->is_taken) ||
-                            $req->status == 'completed' ||
-                            $req->is_taken
-                        ))
-                            <div class="status-actions">
-                                <span class="status-label">Request actions</span>
+                        {{-- SCHEDULE DETAILS --}}       
 
-                                @if($req->status == 'pending')
-                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn cancel-button">
-                                            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
-                                            Cancel request
-                                        </button>
-                                    </form>
-
-                                @elseif($req->status == 'approved' && !$req->is_taken)
-
-                                    <form method="POST" action="{{ route('request.take', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn complete-button">
-                                            <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
-                                            Mark as received
-                                        </button>
-                                    </form>
-
-                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}">
-                                        @csrf
-
-                                        <button type="submit" class="btn cancel-button">
-                                            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
-                                            Cancel request
-                                        </button>
-                                    </form>
-
-                                @elseif($req->status == 'completed' || $req->is_taken)
-
-                                    @if(!$hasReview)
-                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button">
-                                            <i class="bi bi-star me-1" aria-hidden="true"></i>
-                                            Write a review
-                                        </a>
-                                    @else
-                                        <span class="reviewed-label">
-                                            <i class="bi bi-check-circle" aria-hidden="true"></i>
-                                            Already reviewed
-                                        </span>
-                                    @endif
-                                @endif
-                            </div>
-                        @endif
-
-                        {{-- SCHEDULE DETAILS --}}
                         <div class="schedule-grid">
 
                             @if($isExchange)
@@ -1090,47 +1022,96 @@
                             @else
 
                                 
-                                {{-- SELL: ORIGINAL SELLER SCHEDULE - ALWAYS DISPLAY --}}
-                                <section class="schedule-box">
+                                {{-- SELL: FINAL AGREED SCHEDULE AFTER COMPLETION --}}
+                                @if($req->status === 'completed')
 
-                                    <h3 class="schedule-title">
-                                        <i class="bi bi-calendar2-check"></i>
-                                        Seller's Original Schedule
-                                    </h3>
+                                    <section class="schedule-box final">
 
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-geo-alt"></i>
-                                        <span>
-                                            <strong>Location</strong><br>
-                                            {{ $req->book->meeting_location ?? 'Not set' }}
-                                        </span>
-                                    </p>
+                                        <h3 class="schedule-title">
+                                            <i class="bi bi-check-circle"></i>
+                                            Final Agreed Schedule
+                                        </h3>
 
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-calendar3"></i>
-                                        <span>
-                                            <strong>Date</strong><br>
-                                            {{ $req->book->meeting_date
-                                                ? \Carbon\Carbon::parse($req->book->meeting_date)->format('d M Y')
-                                                : 'Not set' }}
-                                        </span>
-                                    </p>
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>
+                                                <strong>Location</strong><br>
+                                                {{ $req->proposed_location ?? $req->book->meeting_location ?? 'Not set' }}
+                                            </span>
+                                        </p>
 
-                                    <p class="schedule-detail">
-                                        <i class="bi bi-clock"></i>
-                                        <span>
-                                            <strong>Time</strong><br>
-                                            {{ $req->book->meeting_time
-                                                ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A')
-                                                : 'Not set' }}
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>
+                                                <strong>Date</strong><br>
+                                                {{ ($req->proposed_date ?? $req->book->meeting_date)
+                                                    ? \Carbon\Carbon::parse($req->proposed_date ?? $req->book->meeting_date)->format('d M Y')
+                                                    : 'Not set' }}
+                                            </span>
+                                        </p>
 
-                                            @if($req->book->meeting_end_time)
-                                                – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
-                                            @endif
-                                        </span>
-                                    </p>
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-clock"></i>
+                                            <span>
+                                                <strong>Time</strong><br>
 
-                                </section>
+                                                {{ ($req->proposed_time ?? $req->book->meeting_time)
+                                                    ? \Carbon\Carbon::parse($req->proposed_time ?? $req->book->meeting_time)->format('g:i A')
+                                                    : 'Not set' }}
+
+                                                @if($req->proposed_end_time ?? $req->book->meeting_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->proposed_end_time ?? $req->book->meeting_end_time)->format('g:i A') }}
+                                                @endif
+                                            </span>
+                                        </p>
+
+                                    </section>
+
+                                @else
+
+                                    {{-- SELL: ORIGINAL SELLER SCHEDULE --}}
+                                    <section class="schedule-box">
+
+                                        <h3 class="schedule-title">
+                                            <i class="bi bi-calendar2-check"></i>
+                                            Owner Schedule
+                                        </h3>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>
+                                                <strong>Location</strong><br>
+                                                {{ $req->book->meeting_location ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>
+                                                <strong>Date</strong><br>
+                                                {{ $req->book->meeting_date
+                                                    ? \Carbon\Carbon::parse($req->book->meeting_date)->format('d M Y')
+                                                    : 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-clock"></i>
+                                            <span>
+                                                <strong>Time</strong><br>
+                                                {{ $req->book->meeting_time
+                                                    ? \Carbon\Carbon::parse($req->book->meeting_time)->format('g:i A')
+                                                    : 'Not set' }}
+
+                                                @if($req->book->meeting_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->book->meeting_end_time)->format('g:i A') }}
+                                                @endif
+                                            </span>
+                                        </p>
+
+                                    </section>
+
+                                @endif
 
                                 {{-- SELL: SHOW SELLER'S NEW PROPOSAL AFTER STUDENT B PROPOSES --}}
                                 @if(
@@ -1149,7 +1130,7 @@
                                             <i class="bi bi-geo-alt"></i>
                                             <span>
                                                 <strong>Location</strong><br>
-                                                {{ $req->seller_proposed_location ?? 'Not set' }}
+                                                {{ $req->proposed_location ?? 'Not set' }}
                                             </span>
                                         </p>
 
@@ -1157,8 +1138,8 @@
                                             <i class="bi bi-calendar3"></i>
                                             <span>
                                                 <strong>Date</strong><br>
-                                                {{ $req->seller_proposed_date
-                                                    ? \Carbon\Carbon::parse($req->seller_proposed_date)->format('d M Y')
+                                                {{ $req->proposed_date
+                                                    ? \Carbon\Carbon::parse($req->proposed_date)->format('d M Y')
                                                     : 'Not set' }}
                                             </span>
                                         </p>
@@ -1167,12 +1148,12 @@
                                             <i class="bi bi-clock"></i>
                                             <span>
                                                 <strong>Time</strong><br>
-                                                {{ $req->seller_proposed_time
-                                                    ? \Carbon\Carbon::parse($req->seller_proposed_time)->format('g:i A')
+                                                {{ $req->proposed_time
+                                                    ? \Carbon\Carbon::parse($req->proposed_time)->format('g:i A')
                                                     : 'Not set' }}
 
-                                                @if($req->seller_proposed_end_time)
-                                                    – {{ \Carbon\Carbon::parse($req->seller_proposed_end_time)->format('g:i A') }}
+                                                @if($req->proposed_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
                                                 @endif
                                             </span>
                                         </p>
@@ -1181,9 +1162,412 @@
 
                                 @endif
 
+                                {{-- SELL: SHOW STUDENT A'S OWN PROPOSAL --}}
+                                @if(
+                                    $req->status === 'negotiation' &&
+                                    $req->schedule_type === 'buyer'
+                                )
+
+                                    <section class="schedule-box proposed">
+
+                                        <h3 class="schedule-title">
+                                            <i class="bi bi-calendar-plus"></i>
+                                            Your Proposed Schedule
+                                        </h3>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-geo-alt"></i>
+                                            <span>
+                                                <strong>Location</strong><br>
+                                                {{ $req->proposed_location ?? 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-calendar3"></i>
+                                            <span>
+                                                <strong>Date</strong><br>
+                                                {{ $req->proposed_date
+                                                    ? \Carbon\Carbon::parse($req->proposed_date)->format('d M Y')
+                                                    : 'Not set' }}
+                                            </span>
+                                        </p>
+
+                                        <p class="schedule-detail">
+                                            <i class="bi bi-clock"></i>
+                                            <span>
+                                                <strong>Time</strong><br>
+                                                {{ $req->proposed_time
+                                                    ? \Carbon\Carbon::parse($req->proposed_time)->format('g:i A')
+                                                    : 'Not set' }}
+
+                                                @if($req->proposed_end_time)
+                                                    – {{ \Carbon\Carbon::parse($req->proposed_end_time)->format('g:i A') }}
+                                                @endif
+                                            </span>
+                                        </p>
+
+                                        <div class="proposal-manage">
+
+                                            <button type="button"
+                                                    class="manage-button"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#proposalModal-{{ $req->id }}">
+                                                <i class="bi bi-pencil-square"></i>
+                                                Manage Proposed Schedule
+                                            </button>
+
+                                        </div>
+
+                                    </section>
+
+                                @endif
+
                             @endif
 
                         </div>
+
+                        {{-- SELL: PHYSICAL BOOK HANDOVER CONFIRMATION --}}
+                        @if(
+                            !$isExchange &&
+                            in_array($req->status, ['approved', 'completed'])
+                        )
+
+                            <div class="handover-progress">
+
+                                <strong>
+                                    <i class="bi bi-box-seam"></i>
+                                    Physical book handover confirmation
+                                </strong>
+
+                                @if($req->requester_confirmed_handover)
+
+                                    <p>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        You have confirmed receiving the book.
+                                    </p>
+
+                                @else
+
+                                    <p>
+                                        <i class="bi bi-clock text-warning"></i>
+                                        You have not confirmed receiving the book.
+                                    </p>
+
+                                @endif
+
+                                @if($req->owner_confirmed_handover)
+
+                                    <p>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        {{ $req->owner->name }} has confirmed handing over the book.
+                                    </p>
+
+                                @else
+
+                                    <p>
+                                        <i class="bi bi-clock text-warning"></i>
+                                        Waiting for {{ $req->owner->name }} to confirm handing over the book.
+                                    </p>
+
+                                @endif
+
+                                @if($req->status === 'completed')
+
+                                    <p>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        This sale has been completed. Both students confirmed the handover.
+                                    </p>
+
+                                @endif
+
+                            </div>
+
+                        @endif
+
+                        {{-- EXISTING SELL ACTIONS --}}
+                        @if(!$isExchange && (
+                            $req->status == 'pending' ||
+                            ($req->status == 'negotiation' && $req->schedule_type === 'buyer') ||
+                            $req->status == 'approved' ||
+                            $req->status == 'completed' 
+                        ))
+                            <div class="status-actions {{ $req->status === 'approved' ? 'sell-approved-actions' : '' }}">
+
+                                @if($req->status == 'pending')
+                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                                        @csrf
+
+                                        <button type="submit" class="btn cancel-button">
+                                            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                                            Cancel request
+                                        </button>
+                                    </form>
+
+                                @elseif($req->status == 'negotiation' && $req->schedule_type === 'buyer')
+
+                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                                        @csrf
+
+                                        <button type="submit" class="btn cancel-button">
+                                            <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                                            Cancel Request
+                                        </button>
+                                    </form>
+
+                                @elseif($req->status == 'approved')
+
+                                    @if(!$req->requester_confirmed_handover)
+
+                                        <form method="POST"
+                                            action="{{ route('request.confirm-handover', $req->id) }}"
+                                            onsubmit="return confirm('Confirm that you have physically received the book from the seller?');">
+                                            @csrf
+
+                                            <button type="submit" class="btn complete-button">
+                                                <i class="bi bi-check-circle me-1" aria-hidden="true"></i>
+                                                Confirm Handover
+                                            </button>
+                                        </form>
+
+                                    @else
+
+                                        <span class="text-muted">
+                                            <i class="bi bi-clock me-1"></i>
+                                            Waiting for seller to confirm handover
+                                        </span>
+
+                                    @endif
+
+                                    @if(!$req->requester_confirmed_handover && !$req->owner_confirmed_handover)
+
+                                        <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                                            @csrf
+
+                                            <button type="submit" class="btn cancel-button">
+                                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
+                                                Cancel request
+                                            </button>
+                                        </form>
+
+                                    @endif
+
+                                @elseif($req->status == 'completed')
+
+                                    @if(!$hasReview)
+                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button mt-3">
+                                            <i class="bi bi-star me-1" aria-hidden="true"></i>
+                                            Write a review
+                                        </a>
+                                    @else
+                                        <span class="reviewed-label">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                            Already reviewed
+                                        </span>
+                                    @endif
+                                @endif
+                            </div>
+                        @endif
+
+                        {{-- EXCHANGE: PHYSICAL BOOK HANDOVER CONFIRMATION --}}
+                        @if(
+                            $isExchange &&
+                            in_array($req->status, ['approved', 'completed'])
+                        )
+
+                            <div class="handover-progress">
+
+                                <strong>
+                                    <i class="bi bi-box-seam"></i>
+                                    Physical book handover confirmation
+                                </strong>
+
+                                @if($req->requester_confirmed_handover)
+                                    <p>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        You have confirmed receiving the offered book.
+                                    </p>
+                                @else
+                                    <p>
+                                        <i class="bi bi-clock text-warning"></i>
+                                        You have not confirmed receiving the offered book.
+                                    </p>
+                                @endif
+
+                                @if($req->owner_confirmed_handover)
+                                    <p>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        {{ $req->owner->name }} has confirmed receiving your book.
+                                    </p>
+                                @else
+                                    <p>
+                                        <i class="bi bi-clock text-warning"></i>
+                                        Waiting for {{ $req->owner->name }} to confirm receiving your book.
+                                    </p>
+                                @endif
+
+                                @if($req->status === 'completed')
+                                    <p>
+                                        <i class="bi bi-check-circle-fill text-success"></i>
+                                        This Exchange has been completed. Both students confirmed the handover.
+                                    </p>
+                                @endif
+
+                            </div>
+
+                        @endif
+
+                        {{-- EXCHANGE ACTIONS --}}
+                        @if($isExchange)
+                            <div class="status-actions exchange-status-actions">
+                                {{-- Action 
+                                <span class="status-label">Exchange actions</span>
+                                --}}
+
+                                @if($req->status === 'pending')
+                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
+                                        @csrf
+
+                                        <button type="submit" class="btn cancel-button">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Cancel Exchange
+                                        </button>
+                                    </form>
+
+                                @elseif($req->status === 'negotiation' && $req->schedule_type === 'owner')
+
+                                    <form method="POST" action="{{ route('exchange.accept-schedule', $req->id) }}">
+                                        @csrf
+
+                                        <button type="submit" class="btn complete-button">
+                                            <i class="bi bi-check-circle me-1"></i>
+                                            Accept Proposed Schedule
+                                        </button>
+                                    </form>
+
+                                    <button type="button"
+                                            class="btn cancel-button"
+                                            data-bs-toggle="collapse"
+                                            data-bs-target="#counterSchedule-{{ $req->id }}">
+                                        <i class="bi bi-calendar-plus me-1"></i>
+                                        Propose Another Schedule
+                                    </button>
+
+                                    <div class="collapse mt-3" id="counterSchedule-{{ $req->id }}">
+                                        <form method="POST" action="{{ route('exchange.counter-schedule', $req->id) }}">
+                                            @csrf
+
+                                            <div class="mb-2">
+                                                <label class="form-label">Meeting location</label>
+                                                <input type="text" name="proposed_location" class="form-control" required>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <label class="form-label">Meeting date</label>
+                                                <input type="date"
+                                                       name="proposed_date"
+                                                       class="form-control"
+                                                       min="{{ date('Y-m-d') }}"
+                                                       required>
+                                            </div>
+
+                                            <div class="mb-2">
+                                                <label class="form-label">Start time</label>
+                                                <input type="time" name="proposed_time" class="form-control" required>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label class="form-label">End time</label>
+                                                <input type="time" name="proposed_end_time" class="form-control" required>
+                                            </div>
+
+                                            <button type="submit" class="btn complete-button">
+                                                Proposed New Schedule
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
+                                        @csrf
+
+                                        <button type="submit" class="btn cancel-button">
+                                            <i class="bi bi-x-circle me-1"></i>
+                                            Cancel Exchange
+                                        </button>
+                                    </form>
+
+                                @elseif($req->status === 'negotiation' && $req->schedule_type === 'requester')
+
+                                    <p class="text-muted mb-2">
+                                        Waiting for the other student to respond to your proposed schedule.
+                                    </p>
+
+                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
+                                        @csrf
+
+                                        <button type="submit" class="btn cancel-button">
+                                            Cancel Exchange
+                                        </button>
+                                    </form>
+                       
+                                @elseif($req->status === 'approved')
+
+                                    <div class="request-actions">
+
+                                        @if(!$req->requester_confirmed_handover)
+
+                                            <form method="POST" action="{{ route('exchange.confirm-handover', $req->id) }}"
+                                                onsubmit="return confirm('Confirm that you have physically received the offered book?');">
+                                                @csrf
+
+                                                <button type="submit" class="btn complete-button">
+                                                    <i class="bi bi-check-circle me-1"></i>
+                                                    Confirm Handover
+                                                </button>
+                                            </form>
+
+                                        @else
+
+                                            <span class="reviewed-label">
+                                                <i class="bi bi-check-circle"></i>
+                                                You have confirmed the handover. Waiting for the other student.
+                                            </span>
+
+                                        @endif
+
+                                        @if(!$req->requester_confirmed_handover && !$req->owner_confirmed_handover)
+
+                                            <form method="POST"
+                                                action="{{ route('exchange.cancel', $req->id) }}"
+                                                onsubmit="return confirm('Are you sure you want to cancel this Exchange?');">
+                                                @csrf
+
+                                                <button type="submit" class="btn cancel-button">
+                                                    <i class="bi bi-x-lg me-1"></i>
+                                                    Cancel Exchange
+                                                </button>
+                                            </form>
+
+                                        @endif
+
+                                
+                                    </div>
+                                @elseif($req->status === 'completed')
+
+                                    @if(!$hasReview)
+                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button mt-3">
+                                            <i class="bi bi-star me-1" aria-hidden="true"></i>
+                                            Write a review
+                                        </a>
+                                    @else
+                                        <span class="reviewed-label">
+                                            <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                            Already reviewed
+                                        </span>
+                                    @endif
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 </article>
 
@@ -1384,7 +1768,7 @@
                                            class="form-control"
                                            maxlength="255"
                                            required
-                                           value="{{ $req->buyer_proposed_location }}">
+                                           value="{{ $req->proposed_location }}">
                                 </div>
 
                                 <div class="mb-3">
@@ -1394,7 +1778,7 @@
                                            class="form-control"
                                            min="{{ date('Y-m-d') }}"
                                            required
-                                           value="{{ $req->buyer_proposed_date ? \Carbon\Carbon::parse($req->buyer_proposed_date)->format('Y-m-d') : '' }}">
+                                           value="{{ $req->proposed_date ? \Carbon\Carbon::parse($req->proposed_date)->format('Y-m-d') : '' }}">
                                 </div>
 
                                 <div class="row">
@@ -1404,7 +1788,7 @@
                                                name="proposed_time"
                                                class="form-control"
                                                required
-                                               value="{{ $req->buyer_proposed_time ? substr($req->buyer_proposed_time, 0, 5) : '' }}">
+                                               value="{{ $req->proposed_time ? substr($req->proposed_time, 0, 5) : '' }}">
                                     </div>
 
                                     <div class="col-md-6 mb-3">
@@ -1413,7 +1797,7 @@
                                                name="proposed_end_time"
                                                class="form-control"
                                                required
-                                               value="{{ $req->buyer_proposed_end_time ? substr($req->buyer_proposed_end_time, 0, 5) : '' }}">
+                                               value="{{ $req->proposed_end_time ? substr($req->proposed_end_time, 0, 5) : '' }}">
                                     </div>
                                 </div>
 

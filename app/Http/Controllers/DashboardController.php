@@ -9,11 +9,11 @@ use App\Notifications\BookRequestStatusNotification;
 
 class DashboardController extends Controller
 {
+    
     public function index()
     {
-        $averageRating = Review::whereHas('book', function ($query) {
-            $query->where('user_id', auth()->id());
-        })->avg('rating');
+        $averageRating = Review::where('reviewed_user_id', auth()->id())
+            ->avg('rating');
 
         $averageRating = number_format($averageRating ?? 0, 1);
 

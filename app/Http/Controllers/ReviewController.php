@@ -9,48 +9,115 @@ use App\Models\Review;
 class ReviewController extends Controller
 {
     // ⭐ show review form
+    
     public function create($requestId)
     {
-        $request = BookRequest::with('book')->findOrFail($requestId);
+        $bookRequest = BookRequest::with(['book', 'requester', 'owner'])
+            ->findOrFail($requestId);
 
-        if ($request->requester_id != auth()->id()) {
-            return back()->with('error', 'Unauthorized');
+        // Allow reviews for both Sell and Exchange transactions.
+        if (
+            !$bookRequest->book ||
+            !in_array($bookRequest->book->listing_type, ['sell', 'exchange'], true)
+        ) {
+            abort(404);
         }
 
-        if ($request->status != 'completed') {
-            return back()->with('error', 'You can only review completed books.');
+        // Only the buyer and seller can review each other.
+        $isRequester = $bookRequest->requester_id == auth()->id();
+        $isOwner = $bookRequest->owner_id == auth()->id();
+
+        if (!$isRequester && !$isOwner) {
+            return back()->with('error', 'Unauthorized.');
         }
 
-        return view('review-create', compact('request'));
-    }
-
-    // ⭐ store review
-    public function store(Request $request, $requestId)
-    {
-        $bookRequest = BookRequest::findOrFail($requestId);
-
-        if ($bookRequest->requester_id != auth()->id()) {
-            return back()->with('error', 'Unauthorized');
+        // Both students must confirm handover first.
+        if ($bookRequest->status !== 'completed') {
+            return back()->with('error', 'You can only review after both students confirm handover.');
         }
 
-        // 🚫 prevent double review
-        $existing = Review::where('book_id', $bookRequest->book_id)
+        // Determine who receives the review.
+        $reviewedUser = $isRequester
+            ? $bookRequest->owner
+            : $bookRequest->requester;
+
+        // Prevent duplicate reviews for this transaction.
+        $existing = Review::where('book_request_id', $bookRequest->id)
             ->where('user_id', auth()->id())
-            ->first();
+            ->exists();
 
         if ($existing) {
-            return back()->with('error', 'You already reviewed this book!');
+            return back()->with('error', 'You have already reviewed this transaction.');
         }
+
+        return view('review-create', [
+            'request' => $bookRequest,
+            'reviewedUser' => $reviewedUser,
+        ]);
+    }
+
+
+    // ⭐ store review
+    
+    public function store(Request $request, $requestId)
+    {
+        $bookRequest = BookRequest::with('book')->findOrFail($requestId);
+
+        // Sell reviews only. Keep Exchange unchanged.
+        if (
+            !$bookRequest->book ||
+            !in_array($bookRequest->book->listing_type, ['sell', 'exchange'], true)
+        ) {
+            abort(404);
+        }
+
+        $isRequester = $bookRequest->requester_id == auth()->id();
+        $isOwner = $bookRequest->owner_id == auth()->id();
+
+        if (!$isRequester && !$isOwner) {
+            return back()->with('error', 'Unauthorized.');
+        }
+
+        if ($bookRequest->status !== 'completed') {
+            return back()->with('error', 'Both students must confirm handover before reviewing.');
+        }
+
+        $validated = $request->validate([
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:2000',
+        ]);
+
+        $existing = Review::where('book_request_id', $bookRequest->id)
+            ->where('user_id', auth()->id())
+            ->exists();
+
+        if ($existing) {
+            return back()->with('error', 'You have already reviewed this transaction.');
+        }
+
+        // Review the other student.
+        $reviewedUserId = $isRequester
+            ? $bookRequest->owner_id
+            : $bookRequest->requester_id;
 
         Review::create([
             'book_id' => $bookRequest->book_id,
+            'book_request_id' => $bookRequest->id,
             'user_id' => auth()->id(),
-            'rating' => $request->rating,
-            'comment' => $request->comment,
+            'reviewed_user_id' => $reviewedUserId,
+            'rating' => $validated['rating'],
+            'comment' => $validated['comment'] ?? null,
         ]);
 
-        return redirect('/sent-requests')->with('success', 'Review submitted!');
+        if ($isRequester) {
+            return redirect('/sent-requests')
+                ->with('success', 'Review submitted successfully!');
+        }
+
+        return redirect()->route('inbox')
+            ->with('success', 'Review submitted successfully!');
     }
+
 
     public function myReviews()
     {
@@ -76,11 +143,22 @@ class ReviewController extends Controller
         return back()->with('success', 'Review deleted successfully!');
     }
 
-    public function received()
+   public function received()
     {
-        $reviews = Review::whereHas('book', function ($q) {
-            $q->where('user_id', auth()->id());
-        })->latest()->get();
+        $reviews = Review::with(['book', 'user'])
+            ->where(function ($query) {
+                $query->where('reviewed_user_id', auth()->id())
+
+                    // Preserve older reviews created before the new columns.
+                    ->orWhere(function ($legacyQuery) {
+                        $legacyQuery->whereNull('reviewed_user_id')
+                            ->whereHas('book', function ($bookQuery) {
+                                $bookQuery->where('user_id', auth()->id());
+                            });
+                    });
+            })
+            ->latest()
+            ->get();
 
         return view('received', compact('reviews'));
     }
