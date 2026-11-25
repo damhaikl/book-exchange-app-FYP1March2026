@@ -97,6 +97,12 @@
                         <input type="email" id="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="you@example.com" autocomplete="email" required>
                         @error('email') <small class="field-error">{{ $message }}</small> @enderror
                     </div>
+                    <div class="col-12 col-sm-6">
+                        <label for="phone" class="form-label">Phone number</label>
+                        <input type="tel" id="phone" name="phone" class="form-control" value="{{ old('phone') }}" placeholder="e.g. +60 12-345 6789" autocomplete="tel" inputmode="tel" required>
+                        <small class="form-hint">Only shared with the other participant after a request is approved.</small>
+                        @error('phone') <small class="field-error">{{ $message }}</small> @enderror
+                    </div>
                     <div class="col-12"><div class="form-section-title">Account security</div></div>
                     <div class="col-12 col-sm-6">
                         <label for="password" class="form-label">Password</label>

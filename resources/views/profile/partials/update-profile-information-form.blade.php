@@ -47,6 +47,13 @@
             @endif
         </div>
 
+        <div>
+            <x-input-label for="phone" :value="__('Phone number')" />
+            <x-text-input id="phone" name="phone" type="tel" class="mt-1 block w-full" :value="old('phone', $user->phone)" autocomplete="tel" inputmode="tel" placeholder="e.g. +60 12-345 6789" />
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">This number is shared with the other participant only after a book request is approved.</p>
+            <x-input-error class="mt-2" :messages="$errors->get('phone')" />
+        </div>
+
         {{-- ================================= --}}
         {{-- ACADEMIC INFORMATION             --}}
         {{-- ================================= --}}
