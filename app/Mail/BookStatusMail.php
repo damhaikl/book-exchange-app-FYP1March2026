@@ -16,15 +16,17 @@ class BookStatusMail extends Mailable implements ShouldQueue
     public $bookRequest;
     public $status;
     public $isCompleted;
+    public $cancelledBy;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($bookRequest, $status, $isCompleted = false)
+    public function __construct($bookRequest, $status, $isCompleted = false, $cancelledBy = null)
     {
         $this->bookRequest = $bookRequest;
         $this->status = $status;
         $this->isCompleted = $isCompleted;
+        $this->cancelledBy = $cancelledBy;
     }
 
     /**
@@ -33,11 +35,34 @@ class BookStatusMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         $bookTitle = $this->bookRequest->book->title ?? 'Book';
-        $requestType = ucfirst($this->bookRequest->book->listing_type ?? 'Book');
 
-        return new Envelope(
-            subject: "New {$requestType} Request Received – {$bookTitle}",
-        );
+        $subject = match ($this->status) {
+            'sell_schedule_proposed' =>
+                "New Meeting Schedule Proposed – {$bookTitle}",
+
+            'exchange_schedule_proposed' =>
+                "New Exchange Meeting Schedule Proposed – {$bookTitle}",
+
+            'exchange_schedule_accepted' =>
+                "Exchange Meeting Schedule Confirmed – {$bookTitle}",
+
+            'approved' =>
+                "Request Approved – {$bookTitle}",
+
+            'rejected' =>
+                "Request Rejected – {$bookTitle}",
+
+            'cancelled' =>
+                "Request Cancelled – {$bookTitle}",
+
+            'completed' =>
+                "Transaction Completed – {$bookTitle}",
+
+            default =>
+                "New Request Received – {$bookTitle}",
+        };
+
+        return new Envelope(subject: $subject);
     }
 
     /**

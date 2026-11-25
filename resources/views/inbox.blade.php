@@ -1653,7 +1653,7 @@
 
                                 <summary class="fw-bold" style="color:#102f53;cursor:pointer;">
                                     <i class="bi bi-calendar-plus me-1"></i>
-                                    Propose Another Schedule
+                                    Accept Propose Another Schedule
                                 </summary>
 
                                 <form method="POST"

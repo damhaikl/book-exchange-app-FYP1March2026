@@ -537,7 +537,7 @@
             <span class="brand-mark" aria-hidden="true">
                 <i class="bi bi-book-half"></i>
             </span>
-            <span>UniKL BookHub</span>
+            <span>UniKL MIIT BookHub</span>
         </a>
 
         <a href="{{ url('/book/' . $book->id) }}" class="back-link">

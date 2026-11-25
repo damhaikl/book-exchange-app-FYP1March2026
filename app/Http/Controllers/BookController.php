@@ -332,7 +332,7 @@ class BookController extends Controller
             ->exists();
 
         if ($existingRequest) {
-            return redirect()->route('book.show', $book->id)
+            return redirect('/book/' . $book->id)
                 ->with('error', 'You already have an active Exchange request for this book.');
         }
 
@@ -874,8 +874,8 @@ class BookController extends Controller
                 ->with('error', 'You already have an active request for this book.');
         }
 
-        // ✅ Create negotiation request
-        BookRequest::create([
+        // Create negotiation request
+        $bookRequest = BookRequest::create([
             'book_id' => $book->id,
             'requester_id' => auth()->id(),
             'owner_id' => $book->user_id,
@@ -889,6 +889,14 @@ class BookController extends Controller
 
             'schedule_type' => 'buyer'
         ]);
+
+        // Send email to the book owner
+        $owner = User::find($bookRequest->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($bookRequest, 'pending'));
+        }
 
         return redirect('/homepage')
             ->with('success', 'New schedule proposed to seller!');
@@ -1353,6 +1361,20 @@ class BookController extends Controller
             ]);
         });
 
+        // Refresh the approved Exchange request before sending notifications.
+        $exchangeRequest->refresh();
+
+        $requester = User::find($exchangeRequest->requester_id);
+
+        if ($requester) {
+            $requester->notify(
+                new BookRequestStatusNotification($exchangeRequest)
+            );
+
+            Mail::to($requester->email)
+                ->queue(new BookStatusMail($exchangeRequest, 'approved'));
+        }
+
         return back()->with('success', 'Exchange accepted. The meeting schedule is confirmed.');
     }
 
@@ -1415,6 +1437,16 @@ class BookController extends Controller
             'status' => 'negotiation',
             'schedule_type' => $isOwner ? 'owner' : 'requester',
         ]));
+
+        // Email the other student about the new Exchange schedule proposal.
+        $otherStudent = $isOwner
+            ? User::find($exchangeRequest->requester_id)
+            : User::find($exchangeRequest->owner_id);
+
+        if ($otherStudent) {
+            Mail::to($otherStudent->email)
+                ->queue(new BookStatusMail($exchangeRequest, 'exchange_schedule_proposed'));
+        }
 
         return back()->with('success', 'Your new meeting schedule has been proposed.');
     }
@@ -1525,6 +1557,14 @@ class BookController extends Controller
             ]);
         });
 
+        // Notify the book owner that the requester accepted the proposed schedule.
+        $owner = User::find($exchangeRequest->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($exchangeRequest, 'exchange_schedule_accepted'));
+        }
+
         return back()->with('success', 'Schedule accepted. Your Exchange is confirmed.');
     }
 
@@ -1560,7 +1600,7 @@ class BookController extends Controller
     // Both Student: Cancel Exchange
     public function cancelExchange($id)
     {
-        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+        $exchangeRequest = BookRequest::with(['book', 'exchangeOffer'])->findOrFail($id);
 
         $isRequester = $exchangeRequest->requester_id == auth()->id();
         $isOwner = $exchangeRequest->owner_id == auth()->id();
@@ -1615,6 +1655,21 @@ class BookController extends Controller
 
         if ($exchangeRequest->status !== 'cancelled') {
             return back()->with('error', 'This Exchange cannot be cancelled.');
+        }
+
+        // Email the other student about the cancellation.
+        $otherStudent = $isRequester
+            ? User::find($exchangeRequest->owner_id)
+            : User::find($exchangeRequest->requester_id);
+
+        if ($otherStudent) {
+            Mail::to($otherStudent->email)
+                ->queue(new BookStatusMail(
+                    $exchangeRequest,
+                    'cancelled',
+                    false,
+                    auth()->user()->name
+                ));
         }
 
         return back()->with('success', 'Exchange request cancelled successfully.');
@@ -1937,7 +1992,12 @@ class BookController extends Controller
 
         if ($otherStudent) {
             Mail::to($otherStudent->email)
-                ->queue(new BookStatusMail($bookRequest, 'cancelled'));
+                ->queue(new BookStatusMail(
+                    $bookRequest,
+                    'cancelled',
+                    false,
+                    auth()->user()->name
+                ));
         }
 
         return back()->with('success', 'Request cancelled successfully.');

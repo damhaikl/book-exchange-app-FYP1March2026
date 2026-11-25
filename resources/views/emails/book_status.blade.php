@@ -10,15 +10,47 @@
 
     @if($status === 'pending')
 
-        <p>Hello {{ $bookRequest->owner->name ?? 'Student' }},</p>
+    <p>Hello {{ $bookRequest->owner->name ?? 'Student' }},</p>
+
+    @if(($bookRequest->book->listing_type ?? '') === 'exchange')
 
         <p>
-            You have received a new request for your listed book.
+            You have received a new Exchange request for your listed book.
         </p>
 
         <ul>
             <li>
-                <strong>Book:</strong>
+                <strong>Your Book:</strong>
+                {{ $bookRequest->book->title ?? 'Unknown Book' }}
+            </li>
+            <li>
+                <strong>Offered Book:</strong>
+                {{ $bookRequest->exchangeOffer->title ?? 'Unknown Book' }}
+            </li>
+            <li>
+                <strong>Requested By:</strong>
+                {{ $bookRequest->requester->name ?? 'Unknown Student' }}
+            </li>
+            <li>
+                <strong>Status:</strong>
+                {{ ucfirst($bookRequest->status) }}
+            </li>
+        </ul>
+        @if($bookRequest->status === 'negotiation')
+            <p>
+                The requester has suggested a different meeting schedule.
+            </p>
+        @endif
+
+    @else
+
+        <p>
+            You have received a new Sell request for your listed book.
+        </p>
+
+        <ul>
+            <li>
+                <strong>Your Book:</strong>
                 {{ $bookRequest->book->title ?? 'Unknown Book' }}
             </li>
             <li>
@@ -27,29 +59,121 @@
             </li>
             <li>
                 <strong>Status:</strong>
-                Pending
+                {{ ucfirst($bookRequest->status) }}
             </li>
         </ul>
 
-        <p>
-            Please log in to UniKL MIIT BookHub to review and respond to this request.
-        </p>
+        @if($bookRequest->status === 'negotiation')
+            <p>
+                The requester has suggested a different meeting schedule.
+            </p>
+        @endif
+
+    @endif
+
+    <p>
+        Please log in to UniKL MIIT BookHub to review and respond to this request.
+    </p>
 
     @elseif($status === 'approved')
 
         <p>Hello {{ $bookRequest->requester->name ?? 'Student' }},</p>
 
-        <p style="color: green;">
-            ✅ Your {{ ucfirst($bookRequest->book->listing_type ?? 'book') }} request has been approved.
-        </p>
+        @if($bookRequest->book->listing_type === 'sell')
+
+            <p>
+                Good news! Your request for the following book has been approved by the book owner.
+            </p>
+
+            <p><strong>Request Details</strong></p>
+
+            <ul>
+                <li>
+                    <strong>Book:</strong>
+                    {{ $bookRequest->book->title ?? 'Unknown Book' }}
+                </li>
+                <li>
+                    <strong>Approved By:</strong>
+                    {{ $bookRequest->owner->name ?? 'Book Owner' }}
+                </li>
+                <li><strong>Status:</strong> Approved</li>
+            </ul>
+
+            <p><strong>Final Agreed Schedule</strong></p>
+
+            <ul>
+                <li>
+                    <strong>Location:</strong>
+                    {{ $bookRequest->book->meeting_location ?? 'Not specified' }}
+                </li>
+                <li>
+                    <strong>Date:</strong>
+                    {{ $bookRequest->book->meeting_date ?? 'Not specified' }}
+                </li>
+                <li>
+                    <strong>Time:</strong>
+                    {{ $bookRequest->book->meeting_time ?? 'Not specified' }}
+                    –
+                    {{ $bookRequest->book->meeting_end_time ?? 'Not specified' }}
+                </li>
+            </ul>
+
+            <p>
+                Your request has been successfully approved. Please attend the agreed meeting to collect your book.
+            </p>
+
+        @else
+
+            <p>
+                Good news! Your Exchange request has been accepted by the book owner.
+            </p>
+
+            <p><strong>Exchange Details</strong></p>
+
+            <ul>
+                <li>
+                    <strong>Your Book:</strong>
+                    {{ $bookRequest->exchangeOffer->title ?? 'Unknown Book' }}
+                </li>
+                <li>
+                    <strong>Offered Book:</strong>
+                    {{ $bookRequest->book->title ?? 'Unknown Book' }}
+                </li>
+                <li>
+                    <strong>Accepted By:</strong>
+                    {{ $bookRequest->owner->name ?? 'Book Owner' }}
+                </li>
+                <li><strong>Status:</strong> Approved</li>
+            </ul>
+
+            <p><strong>Final Agreed Schedule</strong></p>
+
+            <ul>
+                <li>
+                    <strong>Location:</strong>
+                    {{ $bookRequest->proposed_location ?? 'Not specified' }}
+                </li>
+                <li>
+                    <strong>Date:</strong>
+                    {{ $bookRequest->proposed_date ?? 'Not specified' }}
+                </li>
+                <li>
+                    <strong>Time:</strong>
+                    {{ $bookRequest->proposed_time ?? 'Not specified' }}
+                    –
+                    {{ $bookRequest->proposed_end_time ?? 'Not specified' }}
+                </li>
+            </ul>
+
+            <p>
+                Your Exchange arrangement has been successfully confirmed.
+                Please bring your offered book to the agreed meeting to complete the exchange.
+            </p>
+
+        @endif
 
         <p>
-            <strong>Book:</strong>
-            {{ $bookRequest->book->title ?? 'Unknown Book' }}
-        </p>
-
-        <p>
-            Please log in to UniKL MIIT BookHub to view your request.
+            Please log in to UniKL MIIT BookHub to view your request details.
         </p>
 
     @elseif($status === 'rejected')
@@ -73,14 +197,41 @@
 
         <p>Hello,</p>
 
-        <p style="color: orange;">
-            Your book request has been cancelled.
+        <p>
+            @if(($bookRequest->book->listing_type ?? '') === 'exchange')
+                Your Exchange request has been cancelled.
+            @else
+                Your Sell request has been cancelled.
+            @endif
         </p>
 
-        <p>
-            <strong>Book:</strong>
-            {{ $bookRequest->book->title ?? 'Unknown Book' }}
-        </p>
+        <ul>
+            @if(($bookRequest->book->listing_type ?? '') === 'exchange')
+
+                <li>
+                    <strong>Your Book:</strong>
+                    {{ $bookRequest->book->title ?? 'Unknown Book' }}
+                </li>
+
+                <li>
+                    <strong>Offered Book:</strong>
+                    {{ $bookRequest->exchangeOffer->title ?? 'Unknown Book' }}
+                </li>
+
+            @else
+
+                <li>
+                    <strong>Book:</strong>
+                    {{ $bookRequest->book->title ?? 'Unknown Book' }}
+                </li>
+
+            @endif
+
+            <li>
+                <strong>Cancelled By:</strong>
+                {{ $cancelledBy ?? 'Unknown Student' }}
+            </li>
+        </ul>
 
         <p>
             Please log in to UniKL MIIT BookHub to view the updated request status.
@@ -88,36 +239,203 @@
 
     @elseif($status === 'sell_schedule_proposed')
 
-        <p>Hello,</p>
+    <p>
+        Hello
+        {{ $bookRequest->schedule_type === 'seller'
+            ? ($bookRequest->requester->name ?? 'Student')
+            : ($bookRequest->owner->name ?? 'Student') }},
+    </p>
 
-        <p style="color: #1d4ed8;">
-            📅 A new Sell meeting schedule has been proposed.
-        </p>
+    <p style="color: #1d4ed8;">
+        📅 A new Sell meeting schedule has been proposed.
+    </p>
 
+    @if($bookRequest->schedule_type === 'seller')
         <p>
+            The book owner has proposed a different meeting schedule
+            for your Sell request.
+        </p>
+    @else
+        <p>
+            The requester has proposed a different meeting schedule
+            for the Sell request.
+        </p>
+    @endif
+
+    <p><strong>Sell Request Details</strong></p>
+
+    <ul>
+        <li>
             <strong>Book:</strong>
             {{ $bookRequest->book->title ?? 'Unknown Book' }}
-        </p>
+        </li>
+        <li>
+            <strong>Proposed By:</strong>
+            {{ $bookRequest->schedule_type === 'seller'
+                ? ($bookRequest->owner->name ?? 'Unknown Student')
+                : ($bookRequest->requester->name ?? 'Unknown Student') }}
+        </li>
+        <li>
+            <strong>Status:</strong>
+            Negotiation
+        </li>
+    </ul>
 
-        <p>
-            Please log in to UniKL MIIT BookHub to review the proposed schedule.
-        </p>
+    <p><strong>New Proposed Schedule</strong></p>
+
+    <ul>
+        <li>
+            <strong>Location:</strong>
+            {{ $bookRequest->proposed_location ?? 'Not specified' }}
+        </li>
+        <li>
+            <strong>Date:</strong>
+            {{ $bookRequest->proposed_date ?? 'Not specified' }}
+        </li>
+        <li>
+            <strong>Time:</strong>
+            {{ $bookRequest->proposed_time ?? 'Not specified' }}
+            –
+            {{ $bookRequest->proposed_end_time ?? 'Not specified' }}
+        </li>
+    </ul>
+
+    <p>
+        Please log in to UniKL MIIT BookHub to review the proposed schedule.
+        You can accept the schedule or propose another schedule.
+    </p>
+
+    <p>
+        Thank you for using UniKL MIIT BookHub.
+    </p>
 
     @elseif($status === 'exchange_schedule_proposed')
 
-        <p>Hello,</p>
+        <p>
+            Hello
+            {{ $bookRequest->schedule_type === 'owner'
+                ? ($bookRequest->requester->name ?? 'Student')
+                : ($bookRequest->owner->name ?? 'Student') }},
+        </p>
 
         <p style="color: #1d4ed8;">
             📅 A new Exchange meeting schedule has been proposed.
         </p>
 
+        @if($bookRequest->schedule_type === 'owner')
+            <p>
+                The book owner has proposed a different meeting schedule
+                for your Exchange request.
+            </p>
+        @else
+            <p>
+                The requester has proposed a different meeting schedule
+                for the Exchange request.
+            </p>
+        @endif
+
+        <p><strong>Exchange Details</strong></p>
+
+        <ul>
+            <li>
+                <strong>Your Book:</strong>
+                {{ $bookRequest->exchangeOffer->title ?? 'Unknown Book' }}
+            </li>
+            <li>
+                <strong>Requested Book:</strong>
+                {{ $bookRequest->book->title ?? 'Unknown Book' }}
+            </li>
+            <li>
+                <strong>Proposed By:</strong>
+                {{ $bookRequest->schedule_type === 'owner'
+                    ? ($bookRequest->owner->name ?? 'Unknown Student')
+                    : ($bookRequest->requester->name ?? 'Unknown Student') }}
+            </li>
+            <li>
+                <strong>Status:</strong>
+                {{ ucfirst($bookRequest->status) }}
+            </li>
+        </ul>
+
+        <p><strong>New Proposed Schedule</strong></p>
+
+        <ul>
+            <li>
+                <strong>Location:</strong>
+                {{ $bookRequest->proposed_location ?? 'Not specified' }}
+            </li>
+            <li>
+                <strong>Date:</strong>
+                {{ $bookRequest->proposed_date ?? 'Not specified' }}
+            </li>
+            <li>
+                <strong>Time:</strong>
+                {{ $bookRequest->proposed_time ?? 'Not specified' }}
+                –
+                {{ $bookRequest->proposed_end_time ?? 'Not specified' }}
+            </li>
+        </ul>
+
         <p>
-            <strong>Book:</strong>
-            {{ $bookRequest->book->title ?? 'Unknown Book' }}
+            Please log in to UniKL MIIT BookHub to review the proposed
+            schedule. You can accept it or propose another schedule.
+        </p>
+
+    @elseif($status === 'exchange_schedule_accepted')
+
+        <p>Hello {{ $bookRequest->owner->name ?? 'Student' }},</p>
+
+        <p style="color: green;">
+            ✅ The requester has accepted your proposed Exchange meeting schedule.
+        </p>
+
+        <p><strong>Exchange Details</strong></p>
+
+        <ul>
+            <li>
+                <strong>Your Book:</strong>
+                {{ $bookRequest->book->title ?? 'Unknown Book' }}
+            </li>
+            <li>
+                <strong>Offered Book:</strong>
+                {{ $bookRequest->exchangeOffer->title ?? 'Unknown Book' }}
+            </li>
+            <li>
+                <strong>Accepted By:</strong>
+                {{ $bookRequest->requester->name ?? 'Unknown Student' }}
+            </li>
+            <li>
+                <strong>Status:</strong>
+                Approved
+            </li>
+        </ul>
+
+        <p><strong>Final Agreed Schedule</strong></p>
+
+        <ul>
+            <li>
+                <strong>Location:</strong>
+                {{ $bookRequest->proposed_location ?? 'Not specified' }}
+            </li>
+            <li>
+                <strong>Date:</strong>
+                {{ $bookRequest->proposed_date ?? 'Not specified' }}
+            </li>
+            <li>
+                <strong>Time:</strong>
+                {{ $bookRequest->proposed_time ?? 'Not specified' }}
+                –
+                {{ $bookRequest->proposed_end_time ?? 'Not specified' }}
+            </li>
+        </ul>
+
+        <p>
+            The Exchange meeting schedule has been confirmed.
+            Please attend the agreed meeting to complete the exchange.
         </p>
 
         <p>
-            Please log in to UniKL MIIT BookHub to review the proposed schedule.
+            Please log in to UniKL MIIT BookHub to view your Exchange details.
         </p>
 
     @elseif($status === 'exchange_accepted')

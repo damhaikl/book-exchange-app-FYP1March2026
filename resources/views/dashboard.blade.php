@@ -104,7 +104,7 @@
         <div class="dashboard-shell mx-auto px-4 sm:px-6 lg:px-8">
             <section class="dashboard-hero">
                 <div class="dashboard-hero-copy">
-                    <p class="dashboard-hero-kicker">UniKL BookHub</p>
+                    <p class="dashboard-hero-kicker">UniKL MIIT BookHub</p>
                     <h1>Welcome back, {{ Auth::user()->name }}</h1>
                     <p>Find your next read, manage your book exchanges, and keep up with your BookHub activity.</p>
                 </div>
