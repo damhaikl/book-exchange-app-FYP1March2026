@@ -226,6 +226,12 @@
         Route::get('/admin/reports/rejected', [ReportController::class, 'rejectedReports'])
             ->name('admin.reports.rejected');
 
+        // Deleted reports and recovery
+        Route::get('/admin/reports/deleted', [ReportController::class, 'deletedReports'])
+            ->name('admin.reports.deleted');
+        Route::post('/admin/reports/{id}/restore', [ReportController::class, 'restoreDeleted'])
+            ->name('admin.reports.restore');
+
         // Delete Admin Report
         Route::delete('/admin/reports/{id}', [ReportController::class, 'adminDestroy'])
             ->name('admin.reports.delete');

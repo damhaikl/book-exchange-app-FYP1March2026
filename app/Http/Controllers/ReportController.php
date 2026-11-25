@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Report;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use App\Mail\ReportStatusMail;
 use Illuminate\Support\Facades\Mail;
@@ -63,7 +64,7 @@ class ReportController extends Controller
             });
         }
 
-        $reports = $query->latest()->get();
+        $reports = $this->applyReportFilters($query, $request)->get();
 
         return view('admin.reports', compact('reports'));
     }
@@ -89,7 +90,7 @@ class ReportController extends Controller
             });
         }
 
-        $reports = $query->latest()->get();
+        $reports = $this->applyReportFilters($query, $request)->get();
 
         return view('admin.pending-reports', compact('reports'));
     }
@@ -171,14 +172,15 @@ class ReportController extends Controller
             ->where('user_id', auth()->id()) // 🔒 only own report
             ->firstOrFail();
 
-        $report->delete();
+        // Keep the existing student-side delete behavior unchanged.
+        $report->forceDelete();
 
         return back()->with('success', 'Report deleted successfully!');
     }
 
     public function resolvedReports(Request $request)
     {
-        $query = Report::with('user', 'book')
+        $query = Report::with(['user', 'book', 'reviewer'])
             ->where('status', 'resolved');
 
         if ($request->search) {
@@ -190,14 +192,14 @@ class ReportController extends Controller
             });
         }
 
-        $reports = $query->latest()->get();
+        $reports = $this->applyReportFilters($query, $request)->get();
 
         return view('admin.resolved-reports', compact('reports'));
     }
 
     public function rejectedReports(Request $request)
     {
-        $query = Report::with('user', 'book')
+        $query = Report::with(['user', 'book', 'reviewer'])
             ->where('status', 'rejected');
 
         // 🔍 search feature
@@ -217,7 +219,7 @@ class ReportController extends Controller
             });
         }
 
-        $reports = $query->latest()->get();
+        $reports = $this->applyReportFilters($query, $request)->get();
 
         return view('admin.rejected-reports', compact('reports'));
     }
@@ -228,6 +230,81 @@ class ReportController extends Controller
         $report = Report::findOrFail($id);
         $report->delete();
 
-        return back()->with('success', 'Report deleted by admin!');
+        return back()->with('success', 'Report moved to Deleted reports.');
+    }
+
+    public function deletedReports(Request $request)
+    {
+        $query = Report::onlyTrashed()
+            ->with(['user', 'book', 'reviewer']);
+
+        if ($request->filled('search')) {
+            $search = trim((string) $request->input('search'));
+            $query->where(function (Builder $q) use ($search) {
+                $q->whereHas('user', fn (Builder $user) => $user->where('name', 'like', "%{$search}%"))
+                    ->orWhereHas('book', fn (Builder $book) => $book->where('title', 'like', "%{$search}%"))
+                    ->orWhere('reason', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $reports = $request->filled('filter_by')
+            ? $this->applyReportFilters($query, $request)->get()
+            : $query->orderByDesc('deleted_at')->get();
+
+        return view('admin.deleted-reports', compact('reports'));
+    }
+
+    public function restoreDeleted($id)
+    {
+        $report = Report::onlyTrashed()->findOrFail($id);
+        $report->restore();
+
+        return back()->with('success', 'Report recovered and returned to its previous status.');
+    }
+
+    private function applyReportFilters(Builder $query, Request $request): Builder
+    {
+        $filters = $request->validate([
+            'filter_by' => ['nullable', 'in:reporter,date,specific_date,reviewer'],
+            'reporter_name' => ['required_if:filter_by,reporter', 'nullable', 'string', 'max:255'],
+            'start_date' => ['required_if:filter_by,date', 'nullable', 'date'],
+            'end_date' => ['required_if:filter_by,date', 'nullable', 'date', 'after_or_equal:start_date'],
+            'specific_date' => ['required_if:filter_by,specific_date', 'nullable', 'date'],
+            'reviewer_role' => ['required_if:filter_by,reviewer', 'nullable', 'in:admin,super_admin'],
+        ]);
+
+        $filterBy = $filters['filter_by'] ?? null;
+
+        if ($filterBy === 'reporter') {
+            $reporterName = trim($filters['reporter_name']);
+            $query->whereHas('user', fn (Builder $user) => $user->where('name', 'like', "%{$reporterName}%"));
+            $query->orderBy(
+                User::select('name')
+                    ->whereColumn('users.id', 'reports.user_id')
+                    ->limit(1),
+                'asc'
+            );
+        } elseif ($filterBy === 'date') {
+            $query->whereDate('reports.created_at', '>=', $filters['start_date'])
+                ->whereDate('reports.created_at', '<=', $filters['end_date'])
+                ->orderByDesc('reports.created_at');
+        } elseif ($filterBy === 'specific_date') {
+            $query->whereDate('reports.created_at', $filters['specific_date'])
+                ->orderByDesc('reports.created_at');
+        } elseif ($filterBy === 'reviewer') {
+            $reviewerRole = $filters['reviewer_role'];
+            $query->whereHas('reviewer', fn (Builder $reviewer) => $reviewer->where('role', $reviewerRole));
+            $query->orderBy(
+                User::select('name')
+                    ->whereColumn('users.id', 'reports.reviewed_by')
+                    ->limit(1),
+                'asc'
+            );
+        } else {
+            $query->orderByDesc('reports.created_at');
+        }
+
+        return $query->orderByDesc('reports.id');
     }
 }

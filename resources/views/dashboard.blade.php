@@ -156,6 +156,11 @@
                             <div><p class="rejected_text">Rejected</p><p class="card-sub">Closed reports</p></div>
                         </a>
 
+                        <a href="{{ route('admin.reports.deleted') }}" class="dash-card">
+                            <div class="card-icon" style="background:#e2e8f0; color:#475569;">🗑️</div>
+                            <div><p class="card-label">Deleted</p><p class="card-sub">Recover removed reports</p></div>
+                        </a>
+
                     </div>
                     <hr class="dash-divider">
                     <div class="section-label">Admin</div>
@@ -187,7 +192,6 @@
                                 <p class="card-sub">See all student reviews</p>
                             </div>
                         </a>
-                    </div>
 
                     <hr class="dash-divider">
                     <div class="section-label">Reports</div>
@@ -204,6 +208,11 @@
                         <a href="{{ route('admin.reports.rejected') }}" class="dash-card">
                             <div class="card-icon" style="background:#fee2e2; color:#b91c1c;">❌</div>
                             <div><p class="rejected_text">Rejected</p><p class="card-sub">Closed reports</p></div>
+                        </a>
+
+                        <a href="{{ route('admin.reports.deleted') }}" class="dash-card">
+                            <div class="card-icon" style="background:#e2e8f0; color:#475569;">🗑️</div>
+                            <div><p class="card-label">Deleted</p><p class="card-sub">Recover removed reports</p></div>
                         </a>
                     </div>
                     @else

@@ -1259,6 +1259,25 @@
 
                     @endif
 
+                    @if(in_array($req->status, ['approved', 'completed'], true))
+                        <section class="schedule-box final mb-3" aria-label="Contact information">
+                            <h3 class="schedule-title">
+                                <i class="bi bi-telephone" aria-hidden="true"></i>
+                                Contact {{ $req->requester->name }}
+                            </h3>
+                            @if($req->requester->phone)
+                                <p class="schedule-detail mb-0">
+                                    <i class="bi bi-phone" aria-hidden="true"></i>
+                                    <a href="tel:{{ preg_replace('/[^0-9+]/', '', $req->requester->phone) }}">{{ $req->requester->phone }}</a>
+                                </p>
+                            @else
+                                <p class="schedule-detail mb-0">
+                                    <i class="bi bi-info-circle" aria-hidden="true"></i>
+                                    Phone number not added to this user’s profile.
+                                </p>
+                            @endif
+                        </section>
+                    @endif
 
 
                     {{-- =====================================

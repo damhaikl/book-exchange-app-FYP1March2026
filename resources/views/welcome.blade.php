@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>{{ config('app.name', 'UniKL BookHub') }}</title>
+    <title>{{ config('app.name', 'UniKL MIIT BookHub') }}</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <style>
@@ -85,9 +85,9 @@
 </head>
 <body>
     <nav class="site-nav" aria-label="Main navigation">
-        <a class="brand" href="#welcome" aria-label="UniKL BookHub home">
+        <a class="brand" href="#welcome" aria-label="UniKL MIIT BookHub home">
             <span class="brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" stroke="currentColor" stroke-width="1.8"/><path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20M8 7h8M8 10h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
-            <span>UniKL BookHub</span>
+            <span>UniKL MIIT BookHub</span>
         </a>
         <div class="nav-links">
             <a class="nav-about" href="#about">About</a>
@@ -106,7 +106,7 @@
             <div class="hero-layout">
                 <div class="hero-content reveal">
                     <div class="eyebrow"><span class="eyebrow-dot"></span> A book community for UniKL students</div>
-                    <h1 id="welcome-title">Welcome to<br><span>UniKL BookHub.</span></h1>
+                    <h1 id="welcome-title">Welcome to<br><span>UniKL MIIT BookHub.</span></h1>
                     <p class="hero-copy">Find the books you need, share the ones you’ve finished, and make your next study resource easier to find.</p>
                     <div class="hero-actions">
                         <a class="button button-light" href="#get-started">Get started <span aria-hidden="true">↓</span></a>
@@ -127,7 +127,7 @@
                     <div class="start-copy">
                         <p class="section-kicker">Your next step</p>
                         <h2 id="start-title">Make your next book easier to find.</h2>
-                        <p class="section-lead">Join the UniKL BookHub community or start exploring the catalogue. Choose the option that works for you.</p>
+                        <p class="section-lead">Join the UniKL MIIT BookHub community or start exploring the catalogue. Choose the option that works for you.</p>
                     </div>
                     <figure class="start-visual">
                         <img src="{{ asset('images/book-exchange.png') }}" alt="One student handing a book to another student">
@@ -144,7 +144,7 @@
                         @if(Route::has('register'))
                             <a class="start-card" href="{{ route('register') }}">
                                 <span class="card-icon" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2m7-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11-3v6m3-3h-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-                                <h3>Create an account</h3><p>Sign up with your student details and take part in the campus book exchange.</p><span class="card-link">Sign up for UniKL BookHub <span aria-hidden="true">→</span></span>
+                                <h3>Create an account</h3><p>Sign up with your student details and take part in the campus book exchange.</p><span class="card-link">Sign up for UniKL MIIT BookHub <span aria-hidden="true">→</span></span>
                             </a>
                         @endif
                     @else
@@ -164,9 +164,9 @@
         <section class="section about-section" id="about" aria-labelledby="about-title">
             <div class="section-inner about-layout reveal">
                 <div>
-                    <p class="section-kicker">About UniKL BookHub</p>
+                    <p class="section-kicker">About UniKL MIIT BookHub</p>
                     <h2 id="about-title">Good books deserve another chapter.</h2>
-                    <p class="section-lead">UniKL BookHub helps students connect around the books that support their studies. Find useful learning materials, list books you’re ready to pass on, and arrange exchanges with fellow students.</p>
+                    <p class="section-lead">UniKL MIIT BookHub helps students connect around the books that support their studies. Find useful learning materials, list books you’re ready to pass on, and arrange exchanges with fellow students.</p>
                 </div>
                 <div class="about-points">
                     <div class="about-point"><span class="about-point-icon" aria-hidden="true">⌕</span><div><strong>Discover study materials</strong><span>Search a shared catalogue of books listed by the UniKL community.</span></div></div>
@@ -177,7 +177,7 @@
         </section>
     </main>
 
-    <footer class="footer"><span>© {{ date('Y') }} UniKL BookHub</span><a href="#welcome">Back to top ↑</a></footer>
+    <footer class="footer"><span>© {{ date('Y') }} UniKL MIIT BookHub</span><a href="#welcome">Back to top ↑</a></footer>
     <script>
         (() => {
             const items = document.querySelectorAll('.reveal');

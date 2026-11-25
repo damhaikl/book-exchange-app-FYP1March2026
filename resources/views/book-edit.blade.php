@@ -58,7 +58,7 @@
             @error('subject_category')<div class="text-danger small mt-1">{{ $message }}</div>@enderror
         </div>
 
-        <input type="file" name="image" class="form-control mb-3">
+        <input type="file" name="image" class="form-control mb-3" accept=".jpg,.jpeg,.png">
 
         <hr>
 
