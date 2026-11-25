@@ -32,8 +32,11 @@ class BookStatusMail extends Mailable implements ShouldQueue
      */
     public function envelope(): Envelope
     {
+        $bookTitle = $this->bookRequest->book->title ?? 'Book';
+        $requestType = ucfirst($this->bookRequest->book->listing_type ?? 'Book');
+
         return new Envelope(
-            subject: 'Book Request Status Update',
+            subject: "New {$requestType} Request Received – {$bookTitle}",
         );
     }
 

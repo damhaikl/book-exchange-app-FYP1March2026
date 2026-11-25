@@ -435,7 +435,7 @@ class BookController extends Controller
         }
 
         // Save the Exchange request and offer together
-        DB::transaction(function () use (
+        $bookRequest = DB::transaction(function () use (
             $book,
             $offeredTitle,
             $offeredSubject,
@@ -493,7 +493,17 @@ class BookController extends Controller
 
             ]);
 
+            return $bookRequest;
+
         });
+
+        // Notify the book owner about the new Exchange request.
+        $owner = User::find($bookRequest->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($bookRequest, 'pending'));
+        }
 
         return redirect()->route('homepage')
             ->with('success', 'Your Exchange request has been submitted successfully.');
@@ -1138,6 +1148,14 @@ class BookController extends Controller
             'schedule_type' => 'seller',
         ]);
 
+        // Notify the requester about the seller's new proposed schedule.
+        $requester = User::find($bookRequest->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->queue(new BookStatusMail($bookRequest, 'sell_schedule_proposed'));
+        }
+
         return back()->with('success', 'Your proposed meeting schedule has been sent to the student.');
     }
 
@@ -1241,6 +1259,14 @@ class BookController extends Controller
             'status' => 'negotiation',
             'schedule_type' => 'buyer',
         ]);
+
+        // Notify the book owner about the buyer's new proposed schedule.
+        $owner = User::find($bookRequest->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($bookRequest, 'sell_schedule_proposed'));
+        }
 
         return back()->with('success', 'Your new proposed meeting schedule has been sent to the seller.');
     }
@@ -1715,6 +1741,36 @@ class BookController extends Controller
         });
 
         $sellRequest->refresh();
+
+        // Send emails after the handover confirmation has been recorded.
+        if ($sellRequest->status === 'completed') {
+
+            // Both students receive a transaction completion email.
+            $requester = User::find($sellRequest->requester_id);
+            $owner = User::find($sellRequest->owner_id);
+
+            if ($requester) {
+                Mail::to($requester->email)
+                    ->queue(new BookStatusMail($sellRequest, 'completed', true));
+            }
+
+            if ($owner) {
+                Mail::to($owner->email)
+                    ->queue(new BookStatusMail($sellRequest, 'completed', true));
+            }
+
+        } else {
+
+            // Notify the other student that handover has been confirmed.
+            $otherStudent = $isRequester
+                ? User::find($sellRequest->owner_id)
+                : User::find($sellRequest->requester_id);
+
+            if ($otherStudent) {
+                Mail::to($otherStudent->email)
+                    ->queue(new BookStatusMail($sellRequest, 'handover_confirmed'));
+            }
+        }
 
         if ($sellRequest->status === 'completed') {
             return back()->with('success', 'Sale completed! Both students confirmed the handover.');
