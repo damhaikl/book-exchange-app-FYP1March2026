@@ -27,6 +27,11 @@
         .page-main { position:relative;z-index:2;max-width:1260px;margin:-20px auto 0;padding:0 28px 56px; }
         .search-panel { display:flex;align-items:flex-end;gap:12px;margin-bottom:16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fff;box-shadow:0 10px 30px #173f6b08; }
         .search-field { flex:1; }
+        .filter-type-field { flex:0 0 205px;min-width:0; }
+        .filter-conditional-field { flex:0 1 220px;min-width:180px; }
+        .filter-date-range { display:grid;flex:1 1 350px;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px; }
+        .filter-conditional-field[hidden] { display:none!important; }
+        .filter-type-field .form-select,.filter-conditional-field .form-select { width:100%; }
         .form-label { margin-bottom:6px;color:#29435f;font-size:.8rem;font-weight:700; }
         .form-control,.form-select { min-height:42px;border:1px solid #d5dfeb;border-radius:9px;color:var(--ink);font-size:.88rem;box-shadow:none; }
         .form-control:focus,.form-select:focus { border-color:#6e9bc9;box-shadow:0 0 0 3px #dceafb; }
@@ -63,7 +68,7 @@
         .empty-state p { max-width:440px;margin:0 auto;color:var(--muted);line-height:1.6; }
         .alert { border:0;border-radius:12px; }
         @media(max-width:760px) { .report-body { grid-template-columns:1fr; } }
-        @media(max-width:600px) { .header-inner { padding:14px 18px; } .page-intro { padding:25px 20px 42px; } .page-main { padding:0 14px 36px; } .search-panel { align-items:stretch;flex-direction:column;padding:14px; } .search-panel .btn { width:100%; } .report-header { padding:16px; } .report-body { gap:15px;padding:16px; } .back-link span { display:none; } }
+        @media(max-width:600px) { .header-inner { padding:14px 18px; } .page-intro { padding:25px 20px 42px; } .page-main { padding:0 14px 36px; } .search-panel { align-items:stretch;flex-direction:column;padding:14px; } .search-panel .filter-type-field,.search-panel .filter-conditional-field { flex:initial;min-width:0; } .filter-date-range { grid-template-columns:1fr; } .search-panel .btn { width:100%; } .report-header { padding:16px; } .report-body { gap:15px;padding:16px; } .back-link span { display:none; } }
     </style>
 </head>
 <body>
@@ -83,16 +88,7 @@
     </header>
 
     <main class="page-main">
-        <form method="GET" action="{{ url()->current() }}" class="search-panel">
-            <div class="search-field">
-                <label for="search" class="form-label">Search reports</label>
-                <input id="search" type="text" name="search" class="form-control" placeholder="Search by student, book, or reason" value="{{ request('search') }}">
-            </div>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-search me-1" aria-hidden="true"></i>Search</button>
-            @if(request('search'))
-                <a href="{{ url()->current() }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Reset</a>
-            @endif
-        </form>
+        @include('admin.partials.report-filters', ['showReviewerFilter' => false])
 
         @forelse($reports as $report)
             <div class="report-list mb-3">
@@ -118,10 +114,10 @@
                             </div>
                             <div class="report-actions">
                                 <a href="{{ url('/book/' . $report->book_id) }}" class="btn btn-outline-secondary" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>View listing</a>
-                                <form method="POST" action="{{ route('admin.reports.delete', $report->id) }}" onsubmit="return confirm('Are you sure?')">
+                                <form method="POST" action="{{ route('admin.reports.delete', $report->id) }}" onsubmit="return confirm('Move this report to Deleted reports? You can recover it later.')">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="submit" class="btn delete-button"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Delete report</button>
+                                    <button type="submit" class="btn delete-button"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Move to deleted</button>
                                 </form>
                             </div>
                         </div>

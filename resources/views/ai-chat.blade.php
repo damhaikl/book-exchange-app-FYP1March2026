@@ -1,148 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <title>AI Assistant</title>
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#102f53">
+    <title>AI Book Assistant | UniKL BookHub</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
     <style>
-        body {
-            background: #f5f5f5;
-        }
-
-        .chat-container {
-            max-width: 800px;
-            margin: 40px auto;
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .chat-box {
-            height: 500px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-            background: #fafafa;
-        }
-
-        .user-msg {
-            text-align: right;
-            margin-bottom: 15px;
-        }
-
-        .ai-msg {
-            text-align: left;
-            margin-bottom: 15px;
-        }
-
-        .bubble {
-            display: inline-block;
-            padding: 10px 15px;
-            border-radius: 15px;
-            max-width: 70%;
-        }
-
-        .ai-msg .bubble {
-            width: 95%;
-            max-width: 95%;
-            line-height: 1.55;
-        }
-
-        .user-msg .bubble {
-            background: #0d6efd;
-            color: white;
-        }
-
-        .ai-msg .bubble {
-            background: #e9ecef;
-        }
-
-        .recommendation-intro { margin-bottom: 12px; }
-        .recommendation-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin:10px 0; }
-        .recommendation-card { background:#fff; border:1px solid #dbe3ef; border-radius:10px; padding:12px; min-width:0; }
-        .recommendation-title { color:#1f2937; font-size:.98rem; font-weight:700; margin:0 0 8px; }
-        .recommendation-meta { color:#64748b; font-size:.8rem; margin:0 0 5px; }
-        .recommendation-reason { color:#374151; font-size:.88rem; margin:8px 0; }
-        .recommendation-price { color:#1d4ed8; font-size:.88rem; font-weight:700; margin:0 0 8px; }
-        .recommendation-link { color:#1d4ed8; font-size:.88rem; font-weight:600; text-decoration:none; }
-        .recommendation-link:hover { text-decoration:underline; }
-        .recommendation-actions { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin-top:10px; }
-        .request-book-button { background:#1d4ed8; border:1px solid #1d4ed8; border-radius:7px; color:#fff; cursor:pointer; font-size:.82rem; font-weight:600; padding:6px 10px; }
-        .request-book-button:hover { background:#1e40af; border-color:#1e40af; }
-        .request-book-button.btn-success { background:#15803d; border-color:#15803d; }
-        .request-book-button:disabled { cursor:default; opacity:.7; }
-        .ai-list { margin:8px 0; padding-left:1.4rem; }
-        .ai-list li { background:#fff; border:1px solid #dbe3ef; border-radius:9px; color:#374151; margin-bottom:8px; padding:10px 12px; }
-        .popup { display:none; position:fixed; inset:0; z-index:1100; align-items:center; justify-content:center; padding:1rem; background:rgba(17,24,39,.55); }
-        .popup-content { width:min(440px,100%); background:#fff; padding:1.5rem; border:1px solid #e5e7eb; border-radius:12px; box-shadow:0 16px 40px rgba(17,24,39,.18); }
-        .popup-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:8px; margin-top:1.25rem; }
-
-        @media (max-width: 576px) {
-            .chat-container { margin:15px auto; padding:15px; }
-            .chat-box { height:65vh; }
-            .ai-msg .bubble { width:100%; max-width:100%; }
+        :root { --navy:#102f53; --navy-dark:#0b2542; --navy-mid:#245586; --sky:#dceafb; --ink:#14263d; --muted:#63758a; --line:#dce5ef; --page:#f4f7fb; }
+        * { box-sizing:border-box; }
+        body { margin:0;min-height:100vh;color:var(--ink);background:var(--page);font-family:'Instrument Sans',Arial,sans-serif; }
+        .site-header { position:relative;overflow:hidden;color:#fff;background:radial-gradient(ellipse at 85% 20%,#2b5d8b 0,transparent 36%),linear-gradient(130deg,#0b2542,#173f6b); }
+        .site-header::after { position:absolute;content:"";width:380px;height:380px;right:-145px;top:-245px;border:1px solid #ffffff18;border-radius:50%;box-shadow:0 0 0 45px #ffffff08,0 0 0 90px #ffffff05;pointer-events:none; }
+        .header-inner { position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:20px;max-width:1100px;margin:auto;padding:18px 28px; }
+        .brand { display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;letter-spacing:-.02em;text-decoration:none; }
+        .brand:hover { color:#fff; }
+        .brand-mark { display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#ffffff1d;color:#fff; }
+        .header-link { display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #ffffff70;border-radius:9px;color:#fff;font-size:.86rem;font-weight:700;text-decoration:none;transition:background .2s,color .2s; }
+        .header-link:hover { color:var(--navy);background:#fff; }
+        .page-intro { position:relative;z-index:1;max-width:1100px;margin:auto;padding:27px 28px 46px; }
+        .eyebrow { margin:0 0 8px;color:#b8d5f5;font-size:.75rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase; }
+        .page-intro h1 { margin:0;color:#fff;font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-.055em; }
+        .page-intro p:last-child { max-width:680px;margin:9px 0 0;color:#d3e1f0;line-height:1.65; }
+        .page-main { position:relative;z-index:2;max-width:1100px;margin:-19px auto 0;padding:0 28px 48px; }
+        .chat-shell { overflow:hidden;border:1px solid var(--line);border-radius:17px;background:#fff;box-shadow:0 14px 38px #173f6b0d; }
+        .chat-context { display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid #e8edf3;background:#fff; }
+        .context-icon { display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:12px;color:var(--navy-mid);background:var(--sky);font-size:1.1rem; }
+        .context-copy { min-width:0; }
+        .context-title { margin:0;color:var(--navy);font-size:.9rem;font-weight:800; }
+        .context-description { margin:3px 0 0;color:var(--muted);font-size:.79rem; }
+        .programme-pill { display:inline-flex;align-items:center;gap:7px;max-width:45%;margin-left:auto;padding:7px 10px;border:1px solid #dce8f4;border-radius:999px;color:var(--navy-mid);background:#f5f9fd;font-size:.75rem;font-weight:700; }
+        .programme-pill span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+        .chat-box { height:min(62vh,650px);min-height:400px;overflow-y:auto;padding:22px;background:#f7f9fc;scroll-behavior:smooth; }
+        .user-msg,.ai-msg { margin-bottom:15px; }
+        .user-msg { text-align:right; }
+        .ai-msg { text-align:left; }
+        .bubble { display:inline-block;max-width:min(82%,680px);padding:11px 15px;border-radius:15px;color:#263d56;background:#fff;border:1px solid #e0e8f1;box-shadow:0 3px 10px #173f6b07;line-height:1.6;text-align:left;overflow-wrap:anywhere; }
+        .ai-msg .bubble { width:min(100%,850px);max-width:100%; }
+        .user-msg .bubble { color:#fff;background:var(--navy);border-color:var(--navy);border-bottom-right-radius:5px; }
+        .ai-msg .bubble { border-bottom-left-radius:5px; }
+        .recommendation-intro { margin-bottom:12px; }
+        .recommendation-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;margin:10px 0; }
+        .recommendation-card { min-width:0;padding:13px;border:1px solid var(--line);border-radius:11px;background:#fff; }
+        .recommendation-title { margin:0 0 8px;color:var(--navy);font-size:.96rem;font-weight:800; }
+        .recommendation-meta { margin:0 0 5px;color:var(--muted);font-size:.78rem; }
+        .recommendation-reason { margin:8px 0;color:#425a73;font-size:.85rem; }
+        .recommendation-price { margin:0 0 8px;color:var(--navy-mid);font-size:.87rem;font-weight:800; }
+        .recommendation-link { color:var(--navy-mid);font-size:.84rem;font-weight:700;text-decoration:none; }
+        .recommendation-link:hover { color:var(--navy-dark);text-decoration:underline; }
+        .recommendation-actions { display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin-top:10px; }
+        .request-book-button { padding:7px 10px;border:1px solid var(--navy);border-radius:8px;color:#fff;background:var(--navy);font-size:.8rem;font-weight:700;cursor:pointer; }
+        .request-book-button:hover { background:var(--navy-dark);border-color:var(--navy-dark); }
+        .request-book-button.btn-success { background:#217a51;border-color:#217a51; }
+        .request-book-button:disabled { cursor:default;opacity:.72; }
+        .ai-list { margin:8px 0;padding-left:1.4rem; }
+        .ai-list li { margin-bottom:8px;padding:10px 12px;border:1px solid var(--line);border-radius:9px;color:#374f68;background:#fff; }
+        .chat-composer { padding:16px 20px 18px;border-top:1px solid #e8edf3;background:#fff; }
+        .chat-composer .form-control { min-height:46px;border:1px solid #d5dfeb;border-radius:11px 0 0 11px;color:var(--ink);font-size:.9rem;box-shadow:none; }
+        .chat-composer .form-control:focus { border-color:#6e9bc9;box-shadow:0 0 0 3px #dceafb; }
+        .chat-send { min-width:98px;border:1px solid var(--navy);border-radius:0 11px 11px 0!important;color:#fff;background:var(--navy);font-weight:700; }
+        .chat-send:hover,.chat-send:focus { color:#fff;background:var(--navy-dark);border-color:var(--navy-dark); }
+        .chat-send:disabled { color:#fff;background:#71869d;border-color:#71869d; }
+        .btn-primary { color:#fff;background:var(--navy);border-color:var(--navy);font-weight:700; }
+        .btn-primary:hover,.btn-primary:focus { color:#fff;background:var(--navy-dark);border-color:var(--navy-dark); }
+        .btn-outline-secondary { color:#526b86;border-color:#c9d5e2;font-weight:700; }
+        .btn-outline-secondary:hover,.btn-outline-secondary:focus { color:var(--navy);border-color:#a9bed4;background:#eaf1f9; }
+        .text-primary { color:var(--navy-mid)!important; }
+        .composer-note { margin:8px 2px 0;color:#8796a6;font-size:.72rem; }
+        .popup { display:none;position:fixed;inset:0;z-index:1100;align-items:center;justify-content:center;padding:1rem;background:rgba(11,37,66,.58); }
+        .popup-content { width:min(440px,100%);padding:1.5rem;border:1px solid var(--line);border-radius:15px;background:#fff;box-shadow:0 20px 50px rgba(11,37,66,.22); }
+        .popup-actions { display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin-top:1.25rem; }
+        .schedule-proposal-form .form-label { color:#29435f;font-size:.82rem;font-weight:700; }
+        .schedule-proposal-form .form-control { border-color:#d5dfeb;border-radius:9px; }
+        @media(max-width:650px) {
+            .header-inner { padding:14px 18px; }
+            .page-intro { padding:24px 20px 40px; }
+            .page-main { padding:0 14px 32px; }
+            .chat-context { align-items:flex-start;flex-wrap:wrap;padding:14px; }
+            .programme-pill { max-width:100%;margin-left:52px; }
+            .chat-box { height:62vh;min-height:360px;padding:15px; }
+            .bubble { max-width:94%;padding:10px 12px; }
+            .ai-msg .bubble { width:100%;max-width:100%; }
             .recommendation-grid { grid-template-columns:1fr; }
+            .chat-composer { padding:13px; }
+            .chat-send { min-width:48px;font-size:0; }
+            .chat-send i { font-size:1rem; }
+            .header-link span { display:none; }
         }
     </style>
 </head>
 
 
 <body>
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand" href="{{ url('/') }}">
+                <span class="brand-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span>
+                <span>UniKL BookHub</span>
+            </a>
+            <a href="{{ route('dashboard') }}" class="header-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Dashboard</span></a>
+        </div>
+        <div class="page-intro">
+            <p class="eyebrow">Your book-finding assistant</p>
+            <h1>UniKL BookHub AI</h1>
+            <p>Get programme-aware book suggestions, explore the catalogue, and start a book request right from the chat.</p>
+        </div>
+    </header>
 
-<div class="chat-container">
-
-    <div class="top-bar">
-        <a href="/dashboard" class="btn btn-outline-secondary">
-            ⬅️ Back
-        </a>
-    </div>
-    <br><br>
-
-    <h3 class="mb-4">🤖 UniKLBook AI Assistant</h3>
-    @if($studentProgramme)
-        <p class="text-muted small mb-3"><i class="bi bi-mortarboard me-1"></i>Book suggestions will consider your programme: <strong>{{ $studentProgramme }}</strong>.</p>
-    @else
-        <p class="text-muted small mb-3"><i class="bi bi-mortarboard me-1"></i>Your profile does not list a programme yet, so suggestions may be general.</p>
-    @endif
-
-    <!-- CHAT AREA -->
-    <div class="chat-box" id="chatBox">
-
-        <div class="ai-msg" id="welcomeMessage">
-            <div class="bubble">
+    <main class="page-main">
+        <section class="chat-shell" aria-label="AI book assistant conversation">
+            <div class="chat-context">
+                <div class="context-icon" aria-hidden="true"><i class="bi bi-stars"></i></div>
+                <div class="context-copy">
+                    <p class="context-title">Book recommendations and exchange help</p>
+                    <p class="context-description">Ask about a subject, book, or meeting proposal.</p>
+                </div>
                 @if($studentProgramme)
-                    Hi {{ $studentName }}! I’m checking the catalogue for books related to your programme…
+                    <span class="programme-pill"><i class="bi bi-mortarboard" aria-hidden="true"></i><span>{{ $studentProgramme }}</span></span>
                 @else
-                    Hi {{ $studentName }}! Tell me what subject or topic you’re interested in, and I’ll look for a book.
+                    <span class="programme-pill"><i class="bi bi-mortarboard" aria-hidden="true"></i><span>General suggestions</span></span>
                 @endif
             </div>
-        </div>
 
-    </div>
+            <div class="chat-box" id="chatBox" aria-live="polite" aria-relevant="additions text">
+                <div class="ai-msg" id="welcomeMessage">
+                    <div class="bubble">
+                        @if($studentProgramme)
+                            Hi {{ $studentName }}! I’m checking the catalogue for books related to your programme…
+                        @else
+                            Hi {{ $studentName }}! Tell me what subject or topic you’re interested in, and I’ll look for a book.
+                        @endif
+                    </div>
+                </div>
+            </div>
 
-    <!-- CHAT FORM -->
-    <form id="chatForm">
-        @csrf
-
-        <div class="input-group">
-            <input type="text"
-                   id="message"
-                   class="form-control"
-                   placeholder="Type your message..."
-                   required>
-
-            <button type="submit" class="btn btn-primary">
-                Send
-            </button>
-        </div>
-    </form>
-
-</div>
+            <div class="chat-composer">
+                <form id="chatForm">
+                    @csrf
+                    <div class="input-group">
+                        <input type="text" id="message" class="form-control" placeholder="Ask about a book or subject…" aria-label="Your message" required>
+                        <button type="submit" class="btn chat-send"><i class="bi bi-send-fill me-1" aria-hidden="true"></i><span>Send</span></button>
+                    </div>
+                    <p class="composer-note">Book suggestions are based on your programme and available listings.</p>
+                </form>
+            </div>
+        </section>
+    </main>
 
 <div id="requestBookPopup" class="popup" role="dialog" aria-modal="true" aria-labelledby="requestBookPopupTitle" aria-describedby="requestBookPopupMessage">
     <div class="popup-content text-center">
