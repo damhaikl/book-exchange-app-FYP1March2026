@@ -134,6 +134,10 @@
         ->middleware('auth')
         ->name('exchange.cancel');
 
+    Route::delete('/book-request/{id}', [BookController::class, 'deleteRequest'])
+    ->middleware('auth')
+    ->name('book-request.delete');
+
     // Both students: Confirm physical handover
     Route::post('/exchange-request/{id}/confirm-handover', [BookController::class, 'confirmExchangeHandover'])
         ->middleware('auth')

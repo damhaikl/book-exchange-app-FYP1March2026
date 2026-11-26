@@ -1370,7 +1370,8 @@
 
                             <div class="request-actions">
 
-                                <form method="POST" action="{{ route('request.approve', $req->id) }}">
+                                <form method="POST" action="{{ route('request.approve', $req->id) }}"
+                                    onsubmit="return confirm('Are you sure you want to approve this request?');">
                                     @csrf
 
                                     <button type="submit" class="btn approve-button">
@@ -1379,7 +1380,8 @@
                                     </button>
                                 </form>
 
-                                <form method="POST" action="{{ route('request.reject', $req->id) }}">
+                                <form method="POST" action="{{ route('request.reject', $req->id) }}"
+                                    onsubmit="return confirm('Are you sure you want to reject this request?');">
                                     @csrf
 
                                     <button type="submit" class="btn reject-button">
@@ -1400,7 +1402,8 @@
 
                                 <form method="POST"
                                     action="{{ route('request.counter-schedule', $req->id) }}"
-                                    class="mt-3">
+                                    class="mt-3"
+                                    onsubmit="return confirm('Are you sure you want to submit this proposed meeting schedule?');">
 
                                     @csrf
 
@@ -1503,7 +1506,7 @@
                                 @if(!$req->requester_confirmed_handover && !$req->owner_confirmed_handover)
                                     <form method="POST"
                                         action="{{ route('request.cancel', $req->id) }}"
-                                        onsubmit="return confirm('Are you sure you want to cancel this Sell request?');">
+                                        onsubmit="return confirm('Are you sure you want to cancel this request?');">
 
                                         @csrf
 
@@ -1539,7 +1542,8 @@
 
                             <div class="request-actions">
 
-                                <form method="POST" action="{{ route('exchange.accept', $req->id) }}">
+                                <form method="POST" action="{{ route('exchange.accept', $req->id) }}"
+                                    onsubmit="return confirm('Are you sure you want to accept this exchange?');">
                                     @csrf
 
                                     <button type="submit" class="btn approve-button">
@@ -1549,7 +1553,7 @@
                                 </form>
 
                                 <form method="POST" action="{{ route('exchange.reject', $req->id) }}"
-                                      onsubmit="return confirm('Are you sure you want to reject this Exchange request?');">
+                                      onsubmit="return confirm('Are you sure you want to reject this exchange?');">
                                     @csrf
 
                                     <button type="submit" class="btn reject-button">
@@ -1571,7 +1575,8 @@
 
                                 <form method="POST"
                                       action="{{ route('exchange.counter-schedule', $req->id) }}"
-                                      class="mt-3">
+                                      class="mt-3"
+                                      onsubmit="return confirm('Are you sure you want to submit this proposed schedule?');">
 
                                     @csrf
 
@@ -1645,7 +1650,8 @@
 
                             <div class="request-actions">
 
-                                <form method="POST" action="{{ route('exchange.accept', $req->id) }}">
+                                <form method="POST" action="{{ route('exchange.accept', $req->id) }}"
+                                    onsubmit="return confirm('Are you sure you want to accept this proposed schedule?');">
                                     @csrf
 
                                     <button type="submit" class="btn approve-button">
@@ -1655,7 +1661,7 @@
                                 </form>
 
                                 <form method="POST" action="{{ route('exchange.reject', $req->id) }}"
-                                      onsubmit="return confirm('Are you sure you want to reject this Exchange request?');">
+                                      onsubmit="return confirm('Are you sure you want to reject this exchange?');">
                                     @csrf
 
                                     <button type="submit" class="btn reject-button">
@@ -1677,7 +1683,8 @@
 
                                 <form method="POST"
                                       action="{{ route('exchange.counter-schedule', $req->id) }}"
-                                      class="mt-3">
+                                      class="mt-3"
+                                      onsubmit="return confirm('Are you sure you want to submit this proposed meeting schedule?');">
 
                                     @csrf
 
@@ -1785,7 +1792,7 @@
 
                                     <form method="POST"
                                         action="{{ route('exchange.cancel', $req->id) }}"
-                                        onsubmit="return confirm('Are you sure you want to cancel this Exchange?');">
+                                        onsubmit="return confirm('Are you sure you want to cancel this exchange?');">
                                         @csrf
 
                                         <button type="submit" class="btn reject-button">
@@ -1800,6 +1807,24 @@
 
                         @endif
 
+                    @endif
+
+                    {{-- HIDE REJECTED OR CANCELLED REQUEST --}}
+                    @if(in_array($req->status, ['rejected', 'cancelled'], true))
+                        <div class="request-actions">
+                            <form method="POST"
+                                action="{{ route('book-request.delete', $req->id) }}"
+                                onsubmit="return confirm('Remove this request from your list?');">
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button type="submit" class="btn btn-outline-danger">
+                                    <i class="bi bi-trash me-1"></i>
+                                    Delete Request
+                                </button>
+                            </form>
+                        </div>
                     @endif
 
                 </div>

@@ -24,6 +24,7 @@ class BookRequest extends Model
     protected $casts = [
         'requester_confirmed_handover' => 'boolean',
         'owner_confirmed_handover' => 'boolean',
+        'hidden_by' => 'array',
     ];
 
     public function book()

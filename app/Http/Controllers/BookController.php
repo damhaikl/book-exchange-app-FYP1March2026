@@ -923,6 +923,14 @@ class BookController extends Controller
             'proposed_end_time' => $validated['proposed_end_time'],
         ]);
 
+        // Send updated schedule email to Student B (book owner)
+        $owner = User::find($proposal->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($proposal, 'sell_schedule_proposed'));
+        }
+
         $redirect = $request->input('return_to') === 'sent-requests'
             ? redirect()->route('sent.requests')
             : redirect('/book/' . $id);
@@ -960,6 +968,10 @@ class BookController extends Controller
     public function inbox()
     {
         $requests = BookRequest::where('owner_id', auth()->id())
+        ->where(function ($query) {
+            $query->whereNull('hidden_by')
+                ->orWhereJsonDoesntContain('hidden_by', auth()->id());
+        })
             ->with([
                 'book',
                 'requester',
@@ -975,6 +987,10 @@ class BookController extends Controller
     public function sentRequests()
     {
         $requests = BookRequest::where('requester_id', auth()->id())
+        ->where(function ($query) {
+            $query->whereNull('hidden_by')
+                ->orWhereJsonDoesntContain('hidden_by', auth()->id());
+        })
             ->with([
                 'book',
                 'owner',
@@ -1482,6 +1498,14 @@ class BookController extends Controller
 
         $exchangeRequest->update($validated);
 
+        // Send email to Student B (book owner)
+        $owner = User::find($exchangeRequest->owner_id);
+
+        if ($owner) {
+            Mail::to($owner->email)
+                ->queue(new BookStatusMail($exchangeRequest, 'exchange_schedule_proposed'));
+        }
+
         return back()->with('success', 'Your Exchange proposed schedule has been updated.');
     }
 
@@ -1569,6 +1593,7 @@ class BookController extends Controller
     }
 
 
+   
     // Student B: Reject Exchange request
     public function rejectExchange($id)
     {
@@ -1593,9 +1618,16 @@ class BookController extends Controller
             'status' => 'rejected',
         ]);
 
+        // EMAIL STUDENT A (REQUESTER)
+        $requester = User::find($exchangeRequest->requester_id);
+
+        if ($requester) {
+            Mail::to($requester->email)
+                ->queue(new BookStatusMail($exchangeRequest, 'rejected'));
+        }
+
         return back()->with('success', 'Exchange request rejected.');
     }
-
     
     // Both Student: Cancel Exchange
     public function cancelExchange($id)
@@ -2001,5 +2033,36 @@ class BookController extends Controller
         }
 
         return back()->with('success', 'Request cancelled successfully.');
+    }
+    // HIDE REJECTED OR CANCELLED REQUEST
+    public function deleteRequest($id)
+    {
+        $bookRequest = BookRequest::findOrFail($id);
+
+        $userId = auth()->id();
+
+        // Only the requester or book owner can hide this request.
+        if (
+            $bookRequest->requester_id != $userId &&
+            $bookRequest->owner_id != $userId
+        ) {
+            abort(403);
+        }
+
+        // Only rejected and cancelled requests can be hidden.
+        if (!in_array($bookRequest->status, ['rejected', 'cancelled'], true)) {
+            return back()->with('error', 'Only rejected or cancelled requests can be hidden.');
+        }
+
+        $hiddenBy = $bookRequest->hidden_by ?? [];
+
+        if (!in_array($userId, $hiddenBy)) {
+            $hiddenBy[] = $userId;
+        }
+
+        $bookRequest->hidden_by = $hiddenBy;
+        $bookRequest->save();
+
+        return back()->with('success', 'Request removed from your list.');
     }
 }

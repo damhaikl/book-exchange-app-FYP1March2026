@@ -44,7 +44,7 @@ class BookStatusMail extends Mailable implements ShouldQueue
                 "New Exchange Meeting Schedule Proposed – {$bookTitle}",
 
             'exchange_schedule_accepted' =>
-                "Exchange Meeting Schedule Confirmed – {$bookTitle}",
+                "Exchange Approved – {$bookTitle}",
 
             'approved' =>
                 "Request Approved – {$bookTitle}",

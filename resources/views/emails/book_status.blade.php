@@ -81,8 +81,8 @@
 
         @if($bookRequest->book->listing_type === 'sell')
 
-            <p>
-                Good news! Your request for the following book has been approved by the book owner.
+            <p style="color: green;">
+                ✅ Good news! Your Request for the following book has been approved by the book owner.
             </p>
 
             <p><strong>Request Details</strong></p>
@@ -124,8 +124,8 @@
 
         @else
 
-            <p>
-                Good news! Your Exchange request has been accepted by the book owner.
+            <p style="color: green;">
+                ✅ Good news! Your Exchange request has been accepted by the book owner.
             </p>
 
             <p><strong>Exchange Details</strong></p>
@@ -197,11 +197,11 @@
 
         <p>Hello,</p>
 
-        <p>
+        <p style="color: red;">
             @if(($bookRequest->book->listing_type ?? '') === 'exchange')
-                Your Exchange request has been cancelled.
+                ❌ Your Exchange request has been cancelled.
             @else
-                Your Sell request has been cancelled.
+                ❌ Your Sell request has been cancelled.
             @endif
         </p>
 
@@ -386,7 +386,7 @@
         <p>Hello {{ $bookRequest->owner->name ?? 'Student' }},</p>
 
         <p style="color: green;">
-            ✅ The requester has accepted your proposed Exchange meeting schedule.
+            ✅ Good News! The requester has accepted your proposed Exchange meeting schedule.
         </p>
 
         <p><strong>Exchange Details</strong></p>

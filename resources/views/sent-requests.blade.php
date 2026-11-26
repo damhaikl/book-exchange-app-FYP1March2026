@@ -199,8 +199,6 @@
             gap:6px;
             padding:7px 10px;
             border-radius:8px;
-            color:#825711;
-            background:#fff2d7;
             font-size:.74rem;
             font-weight:800;
             white-space:nowrap;
@@ -226,9 +224,10 @@
             background:#e9eef4;
         }
 
+        .status-badge.pending,
         .status-badge.negotiation {
-            color:#245586;
-            background:#e6f1fb;
+            color: #825711;
+            background: #FFF2D7;
         }
 
         .request-card-body { padding:18px 22px 21px; }
@@ -639,7 +638,7 @@
                             </p>
                         </div>
 
-                        <span class="status-badge {{ in_array($displayStatus, ['approved', 'rejected', 'completed', 'cancelled'], true) ? $displayStatus : '' }}">
+                        <span class="status-badge {{ in_array($displayStatus, ['approved', 'rejected', 'completed', 'cancelled', 'pending', 'negotiation'], true) ? $displayStatus : '' }}">
                             <i class="bi bi-circle-fill" style="font-size:.42rem" aria-hidden="true"></i>
                             {{ ucfirst($displayStatus) }}
                         </span>
@@ -776,7 +775,8 @@
 
                                 {{-- Cancel request --}}
                                 <form method="POST"
-                                    action="{{ route('request.cancel', $req->id) }}">
+                                    action="{{ route('request.cancel', $req->id) }}"
+                                    onsubmit="return confirm('Are you sure you want to cancel this request?');">
                                     @csrf
 
                                     <button type="submit" class="btn cancel-button">
@@ -1315,18 +1315,20 @@
                             <div class="status-actions {{ $req->status === 'approved' ? 'sell-approved-actions' : '' }}">
 
                                 @if($req->status == 'pending')
-                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}" class="mt-3"
+                                        onsubmit="return confirm('Are you sure you want to cancel this request?');">
                                         @csrf
 
                                         <button type="submit" class="btn cancel-button">
                                             <i class="bi bi-x-circle me-1" aria-hidden="true"></i>
-                                            Cancel request
+                                            Cancel Request
                                         </button>
                                     </form>
 
                                 @elseif($req->status == 'negotiation' && $req->schedule_type === 'buyer')
 
-                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                                    <form method="POST" action="{{ route('request.cancel', $req->id) }}" class="mt-3"
+                                        onsubmit="return confirm('Are you sure you want to cancel this request?');">
                                         @csrf
 
                                         <button type="submit" class="btn cancel-button">
@@ -1361,7 +1363,8 @@
 
                                     @if(!$req->requester_confirmed_handover && !$req->owner_confirmed_handover)
 
-                                        <form method="POST" action="{{ route('request.cancel', $req->id) }}">
+                                        <form method="POST" action="{{ route('request.cancel', $req->id) }}"
+                                            onsubmit="return confirm('Are you sure you want to cancel this request?');">
                                             @csrf
 
                                             <button type="submit" class="btn cancel-button">
@@ -1445,7 +1448,8 @@
                                 --}}
 
                                 @if($req->status === 'pending')
-                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
+                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}"
+                                        onsubmit="return confirm('Are you sure you want to cancel this request?');">
                                         @csrf
 
                                         <button type="submit" class="btn cancel-button">
@@ -1507,7 +1511,8 @@
                                         </form>
                                     </div>
 
-                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
+                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}"
+                                        onsubmit="return confirm('Are you sure you want to cancel this exchange?');">
                                         @csrf
 
                                         <button type="submit" class="btn cancel-button">
@@ -1518,11 +1523,8 @@
 
                                 @elseif($req->status === 'negotiation' && $req->schedule_type === 'requester')
 
-                                    <p class="text-muted mb-2">
-                                        Waiting for the other student to respond to your proposed schedule.
-                                    </p>
-
-                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}">
+                                    <form method="POST" action="{{ route('exchange.cancel', $req->id) }}"
+                                        onsubmit="return confirm('Are you sure you want to cancel this exchange?');">
                                         @csrf
 
                                         <button type="submit" class="btn cancel-button">
@@ -1559,7 +1561,7 @@
 
                                             <form method="POST"
                                                 action="{{ route('exchange.cancel', $req->id) }}"
-                                                onsubmit="return confirm('Are you sure you want to cancel this Exchange?');">
+                                                onsubmit="return confirm('Are you sure you want to cancel this exchange?');">
                                                 @csrf
 
                                                 <button type="submit" class="btn cancel-button">
@@ -1586,6 +1588,21 @@
                                         </span>
                                     @endif
                                 @endif
+                            </div>
+                        @endif
+                        @if(in_array($req->status, ['rejected', 'cancelled'], true))
+                            <div class="request-actions">
+                                <form method="POST"
+                                    action="{{ route('book-request.delete', $req->id) }}"
+                                    onsubmit="return confirm('Remove this request from your list?');">
+                                    @csrf
+                                    @method('DELETE')
+
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        <i class="bi bi-trash me-1"></i>
+                                        Delete Request
+                                    </button>
+                                </form>
                             </div>
                         @endif
                     </div>
@@ -1715,7 +1732,8 @@
 
                             <form method="POST"
                                 action="{{ route('exchange.proposed-schedule.delete', $req->id) }}"
-                                class="m-0">
+                                class="m-0"
+                                onsubmit="return confirm('Are you sure you want to delete this proposal?');">
                                 @csrf
                                 @method('DELETE')
 
@@ -1850,6 +1868,7 @@
                         {{-- DELETE PROPOSAL --}}
                         <form method="POST"
                               action="{{ route('book.proposeSchedule.delete', $req->book_id) }}"
+                              onsubmit="return confirm('Are you sure you want to delete this proposal?');"
                               class="m-0">
                             @csrf
                             @method('DELETE')
