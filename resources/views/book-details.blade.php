@@ -159,6 +159,18 @@
 
                 <div class="page-kicker mb-2">Book details</div>
                 <h1 class="book-title mb-3">{{ $book->title }}</h1>
+
+                @if(!empty($book->description))
+                    <div class="mb-4">
+                        <h2 class="h6 fw-bold mb-2">Book Description</h2>
+                        <p class="book-description mb-0">{{ $book->description }}</p>
+                    </div>
+                @else
+                    <div class="mb-4">
+                        <h2 class="h6 fw-bold mb-2">Book Description</h2>
+                        <p class="text-secondary small mb-0">No description provided.</p>
+                    </div>
+                @endif
                 
                 @if($book->listing_type === 'exchange')
                     <div class="mt-3 mb-4">

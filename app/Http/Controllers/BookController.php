@@ -577,7 +577,8 @@ class BookController extends Controller
     // ✏️ Edit
     public function edit($id)
     {
-        $book = Book::findOrFail($id);
+        $book = Book::with('exchangePreferences')->findOrFail($id);
+
         return view('book-edit', compact('book'));
     }
 
@@ -587,12 +588,23 @@ class BookController extends Controller
         $book = Book::findOrFail($id);
 
         $request->validate([
-            'booktitle' => 'required',
-            'bookdescription' => 'required',
-            'condition' => 'required',
-            'subject_id' => 'required',
-            'subject_category' => ['required', 'string', Rule::in(Book::SUBJECT_CATEGORIES)],
-            'price' => 'required|numeric|min:0',
+            'booktitle' => 'required|string|max:255',
+            'bookdescription' => 'required|string',
+            'condition' => 'required|in:New,Like New,Used',
+            'subject_id' => 'required|string|max:255',
+            'subject_category' => [
+                'required',
+                'string',
+                Rule::in(Book::SUBJECT_CATEGORIES),
+            ],
+
+            'listing_type' => 'required|in:sell,exchange',
+            'price' => 'required_if:listing_type,sell|nullable|numeric|min:0',
+
+            'exchange_preferences' => 'required_if:listing_type,exchange|array|min:1|max:3',
+            'exchange_preferences.*.wanted_subject_id' => 'required_if:listing_type,exchange|string|max:255',
+            'exchange_preferences.*.wanted_book_name' => 'required_if:listing_type,exchange|string|max:255',
+
             'image' => 'nullable|image|mimes:jpg,png,jpeg|max:2048',
             'meeting_location' => 'nullable|string|max:255',
             'meeting_date' => 'nullable|date',
@@ -606,7 +618,11 @@ class BookController extends Controller
             'condition' => $request->condition,
             'subject_id' => $request->subject_id,
             'subject_category' => $request->subject_category,
-            'price' => $request->price,
+            'listing_type' => $request->listing_type,
+
+            // Sale listings have a price. Exchange listings do not.
+            'price' => $request->listing_type === 'sell' ? $request->price : null,
+
             'meeting_location' => $request->meeting_location,
             'meeting_date' => $request->meeting_date,
             'meeting_time' => $request->meeting_time,
@@ -618,6 +634,21 @@ class BookController extends Controller
         }
 
         $book->update($data);
+
+        // Update wanted books for Exchange listings only.
+        if ($request->listing_type === 'exchange') {
+
+            // Remove the previous wanted-book preferences.
+            $book->exchangePreferences()->delete();
+
+            // Save the updated wanted-book preferences.
+            foreach ($request->exchange_preferences as $preference) {
+                $book->exchangePreferences()->create([
+                    'wanted_subject_id' => $preference['wanted_subject_id'],
+                    'wanted_book_name' => $preference['wanted_book_name'],
+                ]);
+            }
+        }
 
         return redirect('/homepage')->with('success', 'Book updated!');
     }
