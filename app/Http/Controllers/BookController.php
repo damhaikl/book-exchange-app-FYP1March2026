@@ -9,11 +9,14 @@ use App\Models\SavedBook;
 use App\Models\Review;
 use App\Models\ExchangeOffer;
 use App\Mail\BookStatusMail;
+use App\Mail\ExchangeMatchMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Models\BookSchedule;
 use Illuminate\Validation\Rule;
 use App\Notifications\BookRequestStatusNotification;
+use App\Notifications\ExchangeMatchNotification;
+use App\Notifications\ExchangeHandoverNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -130,6 +133,68 @@ class BookController extends Controller
 
                     if ($myWantsOtherBook && $otherWantsMyBook) {
 
+                        // Generate the same unique key for both students
+                        $bookIds = [$myBook->id, $otherBook->id];
+                        sort($bookIds);
+
+                        $matchKey = implode('_', $bookIds);
+
+                        // Check whether this match has already been notified
+                        $alreadyNotified = DB::table('notifications')
+                            ->where('type', ExchangeMatchNotification::class)
+                            ->where('data->match_key', $matchKey)
+                            ->exists();
+
+                        if (!$alreadyNotified) {
+
+                            $myStudent = auth()->user();
+                            $otherStudent = $otherBook->user;
+
+                            if ($myStudent && $otherStudent) {
+
+                                // In-app notification for the current student
+                                $myStudent->notify(new ExchangeMatchNotification(
+                                    $myBook->id,
+                                    $otherBook->id,
+                                    $myBook->title,
+                                    $otherBook->title,
+                                    $otherStudent->name,
+                                    $matchKey
+                                ));
+
+                                // Email for the current student
+                                Mail::to($myStudent->email)->queue(
+                                    new ExchangeMatchMail(
+                                        $myStudent->name,
+                                        $myBook->title,
+                                        $otherBook->title,
+                                        $otherStudent->name
+                                    )
+                                );
+
+                                // In-app notification for the matched student
+                                $otherStudent->notify(new ExchangeMatchNotification(
+                                    $otherBook->id,
+                                    $myBook->id,
+                                    $otherBook->title,
+                                    $myBook->title,
+                                    $myStudent->name,
+                                    $matchKey
+                                ));
+
+                                // Email for the matched student
+                                Mail::to($otherStudent->email)->queue(
+                                    new ExchangeMatchMail(
+                                        $otherStudent->name,
+                                        $otherBook->title,
+                                        $myBook->title,
+                                        $myStudent->name
+                                    )
+                                );
+                            }
+                        }
+
+                        // Continue displaying the match on Browse Books
                         $exchangeMatches->push([
                             'my_book' => $myBook,
                             'matched_book' => $otherBook,
@@ -626,6 +691,94 @@ class BookController extends Controller
                     'wanted_subject_id' => $preference['wanted_subject_id'],
                     'wanted_book_name' => $preference['wanted_book_name'],
                 ]);
+            }
+        }
+
+        // Check for mutual exchange matches immediately after publishing
+        if ($validated['listing_type'] === 'exchange') {
+
+            $myStudent = auth()->user();
+
+            $otherExchangeListings = Book::with(['exchangePreferences', 'user'])
+                ->where('user_id', '!=', auth()->id())
+                ->where('listing_type', 'exchange')
+                ->where('status', 'available')
+                ->get();
+
+            $matchesWantedBook = function ($preferences, $targetBook) {
+                return $preferences->contains(function ($preference) use ($targetBook) {
+                    return strtolower(trim($preference->wanted_subject_id))
+                            === strtolower(trim($targetBook->subject_id))
+                        && strtolower(trim($preference->wanted_book_name))
+                            === strtolower(trim($targetBook->title));
+                });
+            };
+
+            foreach ($otherExchangeListings as $otherBook) {
+
+                $myWantsOtherBook = $matchesWantedBook(
+                    $book->exchangePreferences,
+                    $otherBook
+                );
+
+                $otherWantsMyBook = $matchesWantedBook(
+                    $otherBook->exchangePreferences,
+                    $book
+                );
+
+                if ($myWantsOtherBook && $otherWantsMyBook) {
+
+                    $bookIds = [$book->id, $otherBook->id];
+                    sort($bookIds);
+
+                    $matchKey = implode('_', $bookIds);
+
+                    $alreadyNotified = DB::table('notifications')
+                        ->where('type', ExchangeMatchNotification::class)
+                        ->where('data->match_key', $matchKey)
+                        ->exists();
+
+                    if (!$alreadyNotified && $otherBook->user) {
+
+                        // Notify the student who submitted the new listing
+                        $myStudent->notify(new ExchangeMatchNotification(
+                            $book->id,
+                            $otherBook->id,
+                            $book->title,
+                            $otherBook->title,
+                            $otherBook->user->name,
+                            $matchKey
+                        ));
+
+                        Mail::to($myStudent->email)->queue(
+                            new ExchangeMatchMail(
+                                $myStudent->name,
+                                $book->title,
+                                $otherBook->title,
+                                $otherBook->user->name
+                            )
+                        );
+
+                        // Notify the student with the existing listing
+                        $otherBook->user->notify(new ExchangeMatchNotification(
+                            $otherBook->id,
+                            $book->id,
+                            $otherBook->title,
+                            $book->title,
+                            $myStudent->name,
+                            $matchKey
+                        ));
+
+                        Mail::to($otherBook->user->email)->queue(
+                            new ExchangeMatchMail(
+                                $otherBook->user->name,
+                                $otherBook->title,
+                                $book->title,
+                                $myStudent->name
+                            )
+                        );
+                    }
+                }
             }
         }
 
@@ -1706,11 +1859,15 @@ class BookController extends Controller
 
         return back()->with('success', 'Exchange request cancelled successfully.');
     }
-
+    
     // Both students: Confirm physical book handover
     public function confirmExchangeHandover($id)
     {
-        $exchangeRequest = BookRequest::with('book')->findOrFail($id);
+        $exchangeRequest = BookRequest::with([
+            'book',
+            'requester',
+            'owner'
+        ])->findOrFail($id);
 
         if (
             !$exchangeRequest->book ||
@@ -1730,14 +1887,21 @@ class BookController extends Controller
             return back()->with('error', 'The Exchange must be approved before confirming handover.');
         }
 
-        DB::transaction(function () use ($exchangeRequest, $isRequester, $isOwner) {
+        $result = DB::transaction(function () use ($exchangeRequest, $isRequester, $isOwner) {
 
             $lockedRequest = BookRequest::where('id', $exchangeRequest->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
             if ($lockedRequest->status !== 'approved') {
-                return;
+                return ['error' => true];
+            }
+
+            if (
+                ($isRequester && $lockedRequest->requester_confirmed_handover) ||
+                ($isOwner && $lockedRequest->owner_confirmed_handover)
+            ) {
+                return ['already_confirmed' => true];
             }
 
             if ($isRequester) {
@@ -1748,6 +1912,8 @@ class BookController extends Controller
                 $lockedRequest->owner_confirmed_handover = true;
             }
 
+            $completed = false;
+
             if (
                 $lockedRequest->requester_confirmed_handover &&
                 $lockedRequest->owner_confirmed_handover
@@ -1757,19 +1923,125 @@ class BookController extends Controller
                 $lockedRequest->book()->update([
                     'status' => 'exchanged',
                 ]);
+
+                $completed = true;
             }
 
             $lockedRequest->save();
+
+            return ['completed' => $completed];
         });
 
-        $exchangeRequest->refresh();
-
-        if ($exchangeRequest->status === 'completed') {
-            return back()->with('success', 'Exchange completed! Both students confirmed the handover.');
+        if (!empty($result['error'])) {
+            return back()->with('error', 'The Exchange is no longer awaiting handover confirmation.');
         }
 
-        return back()->with('success', 'Your handover confirmation has been recorded. Waiting for the other student.');
+        if (!empty($result['already_confirmed'])) {
+            return back()->with('info', 'You have already confirmed the handover.');
+        }
+
+        $exchangeRequest->refresh();
+        $exchangeRequest->load(['book', 'requester', 'owner']);
+
+        $bookTitle = $exchangeRequest->book->title;
+
+        // Both students have confirmed the physical handover
+        if ($exchangeRequest->status === 'completed') {
+
+            $message = 'Both students have confirmed the physical handover for "' . $bookTitle . '". The Exchange is completed!';
+
+            $notification = new ExchangeHandoverNotification(
+                $exchangeRequest,
+                'exchange_completed',
+                $message
+            );
+
+            // In-app notifications for both students
+            $exchangeRequest->requester->notify($notification);
+            $exchangeRequest->owner->notify($notification);
+
+            // Email notifications for both students
+            Mail::to($exchangeRequest->requester->email)->queue(
+                new BookStatusMail(
+                    $exchangeRequest,
+                    'completed',
+                    true,
+                    null,
+                    $exchangeRequest->requester->name
+                )
+            );
+
+            Mail::to($exchangeRequest->owner->email)->queue(
+                new BookStatusMail(
+                    $exchangeRequest,
+                    'completed',
+                    true,
+                    null,
+                    $exchangeRequest->owner->name
+                )
+            );
+
+            return back()->with(
+                'success',
+                'Exchange completed! Both students confirmed the handover.'
+            );
+        }
+
+        // Only one student has confirmed so far
+        $confirmerName = auth()->user()->name;
+
+        $confirmerMessage = 'Your handover confirmation for "' . $bookTitle . '" has been recorded. Waiting for the other student.';
+
+        $otherStudentMessage = $confirmerName . ' has confirmed the physical handover for "' . $bookTitle . '". Please confirm once you have received the book.';
+
+        $confirmerNotification = new ExchangeHandoverNotification(
+            $exchangeRequest,
+            'handover_confirmed',
+            $confirmerMessage
+        );
+
+        $otherStudentNotification = new ExchangeHandoverNotification(
+            $exchangeRequest,
+            'handover_confirmed',
+            $otherStudentMessage
+        );
+
+        if ($isRequester) {
+            $exchangeRequest->requester->notify($confirmerNotification);
+            $exchangeRequest->owner->notify($otherStudentNotification);
+
+            // Email the other student who still needs to confirm
+            Mail::to($exchangeRequest->owner->email)->queue(
+                new BookStatusMail(
+                    $exchangeRequest,
+                    'handover_confirmed',
+                    false,
+                    null,
+                    $exchangeRequest->owner->name
+                )
+            );
+        } else {
+            $exchangeRequest->owner->notify($confirmerNotification);
+            $exchangeRequest->requester->notify($otherStudentNotification);
+
+            // Email the other student who still needs to confirm
+            Mail::to($exchangeRequest->requester->email)->queue(
+                new BookStatusMail(
+                    $exchangeRequest,
+                    'handover_confirmed',
+                    false,
+                    null,
+                    $exchangeRequest->requester->name
+                )
+            );
+        }
+
+        return back()->with(
+            'success',
+            'Your handover confirmation has been recorded. Waiting for the other student.'
+        );
     }
+
 
     // Both students: Confirm physical handover for Sell
     public function confirmSellHandover($id)
@@ -1838,12 +2110,24 @@ class BookController extends Controller
 
             if ($requester) {
                 Mail::to($requester->email)
-                    ->queue(new BookStatusMail($sellRequest, 'completed', true));
+                    ->queue(new BookStatusMail(
+                        $sellRequest,
+                        'completed',
+                        true,
+                        null,
+                        $requester->name
+                    ));
             }
 
             if ($owner) {
                 Mail::to($owner->email)
-                    ->queue(new BookStatusMail($sellRequest, 'completed', true));
+                    ->queue(new BookStatusMail(
+                        $sellRequest,
+                        'completed',
+                        true,
+                        null,
+                        $owner->name
+                    ));
             }
 
         } else {
@@ -1855,7 +2139,13 @@ class BookController extends Controller
 
             if ($otherStudent) {
                 Mail::to($otherStudent->email)
-                    ->queue(new BookStatusMail($sellRequest, 'handover_confirmed'));
+                    ->queue(new BookStatusMail(
+                        $sellRequest,
+                        'handover_confirmed',
+                        false,
+                        null,
+                        $otherStudent->name
+                    ));
             }
         }
 

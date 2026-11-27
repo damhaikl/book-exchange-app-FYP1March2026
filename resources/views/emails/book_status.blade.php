@@ -10,7 +10,8 @@
 
     @if($status === 'pending')
 
-    <p>Hello {{ $bookRequest->owner->name ?? 'Student' }},</p>
+    <p>Hi,</p>
+    <p>{{ $bookRequest->owner->name ?? 'Student' }},</p>
 
     @if(($bookRequest->book->listing_type ?? '') === 'exchange')
 
@@ -77,7 +78,7 @@
 
     @elseif($status === 'approved')
 
-        <p>Hello {{ $bookRequest->requester->name ?? 'Student' }},</p>
+        <p>Hi, {{ $bookRequest->requester->name ?? 'Student' }}.</p>
 
         @if($bookRequest->book->listing_type === 'sell')
 
@@ -178,7 +179,7 @@
 
     @elseif($status === 'rejected')
 
-        <p>Hello {{ $bookRequest->requester->name ?? 'Student' }},</p>
+        <p>Hi, {{ $bookRequest->requester->name ?? 'Student' }}.</p>
 
         <p style="color: red;">
             ❌ Your {{ ucfirst($bookRequest->book->listing_type ?? 'book') }} request has been rejected.
@@ -195,7 +196,7 @@
 
     @elseif($status === 'cancelled')
 
-        <p>Hello,</p>
+        <p>Hi,</p>
 
         <p style="color: red;">
             @if(($bookRequest->book->listing_type ?? '') === 'exchange')
@@ -240,7 +241,7 @@
     @elseif($status === 'sell_schedule_proposed')
 
     <p>
-        Hello
+        Hi
         {{ $bookRequest->schedule_type === 'seller'
             ? ($bookRequest->requester->name ?? 'Student')
             : ($bookRequest->owner->name ?? 'Student') }},
@@ -305,14 +306,12 @@
         You can accept the schedule or propose another schedule.
     </p>
 
-    <p>
-        Thank you for using UniKL MIIT BookHub.
-    </p>
+   
 
     @elseif($status === 'exchange_schedule_proposed')
 
         <p>
-            Hello
+            Hi
             {{ $bookRequest->schedule_type === 'owner'
                 ? ($bookRequest->requester->name ?? 'Student')
                 : ($bookRequest->owner->name ?? 'Student') }},
@@ -383,7 +382,7 @@
 
     @elseif($status === 'exchange_schedule_accepted')
 
-        <p>Hello {{ $bookRequest->owner->name ?? 'Student' }},</p>
+        <p>Hi, {{ $bookRequest->owner->name ?? 'Student' }}.</p>
 
         <p style="color: green;">
             ✅ Good News! The requester has accepted your proposed Exchange meeting schedule.
@@ -440,7 +439,7 @@
 
     @elseif($status === 'exchange_accepted')
 
-        <p>Hello {{ $bookRequest->requester->name ?? 'Student' }},</p>
+        <p>Hi, {{ $bookRequest->requester->name ?? 'Student' }}.</p>
 
         <p style="color: green;">
             ✅ Your Exchange request has been accepted.
@@ -457,7 +456,7 @@
 
     @elseif($status === 'exchange_rejected')
 
-        <p>Hello {{ $bookRequest->requester->name ?? 'Student' }},</p>
+        <p>Hi, {{ $bookRequest->requester->name ?? 'Student' }}.</p>
 
         <p style="color: red;">
             ❌ Your Exchange request has been rejected.
@@ -474,7 +473,7 @@
 
     @elseif($status === 'handover_confirmed')
 
-        <p>Hello,</p>
+        Hi, {{ $recipientName }}.</p>
 
         <p style="color: green;">
             📦 The other student has confirmed the physical book handover.
@@ -491,7 +490,7 @@
 
     @elseif($status === 'completed' && $isCompleted)
 
-        <p>Hello,</p>
+        Hi, {{ $recipientName }}.</p>
 
         <p style="color: blue;">
             🎉 Both students have confirmed the physical handover.

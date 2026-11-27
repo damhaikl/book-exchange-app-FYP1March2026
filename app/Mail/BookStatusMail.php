@@ -17,16 +17,23 @@ class BookStatusMail extends Mailable implements ShouldQueue
     public $status;
     public $isCompleted;
     public $cancelledBy;
+    public $recipientName;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($bookRequest, $status, $isCompleted = false, $cancelledBy = null)
-    {
+    public function __construct(
+        $bookRequest,
+        $status,
+        $isCompleted = false,
+        $cancelledBy = null,
+        $recipientName = null
+    ) {
         $this->bookRequest = $bookRequest;
         $this->status = $status;
         $this->isCompleted = $isCompleted;
         $this->cancelledBy = $cancelledBy;
+        $this->recipientName = $recipientName;
     }
 
     /**
@@ -55,8 +62,10 @@ class BookStatusMail extends Mailable implements ShouldQueue
             'cancelled' =>
                 "Request Cancelled – {$bookTitle}",
 
-            'completed' =>
-                "Transaction Completed – {$bookTitle}",
+            'handover_confirmed' => "Physical Handover Confirmation – {$bookTitle}",
+            'completed' => $this->isCompleted
+                ? "Exchange Completed Successfully – {$bookTitle}"
+                : "Transaction Completed – {$bookTitle}",
 
             default =>
                 "New Request Received – {$bookTitle}",

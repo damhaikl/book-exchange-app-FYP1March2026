@@ -48,7 +48,7 @@ class ReportReviewedNotification extends Notification implements ShouldQueue
 
         return (new MailMessage)
             ->subject("UniKL MIIT BookHub - Report {$statusText}")
-            ->greeting("Hello {$notifiable->name},")
+            ->greeting("i, {$notifiable->name}.")
             ->line($message)
             ->line('Admin Review:')
             ->line($this->adminReview ?: 'No additional comments provided.')
