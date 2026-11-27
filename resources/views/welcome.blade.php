@@ -169,7 +169,7 @@
                     <p class="section-lead">UniKL MIIT BookHub helps students connect around the books that support their studies. Find useful learning materials, list books you’re ready to pass on, and arrange exchanges with fellow students.</p>
                 </div>
                 <div class="about-points">
-                    <div class="about-point"><span class="about-point-icon" aria-hidden="true">⌕</span><div><strong>Discover study materials</strong><span>Search a shared catalogue of books listed by the UniKL community.</span></div></div>
+                    <div class="about-point"><span class="about-point-icon" aria-hidden="true">⌕</span><div><strong>Discover study materials</strong><span>Search a shared catalogue of books listed by the UniKL MIIT community.</span></div></div>
                     <div class="about-point"><span class="about-point-icon" aria-hidden="true">↔</span><div><strong>Exchange with students</strong><span>Request books and coordinate a meeting with the book owner.</span></div></div>
                     <div class="about-point"><span class="about-point-icon" aria-hidden="true">♡</span><div><strong>Keep books in circulation</strong><span>Give used books a new reader and make learning resources easier to access.</span></div></div>
                 </div>

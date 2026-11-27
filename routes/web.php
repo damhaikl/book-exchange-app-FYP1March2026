@@ -55,15 +55,6 @@
         ->middleware(['auth', 'verified'])
         ->name('dashboard');
 
-    Route::get('/dashboard/book-request-notifications', [DashboardController::class, 'requestNotifications'])
-        ->middleware(['auth', 'verified'])
-        ->name('dashboard.request-notifications');
-
-    Route::post('/dashboard/book-request-notifications/read-status-updates', [DashboardController::class, 'markStatusNotificationsRead'])
-        ->middleware(['auth', 'verified'])
-        ->name('dashboard.request-notifications.read-status-updates');
-
-
     /* =========================
     👤 PROFILE
     ========================= */

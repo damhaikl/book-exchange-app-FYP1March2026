@@ -7,7 +7,6 @@ use App\Models\BookRequest;
 use App\Mail\BookStatusMail;
 use Illuminate\Support\Facades\Mail;
 use App\Models\User;
-use App\Notifications\BookRequestStatusNotification;
 
 class RequestController extends Controller
 {
@@ -41,7 +40,6 @@ class RequestController extends Controller
         $requester = User::find($request->requester_id);
 
         if ($requester) {
-            $requester->notify(new BookRequestStatusNotification($request));
             Mail::to($requester->email)
                 ->send(new BookStatusMail($request, 'completed'));
         }

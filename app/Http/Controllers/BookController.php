@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\User;
 use App\Models\BookSchedule;
 use Illuminate\Validation\Rule;
-use App\Notifications\BookRequestStatusNotification;
 use App\Notifications\ExchangeMatchNotification;
 use App\Notifications\ExchangeHandoverNotification;
 use Illuminate\Support\Facades\DB;
@@ -1293,10 +1292,6 @@ class BookController extends Controller
         $requester = User::find($bookRequest->requester_id);
 
         if ($requester) {
-            $requester->notify(
-                new BookRequestStatusNotification($bookRequest)
-            );
-
             Mail::to($requester->email)
                 ->queue(new BookStatusMail($bookRequest, 'approved'));
         }
@@ -1414,8 +1409,6 @@ class BookController extends Controller
         $owner = User::find($bookRequest->owner_id);
 
         if ($owner) {
-            $owner->notify(new BookRequestStatusNotification($bookRequest));
-
             Mail::to($owner->email)
                 ->queue(new BookStatusMail($bookRequest, 'approved'));
         }
@@ -1496,7 +1489,6 @@ class BookController extends Controller
         $requester = User::find($request->requester_id);
 
         if ($requester) {
-            $requester->notify(new BookRequestStatusNotification($request));
             Mail::to($requester->email)
                 ->queue(new BookStatusMail($request, 'rejected'));
         }
@@ -1567,10 +1559,6 @@ class BookController extends Controller
         $requester = User::find($exchangeRequest->requester_id);
 
         if ($requester) {
-            $requester->notify(
-                new BookRequestStatusNotification($exchangeRequest)
-            );
-
             Mail::to($requester->email)
                 ->queue(new BookStatusMail($exchangeRequest, 'approved'));
         }
@@ -2329,14 +2317,7 @@ class BookController extends Controller
             );
         }
 
-        // Notify the requester about the cancellation.
         $requester = User::find($bookRequest->requester_id);
-
-        if ($requester) {
-            $requester->notify(
-                new BookRequestStatusNotification($bookRequest)
-            );
-        }
 
         // Email the other student about the cancellation.
         $otherStudent = $isRequester
