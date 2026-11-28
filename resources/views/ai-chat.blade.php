@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>AI Book Assistant | UniKL BookHub</title>
+    <title>AI Book Assistant | UniKL MIIT BookHub</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -99,13 +99,13 @@
         <div class="header-inner">
             <a class="brand" href="{{ url('/') }}">
                 <span class="brand-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span>
-                <span>UniKL BookHub</span>
+                <span>UniKL MIIT BookHub</span>
             </a>
             <a href="{{ route('dashboard') }}" class="header-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Dashboard</span></a>
         </div>
         <div class="page-intro">
             <p class="eyebrow">Your book-finding assistant</p>
-            <h1>UniKL BookHub AI</h1>
+            <h1>UniKL MIIT BookHub AI</h1>
             <p>Get programme-aware book suggestions, explore the catalogue, and start a book request right from the chat.</p>
         </div>
     </header>

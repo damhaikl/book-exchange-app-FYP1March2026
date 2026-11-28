@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\BookRequest;
 use App\Models\Review;
+use App\Notifications\NewReviewNotification;
 
 class ReviewController extends Controller
 {
@@ -61,7 +62,8 @@ class ReviewController extends Controller
     
     public function store(Request $request, $requestId)
     {
-        $bookRequest = BookRequest::with('book')->findOrFail($requestId);
+        $bookRequest = BookRequest::with(['book', 'requester', 'owner'])
+            ->findOrFail($requestId);
 
         // Sell reviews only. Keep Exchange unchanged.
         if (
@@ -100,7 +102,7 @@ class ReviewController extends Controller
             ? $bookRequest->owner_id
             : $bookRequest->requester_id;
 
-        Review::create([
+        $review = Review::create([
             'book_id' => $bookRequest->book_id,
             'book_request_id' => $bookRequest->id,
             'user_id' => auth()->id(),
@@ -109,6 +111,31 @@ class ReviewController extends Controller
             'comment' => $validated['comment'] ?? null,
         ]);
 
+        // Notify the student who received the review.
+        $reviewedUser = $isRequester
+            ? $bookRequest->owner
+            : $bookRequest->requester;
+
+            \Log::info('Review notification debug', [
+            'review_id' => $review->id,
+            'reviewer_id' => auth()->id(),
+            'recipient_id' => $reviewedUser?->id,
+        ]);
+
+        try {
+            $reviewedUser->notify(new NewReviewNotification($review));
+
+            \Log::info('Review notification sent successfully', [
+                'recipient_id' => $reviewedUser->id,
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('Review notification failed', [
+                'recipient_id' => $reviewedUser->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+        
         if ($isRequester) {
             return redirect('/sent-requests')
                 ->with('success', 'Review submitted successfully!');

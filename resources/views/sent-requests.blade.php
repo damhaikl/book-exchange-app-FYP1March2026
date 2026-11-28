@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>Sent requests | UniKL BookHub</title>
+    <title>Sent requests | UniKL MIIT BookHub</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -291,15 +291,16 @@
         }
 
         .reviewed-label {
-            display:inline-flex;
-            align-items:center;
-            gap:6px;
-            padding:8px 10px;
-            border-radius:8px;
-            color:#526579;
-            background:#e9eef4;
-            font-size:.78rem;
-            font-weight:700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-top: 0px;
+            color: #526579;
+            background: #e9eef4;
+            font-size: .78rem;
+            font-weight: 700;
         }
 
         .schedule-grid {
@@ -542,7 +543,7 @@
         }
 
         .exchange-status-actions {
-            margin-top: 20px;
+            margin-top: 15px;
         }
     </style>
 </head>
@@ -554,7 +555,7 @@
                 <span class="brand-mark" aria-hidden="true">
                     <i class="bi bi-book-half"></i>
                 </span>
-                <span>UniKL BookHub</span>
+                <span>UniKL MIIT BookHub</span>
             </a>
 
             <a href="{{ route('dashboard') }}" class="back-link">
@@ -1228,7 +1229,7 @@
                         </div>
 
                         @if(in_array($req->status, ['approved', 'completed'], true))
-                            <section class="schedule-box final mb-3" aria-label="Contact information">
+                            <section class="schedule-box final mb-3 mt-3" aria-label="Contact information">
                                 <h3 class="schedule-title">
                                     <i class="bi bi-telephone" aria-hidden="true"></i>
                                     Contact {{ $req->owner->name }}
@@ -1378,12 +1379,12 @@
                                 @elseif($req->status == 'completed')
 
                                     @if(!$hasReview)
-                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button mt-3">
+                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button mt-3 ">
                                             <i class="bi bi-star me-1" aria-hidden="true"></i>
                                             Write a review
                                         </a>
                                     @else
-                                        <span class="reviewed-label">
+                                        <span class="reviewed-label mt-3">
                                             <i class="bi bi-check-circle" aria-hidden="true"></i>
                                             Already reviewed
                                         </span>
@@ -1577,12 +1578,12 @@
                                 @elseif($req->status === 'completed')
 
                                     @if(!$hasReview)
-                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button mt-3">
+                                        <a href="{{ route('review.create', $req->id) }}" class="btn review-button">
                                             <i class="bi bi-star me-1" aria-hidden="true"></i>
                                             Write a review
                                         </a>
                                     @else
-                                        <span class="reviewed-label">
+                                        <span class="reviewed-label mt-3">
                                             <i class="bi bi-check-circle" aria-hidden="true"></i>
                                             Already reviewed
                                         </span>

@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>Write a Review | UniKL BookHub</title>
+    <title>Write a Review | UniKL MIIT BookHub</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
@@ -350,7 +350,7 @@
                 <span class="brand-mark">
                     <i class="bi bi-book-half"></i>
                 </span>
-                <span>UniKL BookHub</span>
+                <span>UniKL MIIT BookHub</span>
             </a>
 
             <a href="{{ route('dashboard') }}" class="header-link">

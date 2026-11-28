@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>Received requests | UniKL BookHub</title>
+    <title>Received requests | UniKL MIIT BookHub</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
@@ -473,6 +473,19 @@
 
         .alert { border:0; border-radius:12px; }
 
+        .reviewed-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-top: 0px;
+            color: #526579;
+            background: #e9eef4;
+            font-size: .78rem;
+            font-weight: 700;
+        }
+
         @media(max-width:650px) {
             .header-inner { padding:14px 18px; }
             .page-intro { padding:25px 20px 42px; }
@@ -493,7 +506,7 @@
             <span class="brand-mark" aria-hidden="true">
                 <i class="bi bi-book-half"></i>
             </span>
-            <span>UniKL BookHub</span>
+            <span>UniKL MIIT BookHub</span>
         </a>
 
         <a href="{{ route('dashboard') }}" class="back-link">
@@ -945,32 +958,6 @@
                     ====================================== --}}
                     @else
 
-                    {{-- Student B: Review Student A after completed Sell --}}
-                    @if($req->status === 'completed')
-
-                        @php
-                            $hasReviewed = \App\Models\Review::where('book_request_id', $req->id)
-                                ->where('user_id', auth()->id())
-                                ->exists();
-                        @endphp
-
-                        <div class="mb-3">
-                            @if(!$hasReviewed)
-                                <a href="{{ route('review.create', $req->id) }}"
-                                    class="btn review-button">
-                                    <i class="bi bi-star me-1" aria-hidden="true"></i>
-                                    Write a Review
-                                </a>
-                            @else
-                                <span class="reviewed-label">
-                                    <i class="bi bi-check-circle" aria-hidden="true"></i>
-                                    Already reviewed
-                                </span>
-                            @endif
-                        </div>
-
-                    @endif
-
                         <div class="schedule-grid">
 
                             {{-- APPROVED: Show only the final agreed schedule --}}
@@ -1223,7 +1210,7 @@
 
                         </div>
 
-                                                {{-- SELL HANDOVER PROGRESS --}}
+                        {{-- SELL HANDOVER PROGRESS --}}
                         @if(in_array($req->status, ['approved', 'completed']))
 
                             <div class="handover-progress">
@@ -1260,7 +1247,7 @@
                     @endif
 
                     @if(in_array($req->status, ['approved', 'completed'], true))
-                        <section class="schedule-box final mb-3" aria-label="Contact information">
+                        <section class="schedule-box final mb-3 mt-3" aria-label="Contact information">
                             <h3 class="schedule-title">
                                 <i class="bi bi-telephone" aria-hidden="true"></i>
                                 Contact {{ $req->requester->name }}
@@ -1277,6 +1264,32 @@
                                 </p>
                             @endif
                         </section>
+                    @endif
+
+                    {{-- Student B: Review Student A after completed Sell --}}
+                    @if(!$isExchange && $req->status === 'completed')
+
+                        @php
+                            $hasReviewed = \App\Models\Review::where('book_request_id', $req->id)
+                                ->where('user_id', auth()->id())
+                                ->exists();
+                        @endphp
+
+                        <div class="mb-3">
+                            @if(!$hasReviewed)
+                                <a href="{{ route('review.create', $req->id) }}"
+                                    class="btn review-button">
+                                    <i class="bi bi-star me-1" aria-hidden="true"></i>
+                                    Write a Review
+                                </a>
+                            @else
+                                <span class="reviewed-label">
+                                    <i class="bi bi-check-circle" aria-hidden="true"></i>
+                                    Already reviewed
+                                </span>
+                            @endif
+                        </div>
+
                     @endif
 
 

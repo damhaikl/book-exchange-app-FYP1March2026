@@ -66,6 +66,18 @@
         .modal-body { padding:1.25rem 1.4rem;color:#52677d;line-height:1.65; }
         .modal-footer { gap:.5rem;padding:0 1.4rem 1.35rem;border-top:0; }
         .modal-footer .btn { border-radius:9px; }
+        .details-panel form .btn-outline-danger {
+            color: var(--navy);
+            border-color: #c9d5e2;
+            background: #fff;
+            transition: all 0.2s ease;
+        }
+
+        .details-panel form .btn-outline-danger:hover {
+            color: #dc3545;
+            background: #fff0f1;
+            border-color: #f1b5bc;
+        }
         @media(max-width:767.98px) { .book-cover { min-height:220px;max-height:340px; } .details-panel { padding:1rem; } }
         .badge-sell {
             background: #eee5ff;

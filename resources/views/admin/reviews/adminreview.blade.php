@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>Student reviews | UniKL BookHub</title>
+    <title>Student reviews | UniKL MIIT BookHub</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -53,14 +53,14 @@
         <div class="header-inner">
             <a class="brand" href="{{ url('/') }}">
                 <span class="brand-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span>
-                <span>UniKL BookHub</span>
+                <span>UniKL MIIT BookHub</span>
             </a>
             <a href="{{ route('dashboard') }}" class="back-link"><i class="bi bi-arrow-left" aria-hidden="true"></i><span>Back to dashboard</span></a>
         </div>
         <div class="page-intro">
             <p class="eyebrow">Community feedback</p>
             <h1>Student reviews</h1>
-            <p>Review ratings and comments submitted by UniKL BookHub students.</p>
+            <p>Review ratings and comments submitted by UniKL MIIT BookHub students.</p>
         </div>
     </header>
 

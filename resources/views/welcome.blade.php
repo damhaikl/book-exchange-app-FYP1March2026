@@ -105,9 +105,9 @@
         <section class="hero" id="welcome" aria-labelledby="welcome-title">
             <div class="hero-layout">
                 <div class="hero-content reveal">
-                    <div class="eyebrow"><span class="eyebrow-dot"></span> A book community for UniKL students</div>
+                    <div class="eyebrow"><span class="eyebrow-dot"></span> A book community for UniKL MIIT students</div>
                     <h1 id="welcome-title">Welcome to<br><span>UniKL MIIT BookHub.</span></h1>
-                    <p class="hero-copy">Find the books you need, share the ones you’ve finished, and make your next study resource easier to find.</p>
+                    <p class="hero-copy">Discover the books you need, sell or exchange your pre-loved books, and make finding your next study resource easier.</p>
                     <div class="hero-actions">
                         <a class="button button-light" href="#get-started">Get started <span aria-hidden="true">↓</span></a>
                         <a class="button button-outline" href="{{ route('homepage') }}">Browse books <span aria-hidden="true">→</span></a>
@@ -115,7 +115,7 @@
                 </div>
                 <figure class="hero-visual reveal">
                     <img src="{{ asset('images/unikl-campus.png') }}" alt="Universiti Kuala Lumpur campus building and student community">
-                    <figcaption class="hero-visual-caption"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5L2 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 11v5c3.3 2.7 8.7 2.7 12 0v-5M22 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>UniKL campus, Kuala Lumpur</figcaption>
+                    <figcaption class="hero-visual-caption"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m2 9 10-5 10 5-10 5L2 9Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 11v5c3.3 2.7 8.7 2.7 12 0v-5M22 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>UniKL MIIT, Kuala Lumpur</figcaption>
                 </figure>
             </div>
             <a class="scroll-cue" href="#get-started" aria-label="Scroll to get started">Scroll to explore <span aria-hidden="true">⌄</span></a>

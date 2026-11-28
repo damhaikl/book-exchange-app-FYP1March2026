@@ -7,7 +7,7 @@
 </head>
 <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
     
-    <h2>📚 UniKL BookHub</h2>
+    <h2>📚 UniKL MIIT BookHub</h2>
 
     <p>Hi, {{ $studentName }}.</p>
 

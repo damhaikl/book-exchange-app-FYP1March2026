@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#102f53">
-    <title>Log in | UniKL BookHub</title>
+    <title>Log in | UniKL MIIT BookHub</title>
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700,800" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -64,7 +64,7 @@
         <aside class="auth-aside">
             <a class="brand" href="{{ url('/') }}">
                 <span class="brand-mark" aria-hidden="true"><i class="bi bi-book-half"></i></span>
-                <span>UniKL BookHub</span>
+                <span>UniKL MIIT BookHub</span>
             </a>
             <div class="aside-content">
                 <div class="aside-kicker"><i class="bi bi-stars" aria-hidden="true"></i> Welcome back</div>

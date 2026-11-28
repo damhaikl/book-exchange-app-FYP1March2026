@@ -2,11 +2,11 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>UniKL BookHub Notification</title>
+    <title>UniKL MIIT BookHub Notification</title>
 </head>
 <body style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
 
-    <h2>📚 UniKL BookHub</h2>
+    <h2>📚 UniKL MIIT BookHub</h2>
 
     @if($status === 'pending')
 
